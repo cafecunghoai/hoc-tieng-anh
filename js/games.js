@@ -128,7 +128,7 @@ function jGo() {
 
 /* ---------- 4. Lật thẻ hội chợ ---------- */
 function startMemory() {
-  const ws = pick(gamePool(6), 6), cards = [];
+  const ws = [], seenVi = new Set(); shuffle(gamePool(6)).forEach(w => { if (ws.length < 6 && !seenVi.has(w.vi)) { seenVi.add(w.vi); ws.push(w); } }); const cards = [];
   ws.forEach((w, i) => { cards.push({ p: i, t: w.en, en: 1 }); cards.push({ p: i, t: w.vi, en: 0, w: w.en }); });
   G = { k: "memory", cards: shuffle(cards), open: [], done: {}, moves: 0, t0: Date.now(), lock: false };
   VIEW = memView; render();

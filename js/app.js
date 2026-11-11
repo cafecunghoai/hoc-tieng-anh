@@ -19,6 +19,7 @@ STAGES.forEach(st => st.lessons.forEach((L, i) => {
 const ALLW = [], WMAP = {};
 ORDER.forEach(id => { const L = LES[id]; if (L.kind !== "letters") L.W.forEach(w => { if (!WMAP[w.en]) { WMAP[w.en] = Object.assign({ lid: id }, w); ALLW.push(WMAP[w.en]); } }); });
 const stageOf = id => STAGES.find(s => s.id === id);
+const VIMAP = {}; ALLW.forEach(w => (VIMAP[w.vi] = VIMAP[w.vi] || new Set()).add(w.en));
 { const seen = new Set(); STAGES.forEach(st => { st.lessons.forEach(L => { if (L.kind !== "letters") L.W.forEach(w => seen.add(w.en)); }); if (st.lessons.length) st.words = "~" + (Math.round(seen.size / 50) * 50).toLocaleString("vi-VN") + " từ"; }); }
 
 /* ---------- Trạng thái ---------- */
@@ -44,7 +45,16 @@ function toast(m, ms) { const t = $("#toast"); t.innerHTML = m; t.classList.add(
 function opts(correct, pool) { const others = shuffle([...new Set(pool.filter(x => x && x !== correct))]).slice(0, 3); const o = shuffle([correct, ...others]); return { o, a: o.indexOf(correct) }; }
 const CONTR = { "i'm": "i am", "you're": "you are", "he's": "he is", "she's": "she is", "it's": "it is", "we're": "we are", "they're": "they are", "don't": "do not", "doesn't": "does not", "didn't": "did not", "isn't": "is not", "aren't": "are not", "wasn't": "was not", "weren't": "were not", "can't": "can not", "cannot": "can not", "couldn't": "could not", "i'd": "i would", "i'll": "i will", "you'll": "you will", "we'll": "we will", "it'll": "it will", "i've": "i have", "you've": "you have", "we've": "we have", "they've": "they have", "haven't": "have not", "hasn't": "has not", "what's": "what is", "that's": "that is", "there's": "there is", "where's": "where is", "let's": "let us", "shouldn't": "should not", "won't": "will not", "you'd": "you would", "mustn't": "must not",
   im: "i am", youre: "you are", dont: "do not", doesnt: "does not", didnt: "did not", isnt: "is not", arent: "are not", wasnt: "was not", werent: "were not", cant: "can not", whats: "what is", thats: "that is", theres: "there is", wheres: "where is", shouldnt: "should not", its: "it is", ive: "i have", havent: "have not", hasnt: "has not", couldnt: "could not", mustnt: "must not" };
-function norm(s) { s = String(s).toLowerCase().replace(/[’‘`]/g, "'"); s = s.replace(/[a-z']+/g, w => CONTR[w] || w); return s.replace(/'/g, "").replace(/[^a-z0-9\s]/g, " ").replace(/\s+/g, " ").trim(); }
+const NUMS = { zero: 0, one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9, ten: 10, eleven: 11, twelve: 12, thirteen: 13, fourteen: 14, fifteen: 15, sixteen: 16, seventeen: 17, eighteen: 18, nineteen: 19, twenty: 20, thirty: 30, forty: 40, fifty: 50, sixty: 60, seventy: 70, eighty: 80, ninety: 90 };
+const UKUS = { colour: "color", colours: "colors", favourite: "favorite", neighbour: "neighbor", neighbours: "neighbors", neighbourhood: "neighborhood", centre: "center", theatre: "theater", behaviour: "behavior", humour: "humor", honour: "honor", flavour: "flavor", harbour: "harbor", labour: "labor", programme: "program", grey: "gray", metre: "meter", litre: "liter", analyse: "analyze", catalogue: "catalog", practise: "practice", practising: "practicing", practised: "practiced", travelled: "traveled", travelling: "traveling", traveller: "traveler", travellers: "travelers", cancelled: "canceled", cancelling: "canceling", jewellery: "jewelry", tyre: "tire", pyjamas: "pajamas", mum: "mom" };
+function usSpell(w) { if (UKUS[w]) return UKUS[w]; const m = w.match(/^(.*[a-z]{3})is(e|es|ed|ing|ation|ations)$/); if (m && /(real|organ|apolog|recogn|critic|summar|priorit|modern|special|minim|maxim|memor|final|util|custom|standard|categor|emphas|symbol|visual|global|urban|moral|author|harmon|optim|central|civil|fertil|stabil|sympath)$/.test(m[1])) return m[1] + "iz" + m[2]; return w; }
+function norm(s) {
+  s = String(s).toLowerCase().replace(/[’‘`]/g, "'"); s = s.replace(/[a-z']+/g, w => CONTR[w] || w);
+  s = s.replace(/'/g, "").replace(/[^a-z0-9\s-]/g, " ");
+  s = s.replace(/\b(twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety)[\s-](one|two|three|four|five|six|seven|eight|nine)\b/g, (m, a, b) => String(NUMS[a] + NUMS[b]));
+  s = s.replace(/-/g, " ").replace(/\b[a-z]+\b/g, w => NUMS[w] !== undefined ? String(NUMS[w]) : usSpell(w));
+  return s.replace(/\s+/g, " ").trim();
+}
 function lev(a, b) { const m = a.length, n = b.length; if (!m) return n; if (!n) return m; let p = Array(n + 1).fill(0).map((_, i) => i); for (let i = 1; i <= m; i++) { const c = [i]; for (let j = 1; j <= n; j++) c[j] = Math.min(p[j] + 1, c[j - 1] + 1, p[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1)); p = c; } return p[n]; }
 function compare(input, target) { const a = norm(input), b = norm(target); if (a === b) return 2; return lev(a, b) <= Math.max(1, Math.round(b.length * 0.08)) ? 1 : 0; }
 function lcsWords(a, b) { const m = a.length, n = b.length, t = Array(m + 1).fill(0).map(() => Array(n + 1).fill(0)); for (let i = 1; i <= m; i++) for (let j = 1; j <= n; j++) t[i][j] = a[i - 1] === b[j - 1] ? t[i - 1][j - 1] + 1 : Math.max(t[i - 1][j], t[i][j - 1]); return t[m][n]; }
@@ -94,10 +104,17 @@ function listenMic(onres, onerr) {
   try { r.start(); } catch (e) { onerr("none"); }
 }
 
+function checkVoice() {
+  if (S.voiceWarned) return;
+  const warn = m => { S.voiceWarned = 1; save(); modal("Chưa nghe được giọng đọc?", m, "Đã hiểu", () => {}, false, "Đóng"); };
+  if (!("speechSynthesis" in window)) return warn("Trình duyệt này chưa hỗ trợ đọc tiếng Anh. Hãy mở app bằng <b>Chrome</b> (Android, máy tính) hoặc <b>Safari</b> (iPhone).");
+  loadV(); if (voices.length && !voices.some(v => v.lang.toLowerCase().startsWith("en"))) warn("Máy của bạn chưa có giọng tiếng Anh.<br>1. Mở <b>Cài đặt</b> → <b>Ngôn ngữ</b>.<br>2. Chọn <b>Chuyển văn bản thành giọng nói</b>.<br>3. Tải thêm giọng <b>English</b>.");
+}
+
 /* ---------- Thời gian, XP, cấp độ ---------- */
 let last = Date.now();
 function lg() { const k = today(); return S.log[k] || (S.log[k] = { lessons: 0, xp: 0 }); }
-function tick() { const now = Date.now(); const s = Math.min((now - last) / 1000, 90); last = now; const k = today(); S.days[k] = (S.days[k] || 0) + s; save(); }
+function tick() { const now = Date.now(); const s = Math.min((now - last) / 1000, 180); last = now; const k = today(); S.days[k] = (S.days[k] || 0) + s; save(); }
 const minutesToday = () => Math.round((S.days[today()] || 0) / 60);
 function streak() { let n = 0; const d = new Date(); if (!(S.days[dkey(d)] > 30)) d.setDate(d.getDate() - 1); while (S.days[dkey(d)] > 30) { n++; d.setDate(d.getDate() - 1); } return n; }
 const totalHours = () => Object.values(S.days).reduce((a, b) => a + b, 0) / 3600;
@@ -170,14 +187,14 @@ function vOnb() {
   const hero = `<svg viewBox="0 0 240 150" class="heroart" aria-hidden="true"><rect x="20" y="20" width="120" height="64" rx="18" fill="var(--pri)"/><path d="M48 84 L40 104 L68 84Z" fill="var(--pri)"/><text x="80" y="60" text-anchor="middle" font-size="26" font-weight="700" fill="#fff" font-family="inherit">Hello!</text><rect x="104" y="64" width="118" height="60" rx="18" fill="var(--acc)"/><path d="M196 124 L204 142 L178 124Z" fill="var(--acc)"/><text x="163" y="101" text-anchor="middle" font-size="21" font-weight="700" fill="#3B2603" font-family="inherit">Xin chào!</text></svg>`;
   let h = `<div class="onb">`;
   if (OB === 0) h += `${hero}<h1>Tiếng Anh từ số 0</h1><p class="lead">Lộ trình rõ ràng từ chưa biết gì đến <b>nghe, nói, đọc, viết</b> thành thạo. Mỗi ngày một chút, có máy nhắc ôn đúng lúc.</p>
-    <ul class="feat"><li><i class="ti ti-route"></i><span><b>6 chặng, 116 bài</b> theo khung chuẩn châu Âu CEFR: 0 → A1 → A2 → B1 → B2 → C1</span></li><li><i class="ti ti-microphone"></i><span><b>Luyện nói</b> có máy chấm phát âm</span></li><li><i class="ti ti-brain"></i><span><b>Ôn từ thông minh</b>: nhắc đúng lúc sắp quên</span></li><li><i class="ti ti-language"></i><span><b>Giải thích bằng tiếng Việt</b>, dễ hiểu</span></li></ul>
+    <ul class="feat"><li><i class="ti ti-route"></i><span><b>6 chặng, 116 bài</b> theo khung chuẩn châu Âu CEFR<br><span class="nw">0 → A1 → A2 → B1 → B2 → C1</span></span></li><li><i class="ti ti-microphone"></i><span><b>Luyện nói</b> có máy chấm phát âm</span></li><li><i class="ti ti-brain"></i><span><b>Ôn từ thông minh</b>: nhắc đúng lúc sắp quên</span></li><li><i class="ti ti-language"></i><span><b>Giải thích bằng tiếng Việt</b>, dễ hiểu</span></li></ul>
     <button class="btn primary full lg" onclick="OB=1;render()">Bắt đầu</button>`;
   else if (OB === 1) h += `<p class="stepn">Bước 1/2</p><h1>Mỗi ngày bạn học bao lâu?</h1><p class="muted">Đều đặn quan trọng hơn học nhiều. Bạn đổi được bất cứ lúc nào.</p><div class="choices">
     ${[[15, "Nhẹ nhàng", "coffee"], [30, "Đều đặn", "walk"], [60, "Nghiêm túc", "run"], [90, "Tăng tốc", "rocket"]].map(x => `<button class="choice ${g === x[0] ? "on" : ""}" onclick="S.settings.goal=${x[0]};save();render()"><i class="ti ti-${x[2]}"></i><span class="grow"><b>${x[0]} phút / ngày</b><small>${x[1]}${x[0] === 60 ? " · khuyên dùng" : ""}</small></span><small class="eta">B2 sau ~${etaMonths(x[0])} tháng</small></button>`).join("")}</div>
     <p class="note">Ước tính theo Cambridge: cần khoảng 500–600 giờ học có hướng dẫn để từ số 0 đạt B2.</p><button class="btn primary full lg" onclick="OB=2;render()">Tiếp tục</button>`;
   else h += `<p class="stepn">Bước 2/2</p><h1>Bạn đang ở đâu?</h1><p class="muted">Để app xếp bạn vào đúng bài.</p><div class="choices">
-    <button class="choice" onclick="finishOnb('zero')"><i class="ti ti-plant"></i><span class="grow"><b>Tôi mới bắt đầu</b><small>Học từ Chặng 0: phát âm và bảng chữ cái</small></span><i class="ti ti-chevron-right"></i></button>
-    <button class="choice" onclick="finishOnb('test')"><i class="ti ti-clipboard-check"></i><span class="grow"><b>Tôi biết một chút</b><small>Làm bài kiểm tra 22 câu, khoảng 5 phút</small></span><i class="ti ti-chevron-right"></i></button></div>
+    <button class="choice" onclick="finishOnb('zero')"><i class="ti ti-plant"></i><span class="grow"><b>Tôi mới bắt đầu</b><small>Bắt đầu từ phát âm và bảng chữ cái</small></span><i class="ti ti-chevron-right"></i></button>
+    <button class="choice" onclick="finishOnb('test')"><i class="ti ti-clipboard-check"></i><span class="grow"><b>Tôi biết một chút</b><small>Kiểm tra nhanh 22 câu, khoảng 5 phút</small></span><i class="ti ti-chevron-right"></i></button></div>
     <button class="link" onclick="OB=1;render()"><i class="ti ti-arrow-left"></i> Quay lại</button>`;
   app().innerHTML = h + `</div>`;
 }
@@ -207,7 +224,7 @@ function vHome() {
 let openStage = null;
 function vRoad() {
   const th = totalHours(), g = S.settings.goal;
-  let h = `<header class="page"><h1>Lộ trình của bạn</h1><p class="muted">Từ số 0 đến B2 – dùng tiếng Anh độc lập trong công việc và đời sống.</p>
+  let h = `<header class="page"><h1>Lộ trình của bạn</h1><p class="muted">Từ số 0 đến C1. Mục tiêu chính là B2: dùng tiếng Anh độc lập trong công việc và đời sống.</p>
   <div class="card flat"><div class="row between"><span>Đã học <b>${th < 1 ? Math.round(th * 60) + " phút" : th.toFixed(1) + " giờ"}</b></span><span class="muted sm">mục tiêu ~550 giờ</span></div><div class="bar"><span style="width:${Math.min(100, th / 550 * 100).toFixed(1)}%"></span></div><p class="sm muted">Với ${g} phút mỗi ngày, bạn đạt B2 sau khoảng ${Math.max(1, Math.round((550 - th) * 60 / g / 30))} tháng nữa.</p></div></header>`;
   if (!openStage) openStage = (LES[nextLesson()] || {}).stage || "s0";
   STAGES.forEach(st => {
@@ -333,7 +350,7 @@ function openIntro(id) {
 
 /* ---------- Tạo bài tập ---------- */
 function mqMeaning(w, pool) { const p = opts(w.vi, pool.map(x => x.vi)); return { type: "mcq", sk: "vocab", label: "Chọn nghĩa đúng", q: w.en, sub: w.ipa ? "/" + w.ipa + "/" : "", audio: w.en, o: p.o, a: p.a, mk: w.en }; }
-function mqReverse(w, pool) { const p = opts(w.en, pool.map(x => x.en)); return { type: "mcq", sk: "vocab", label: "Chọn từ tiếng Anh đúng", q: w.vi, vq: 1, o: p.o, a: p.a, mk: w.en, sayAns: 1 }; }
+function mqReverse(w, pool) { const p = opts(w.en, pool.filter(x => x.vi !== w.vi && !(VIMAP[w.vi] || new Set()).has(x.en)).map(x => x.en)); return { type: "mcq", sk: "vocab", label: "Chọn từ tiếng Anh đúng", q: w.vi, vq: 1, o: p.o, a: p.a, mk: w.en, sayAns: 1 }; }
 function mqListen(w, pool) { const p = opts(w.en, pool.map(x => x.en)); return { type: "mcq", sk: "listen", label: "Nghe và chọn từ bạn nghe được", audio: w.en, autoplay: true, o: p.o, a: p.a, mk: w.en }; }
 function buildLesson(L) {
   const st = [], W = L.W, pool = W.length >= 6 ? W : ALLW;
@@ -360,7 +377,7 @@ function buildLesson(L) {
 }
 function mkRead(r) { return { type: "read", sk: "read", t: r.t, q: r.q.map(x => { const p = x.split("|"); const o = opts(p[1], p.slice(2)); return { q: p[0], o: o.o, a: o.a }; }) }; }
 function newP(kind, steps, extra) { P = Object.assign({ kind, steps, i: 0, ok: 0, tot: 0, xp: 0, sk: {}, wrong: 0 }, extra || {}); last = Date.now(); VIEW = null; render(); }
-function startLesson(id) { if (!isOpen(id)) { toast("Bài này chưa mở"); return; } S.resume = null; newP("lesson", buildLesson(LES[id]), { id }); }
+function startLesson(id) { if (!isOpen(id)) { toast("Bài này chưa mở"); return; } checkVoice(); S.resume = null; newP("lesson", buildLesson(LES[id]), { id }); }
 function resumeLesson() { const r = S.resume; P = r.P; last = Date.now(); VIEW = null; render(); }
 function startReview(extra) {
   const keys = extra ? pick(Object.keys(S.cards), 10) : dueCards().sort((a, b) => S.cards[a].due - S.cards[b].due).slice(0, 20);
@@ -563,7 +580,11 @@ document.addEventListener("keydown", e => {
 let installEvt = null;
 window.addEventListener("beforeinstallprompt", e => { e.preventDefault(); installEvt = e; if (!P && !VIEW) render(); });
 function doInstall() { if (!installEvt) return; installEvt.prompt(); installEvt.userChoice.finally(() => { installEvt = null; render(); }); }
-if ("serviceWorker" in navigator && location.protocol.startsWith("http")) window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
+if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
+  const hadSW = !!navigator.serviceWorker.controller;
+  window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
+  navigator.serviceWorker.addEventListener("controllerchange", () => { if (hadSW) toast("Ứng dụng vừa được cập nhật phiên bản mới"); });
+}
 if (window.matchMedia) try { matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => applyTheme()); } catch (e) {}
 document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") last = Date.now(); });
 /* Không để số tách khỏi đơn vị khi xuống dòng */

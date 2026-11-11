@@ -1,6 +1,6 @@
 /* ============ Tiếng Anh Từ Số 0 — design tokens ============ */
 :root{
-  --bg:#F5F2EA;--bg2:#EDE8DC;--card:#FFFFFF;--ink:#17211E;--ink2:#3C4A45;--mut:#6B7672;--line:#E3DDD0;--line2:#D3CCBC;
+  --bg:#F5F2EA;--bg2:#EDE8DC;--card:#FFFFFF;--ink:#17211E;--ink2:#3C4A45;--mut:#5E6A66;--line:#E3DDD0;--line2:#D3CCBC;
   --pri:#0E6B5C;--pri-h:#0B5A4D;--pri2:#E1F0EA;--pri3:#BFE0D4;--on-pri:#fff;
   --acc:#F2A93B;--acc2:#FDF0DB;--acc-ink:#7A4A06;
   --good:#1F8A55;--good2:#E3F4EA;--bad:#C8473C;--bad2:#FBE8E5;--warn2:#FFF4D6;
@@ -292,3 +292,5 @@ body.playing #nav{display:none}
 h1,h2,h3,h4,.q,.btn,.lab,.tag,.pill,.fbt,.gcard b,.choice b,.task b,.say h2,.postcard h2,.done h1,.stepn,.bdg span,.les .grow,.stall small{text-wrap:balance}
 p,li,small,.vi,.passage,.gram,.note,.choice small,.gcard small,.bubble p,.heard{text-wrap:pretty}
 .opt,.chip,.word b{text-wrap:balance}
+
+.nw{white-space:nowrap}.choice small,.task small{display:block}
