@@ -1,5 +1,5 @@
 /* Service worker: chạy offline, tự cập nhật khi có bản mới */
-const V = "hta-mwcg89qf";
+const V = "hta-mwcg9nv4";
 const CORE = ["./", "index.html", "css/style.css", "js/icons.js", "js/data-core.js", "js/data-a2.js", "js/data-b1.js", "js/data-b2.js", "js/data-c1.js", "js/writing.js", "js/app.js", "js/games.js", "manifest.webmanifest", "icons/icon-192.png", "icons/icon-512.png"];
 self.addEventListener("install", e => { e.waitUntil(caches.open(V).then(c => c.addAll(CORE)).then(() => self.skipWaiting())); });
 self.addEventListener("activate", e => { e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== V).map(k => caches.delete(k)))).then(() => self.clients.claim())); });

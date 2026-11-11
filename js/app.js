@@ -504,7 +504,7 @@ const wcount = t => (t.trim().match(/[A-Za-z0-9'’-]+/g) || []).length;
 function kwHit(text, alt) { const n = " " + norm(text) + " "; alt = alt.trim(); if (alt === "ing") return /\b\w{2,}ing\b/.test(norm(text)); return n.includes(" " + norm(alt) + " "); }
 function rWrite(s) {
   const w = s.wr;
-  return `<p class="lab"><i class="ti ti-pencil"></i> Viết · Viết đoạn văn ngắn</p><div class="say left"><p><b>${esc(w.p)}</b></p><p class="sm muted">Ít nhất ${w.min} từ. Nên dùng: ${w.kw.map(k => `<span class="kw">${esc(k.split("/")[0])}</span>`).join(" ")}</p></div>
+  return `<p class="lab"><i class="ti ti-pencil"></i> Viết · Viết đoạn văn ngắn</p><div class="say left"><p><b>${esc(w.p)}</b></p><p class="sm muted">Ít nhất ${w.min} từ. Dùng ít nhất ${Math.max(1, Math.ceil(w.kw.length * 0.7))}/${w.kw.length} gợi ý: ${w.kw.map(k => `<span class="kw">${esc(k.split("/")[0])}</span>`).join(" ")}</p></div>
   <textarea id="inp" rows="6" placeholder="Viết bằng tiếng Anh..." oninput="$('#wc').textContent=wcount(this.value)+' / ${w.min} từ';$('#er').textContent=''" autocapitalize="sentences" spellcheck="true"></textarea><p class="sm muted" id="wc">0 / ${w.min} từ</p><p class="err" id="er"></p><div id="wres"></div>
   <button class="btn primary full" id="chk" onclick="checkWrite()">Kiểm tra</button><button class="link" onclick="showModel()">Xem bài mẫu và bỏ qua</button>`;
 }
@@ -512,10 +512,10 @@ function checkWrite() {
   const s = P.steps[P.i], w = s.wr, v = $("#inp").value;
   if (wcount(v) < 3) { $("#er").textContent = "Hãy viết vài câu trước khi kiểm tra."; return; }
   $("#wc").textContent = wcount(v) + " / " + w.min + " từ";
-  const n = wcount(v), res = w.kw.map(k => ({ k: k.split("/")[0], ok: k.split("/").some(a => kwHit(v, a)) })), okLen = n >= w.min, all = okLen && res.every(r => r.ok);
+  const n = wcount(v), res = w.kw.map(k => ({ k: k.split("/")[0], ok: k.split("/").some(a => kwHit(v, a)) })), okLen = n >= w.min, need = Math.max(1, Math.ceil(res.length * 0.7)), hits = res.filter(r => r.ok).length, all = okLen && hits >= need;
   $("#wres").innerHTML = `<div class="checklist"><p class="${okLen ? "g" : "b"}"><i class="ti ti-${okLen ? "check" : "x"}"></i> Độ dài: ${n}/${w.min} từ</p>${res.map(r => `<p class="${r.ok ? "g" : "b"}"><i class="ti ti-${r.ok ? "check" : "x"}"></i> Có dùng “${esc(r.k)}”</p>`).join("")}</div>`;
   if (all) { $("#chk").remove(); $("#inp").disabled = true; showModelBox(); grade(true, "", "Đoạn văn đạt yêu cầu!"); }
-  else $("#er").textContent = "Bổ sung những mục còn thiếu rồi bấm Kiểm tra lại.";
+  else $("#er").textContent = !okLen ? "Viết thêm cho đủ số từ rồi bấm Kiểm tra lại." : `Hãy dùng thêm ${need - hits} cấu trúc gợi ý rồi bấm Kiểm tra lại.`;
 }
 function showModelBox() { const w = P.steps[P.i].wr; $("#wres").insertAdjacentHTML("beforeend", `<div class="model"><div class="row between"><b>Bài mẫu để so sánh</b>${spk(w.model.replace(/\n/g, " "))}</div><p>${esc(w.model).replace(/\n/g, "<br>")}</p><p class="sm muted">Máy kiểm tra độ dài và từ khóa. Hãy tự so ngữ pháp với bài mẫu.</p></div>`); }
 function showModel() { if (P.ans) return; const c = $("#chk"); if (c) c.remove(); $("#inp").disabled = true; showModelBox(); grade(false, ""); }
@@ -538,7 +538,7 @@ function finish() {
     btns = `<button class="btn primary full lg" onclick="nav('home')">Về trang chủ</button>`;
   } else if (k === "exam") {
     const st = stageOf(P.sid), ok = sc >= 80;
-    if (ok) { bonus = 100; S.stagePassed[P.sid] = true; st.lessons.forEach(L => { S.unlocked[L.id] = true; if (L.srs !== false) L.W.forEach(w => { if (!S.cards[w.en]) S.cards[w.en] = { vi: w.vi, box: 2, due: Date.now() + 2 * DAY }; }); }); const ni = ORDER.indexOf(st.lessons[st.lessons.length - 1].id) + 1; if (ORDER[ni]) S.unlocked[ORDER[ni]] = true; }
+    if (ok) { bonus = 100; S.stagePassed[P.sid] = true; st.lessons.forEach(L => { S.unlocked[L.id] = true; if (L.srs !== false) L.W.forEach(w => { if (!S.cards[w.en]) S.cards[w.en] = { vi: w.vi, box: 3, due: Date.now() + (3 + Math.floor(Math.random() * 28)) * DAY }; }); }); const ni = ORDER.indexOf(st.lessons[st.lessons.length - 1].id) + 1; if (ORDER[ni]) S.unlocked[ORDER[ni]] = true; }
     h = `<h1>${ok ? "Chúc mừng! Bạn đã qua " + st.name : "Chưa qua chặng"}</h1><p class="muted">${ok ? "Toàn bộ bài trong chặng đã mở và chặng kế tiếp đã sẵn sàng." : "Cần 80%. Hãy học thêm các bài trong chặng rồi thi lại."}</p>`;
     btns = `<button class="btn primary full lg" onclick="nav('road')">Xem lộ trình</button>`;
   } else {

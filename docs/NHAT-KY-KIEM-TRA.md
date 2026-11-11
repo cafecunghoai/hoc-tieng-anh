@@ -31,3 +31,10 @@ Mỗi vòng, app được soát dưới ba vai: **chuyên gia dạy tiếng Anh*
 | Máy không có giọng tiếng Anh thì không biết vì sao không nghe được | Ở bài học đầu tiên, nếu máy thiếu giọng tiếng Anh, app hiện hướng dẫn 3 bước để cài |
 | Chữ phụ hơi nhạt, khó đọc ngoài trời | Tăng độ tương phản của màu chữ phụ |
 | Lộ trình chỉ ghi "đến B2" trong khi đã có C1 | Sửa lại mô tả, số bài và số từ của từng chặng tự tính theo nội dung thật |
+
+## Vòng 4 – Soát lại toàn bộ
+
+| Phát hiện | Cách sửa |
+|---|---|
+| Thi qua chặng thì hàng trăm từ đến hạn ôn cùng một ngày, gây quá tải | Lịch ôn của các từ này được rải đều trong 3–30 ngày |
+| Bài viết bắt buộc dùng đủ mọi gợi ý, dễ nản khi người học tự viết theo ý mình | Chỉ cần đủ số từ và dùng ít nhất 70% số gợi ý; app báo rõ còn thiếu bao nhiêu |
