@@ -148,9 +148,9 @@ s:["I am going to learn English every day.|Tôi sẽ học tiếng Anh mỗi ng�
 r:{t:"My name is Huy. I'm thirty years old, and I work in a hotel. I want to get a better job, so I am going to improve my English. Every day, I'm going to study for one hour and practice speaking with tourists. Next year, I'm going to take an English exam. It's a big goal, but I'm sure I can do it.",q:["Huy làm việc ở đâu?|Khách sạn|Bệnh viện|Trường học","Mỗi ngày Huy định học bao lâu?|1 giờ|2 giờ|30 phút","Năm sau Huy định làm gì?|Thi tiếng Anh|Đi du lịch|Chuyển nhà"]}}
 ]},
 {id:"a2", name:"A2", title:"Sơ cấp", hours:200, words:"1.300 từ", goals:["Kể lại một ngày, một chuyến đi","Nghe hiểu thông báo, video chậm","Viết email ngắn"], lessons:[]},
-{id:"b1", name:"B1", title:"Trung cấp", hours:400, words:"2.500 từ", locked:true, goals:["Tự xoay xở khi đi du lịch","Nêu ý kiến và lý do","Đọc tin tức đơn giản"], lessons:[]},
-{id:"b2", name:"B2", title:"Thành thạo", hours:600, words:"3.000 từ", locked:true, goals:["Nói chuyện tự nhiên với người bản xứ","Xem phim, nghe podcast hiểu ý chính","Viết bài luận 250 chữ có lập luận"], lessons:[]},
-{id:"c1", name:"C1", title:"Nâng cao", hours:800, words:"5.000 từ", locked:true, goals:["Thuyết trình, họp bằng tiếng Anh","Đọc sách, báo chuyên ngành","Viết văn trang trọng"], lessons:[]}
+{id:"b1", name:"B1", title:"Trung cấp", hours:400, words:"", goals:["Tự xoay xở khi đi du lịch","Nêu ý kiến và lý do","Đọc tin tức đơn giản"], lessons:[]},
+{id:"b2", name:"B2", title:"Thành thạo", hours:600, words:"", goals:["Nói chuyện tự nhiên với người bản xứ","Xem phim, nghe podcast hiểu ý chính","Viết bài luận 250 chữ có lập luận"], lessons:[]},
+{id:"c1", name:"C1", title:"Nâng cao", hours:800, words:"", goals:["Thuyết trình, họp bằng tiếng Anh","Đọc sách, báo chuyên ngành","Viết văn trang trọng"], lessons:[]}
 ];
 
 const PLACEMENT = [
@@ -169,5 +169,11 @@ const PLACEMENT = [
 {q:"If it rains tomorrow, we ___ at home.", o:["will stay","stay","stayed","would stay"]},
 {q:"She is ___ student in the class.", o:["the tallest","taller","the most tall","tallest"]},
 {q:"The bridge ___ in 1990.", o:["was built","built","is building","has built"]},
-{q:"I was cooking ___ the phone rang.", o:["when","while","during","since"]}
+{q:"I was cooking ___ the phone rang.", o:["when","while","during","since"]},
+{q:"I wish I ___ more free time.", o:["had","have","will have","am having"]},
+{q:"By the time we arrived, the film ___.", o:["had already started","has already started","already starts","was already start"]},
+{q:"She asked me where I ___.", o:["lived","do I live","did I live","living"]},
+{q:"If I had known about the problem, I ___ you.", o:["would have told","will tell","told","would tell"]},
+{q:"Not only ___ late, but he also forgot the tickets.", o:["was he","he was","he is","did he"]},
+{q:"“A drop in the ocean” nghĩa là gì?", o:["Muối bỏ bể, quá ít","Một tai nạn trên biển","Rất nguy hiểm","Rất nhiều tiền"]}
 ];

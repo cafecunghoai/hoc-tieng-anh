@@ -19,6 +19,7 @@ STAGES.forEach(st => st.lessons.forEach((L, i) => {
 const ALLW = [], WMAP = {};
 ORDER.forEach(id => { const L = LES[id]; if (L.kind !== "letters") L.W.forEach(w => { if (!WMAP[w.en]) { WMAP[w.en] = Object.assign({ lid: id }, w); ALLW.push(WMAP[w.en]); } }); });
 const stageOf = id => STAGES.find(s => s.id === id);
+{ const seen = new Set(); STAGES.forEach(st => { st.lessons.forEach(L => { if (L.kind !== "letters") L.W.forEach(w => seen.add(w.en)); }); if (st.lessons.length) st.words = "~" + (Math.round(seen.size / 50) * 50).toLocaleString("vi-VN") + " từ"; }); }
 
 /* ---------- Trạng thái ---------- */
 function def() {
@@ -169,14 +170,14 @@ function vOnb() {
   const hero = `<svg viewBox="0 0 240 150" class="heroart" aria-hidden="true"><rect x="20" y="20" width="120" height="64" rx="18" fill="var(--pri)"/><path d="M48 84 L40 104 L68 84Z" fill="var(--pri)"/><text x="80" y="60" text-anchor="middle" font-size="26" font-weight="700" fill="#fff" font-family="inherit">Hello!</text><rect x="104" y="64" width="118" height="60" rx="18" fill="var(--acc)"/><path d="M196 124 L204 142 L178 124Z" fill="var(--acc)"/><text x="163" y="101" text-anchor="middle" font-size="21" font-weight="700" fill="#3B2603" font-family="inherit">Xin chào!</text></svg>`;
   let h = `<div class="onb">`;
   if (OB === 0) h += `${hero}<h1>Tiếng Anh từ số 0</h1><p class="lead">Lộ trình rõ ràng từ chưa biết gì đến <b>nghe, nói, đọc, viết</b> thành thạo. Mỗi ngày một chút, có máy nhắc ôn đúng lúc.</p>
-    <ul class="feat"><li><i class="ti ti-route"></i><span><b>6 chặng</b> theo khung chuẩn châu Âu CEFR: 0 → A1 → A2 → B1 → B2</span></li><li><i class="ti ti-microphone"></i><span><b>Luyện nói</b> có máy chấm phát âm</span></li><li><i class="ti ti-brain"></i><span><b>Ôn từ thông minh</b>: nhắc đúng lúc sắp quên</span></li><li><i class="ti ti-language"></i><span><b>Giải thích bằng tiếng Việt</b>, dễ hiểu</span></li></ul>
+    <ul class="feat"><li><i class="ti ti-route"></i><span><b>6 chặng, 116 bài</b> theo khung chuẩn châu Âu CEFR: 0 → A1 → A2 → B1 → B2 → C1</span></li><li><i class="ti ti-microphone"></i><span><b>Luyện nói</b> có máy chấm phát âm</span></li><li><i class="ti ti-brain"></i><span><b>Ôn từ thông minh</b>: nhắc đúng lúc sắp quên</span></li><li><i class="ti ti-language"></i><span><b>Giải thích bằng tiếng Việt</b>, dễ hiểu</span></li></ul>
     <button class="btn primary full lg" onclick="OB=1;render()">Bắt đầu</button>`;
   else if (OB === 1) h += `<p class="stepn">Bước 1/2</p><h1>Mỗi ngày bạn học bao lâu?</h1><p class="muted">Đều đặn quan trọng hơn học nhiều. Bạn đổi được bất cứ lúc nào.</p><div class="choices">
     ${[[15, "Nhẹ nhàng", "coffee"], [30, "Đều đặn", "walk"], [60, "Nghiêm túc", "run"], [90, "Tăng tốc", "rocket"]].map(x => `<button class="choice ${g === x[0] ? "on" : ""}" onclick="S.settings.goal=${x[0]};save();render()"><i class="ti ti-${x[2]}"></i><span class="grow"><b>${x[0]} phút / ngày</b><small>${x[1]}${x[0] === 60 ? " · khuyên dùng" : ""}</small></span><small class="eta">B2 sau ~${etaMonths(x[0])} tháng</small></button>`).join("")}</div>
     <p class="note">Ước tính theo Cambridge: cần khoảng 500–600 giờ học có hướng dẫn để từ số 0 đạt B2.</p><button class="btn primary full lg" onclick="OB=2;render()">Tiếp tục</button>`;
   else h += `<p class="stepn">Bước 2/2</p><h1>Bạn đang ở đâu?</h1><p class="muted">Để app xếp bạn vào đúng bài.</p><div class="choices">
     <button class="choice" onclick="finishOnb('zero')"><i class="ti ti-plant"></i><span class="grow"><b>Tôi mới bắt đầu</b><small>Học từ Chặng 0: phát âm và bảng chữ cái</small></span><i class="ti ti-chevron-right"></i></button>
-    <button class="choice" onclick="finishOnb('test')"><i class="ti ti-clipboard-check"></i><span class="grow"><b>Tôi biết một chút</b><small>Làm bài kiểm tra 16 câu, khoảng 3 phút</small></span><i class="ti ti-chevron-right"></i></button></div>
+    <button class="choice" onclick="finishOnb('test')"><i class="ti ti-clipboard-check"></i><span class="grow"><b>Tôi biết một chút</b><small>Làm bài kiểm tra 22 câu, khoảng 5 phút</small></span><i class="ti ti-chevron-right"></i></button></div>
     <button class="link" onclick="OB=1;render()"><i class="ti ti-arrow-left"></i> Quay lại</button>`;
   app().innerHTML = h + `</div>`;
 }
@@ -196,7 +197,7 @@ function vHome() {
   if (L) {
     const rs = S.resume && S.resume.id === n;
     h += `<section class="card big" onclick="openIntro('${n}')"><div class="row between"><span class="tag">${st.name} · Bài ${L.no}/${st.lessons.length}</span><span class="sm muted">${stageProgress(st)}% chặng</span></div><h2>${esc(L.t)}</h2><p class="muted">${L.W.length} từ mới · ${L.stage === "s0" ? "phát âm" : "nghe · nói · đọc · viết"} · ~25 phút</p><button class="btn primary full lg">${rs ? "Học tiếp" : "Vào học"} <i class="ti ti-arrow-right"></i></button></section>`;
-  } else h += `<section class="card big"><h2>Bạn đã học hết nội dung hiện có!</h2><p class="muted">Hãy làm bài thi qua chặng và ôn thẻ mỗi ngày. Chặng B1 đang được soạn.</p><button class="btn full" onclick="nav('road')">Xem lộ trình</button></section>`;
+  } else h += `<section class="card big"><h2>Bạn đã học hết nội dung hiện có!</h2><p class="muted">Bạn đã đi hết toàn bộ lộ trình từ số 0 đến C1. Hãy ôn thẻ và chơi trò chơi mỗi ngày để giữ vốn từ.</p><button class="btn full" onclick="nav('road')">Xem lộ trình</button></section>`;
   h += `<div class="quick"><button onclick="nav('review')"><i class="ti ti-cards"></i><b>${due}</b><span>thẻ cần ôn</span></button><button onclick="${mk ? "startMistakes()" : "nav('book')"}"><i class="ti ti-alert-triangle"></i><b>${mk}</b><span>lỗi cần sửa</span></button><button onclick="nav('book')"><i class="ti ti-notebook"></i><b>${Object.keys(S.cards).length}</b><span>từ đã học</span></button></div>`;
   h += `<h4 class="sec">Một buổi học 60 phút lý tưởng</h4><div class="loop">${[["cards", "10'", "Ôn thẻ"], ["headphones", "15'", "Nghe"], ["microphone", "15'", "Nói nhại"], ["book", "10'", "Đọc"], ["pencil", "10'", "Viết"]].map(x => `<div><i class="ti ti-${x[0]}"></i><b>${x[1]}</b><span>${x[2]}</span></div>`).join("")}</div>`;
   app().innerHTML = h;
@@ -341,7 +342,7 @@ function buildLesson(L) {
   if (L.kind === "letters") { pick(W, 10).forEach(w => st.push(mqListen(w, W))); L.S.forEach(s => st.push({ type: "speak", sk: "speak", en: s.en, vi: s.vi })); return st; }
   pick(W, 6).forEach(w => st.push(mqMeaning(w, pool)));
   pick(W, 3).forEach(w => st.push(mqReverse(w, pool)));
-  pick(W, 5).forEach(w => st.push(mqListen(w, pool)));
+  pick(W.filter(w => !/^-|-$|=/.test(w.en) && !w.en.includes("-") || /\w-\w/.test(w.en)), 5).forEach(w => st.push(mqListen(w, pool)));
   if (L.stage === "s0") {
     pick(W, 4).forEach(w => st.push({ type: "dict", sk: "listen", label: "Nghe và gõ lại từ", en: w.en, vi: w.vi }));
     pick(W, 4).forEach(w => st.push({ type: "speak", sk: "speak", en: w.en, vi: w.vi, ipa: w.ipa }));
@@ -529,7 +530,9 @@ function finish() {
     else if (n <= 7) { start = "a1-1"; msg = "Bạn đã có chút nền. Bắt đầu từ <b>A1 – Bài 1</b>. Chặng 0 vẫn mở để bạn luyện phát âm."; }
     else if (n <= 10) { start = "a1-13"; msg = "Bạn nắm khá tốt phần đầu A1. Đã mở đến <b>A1 – Bài 13</b>."; }
     else if (n <= 13) { start = "a2-1"; msg = "Bạn đã vững A1! Bắt đầu từ <b>A2 – Bài 1</b>. Bạn có thể quay lại ôn A1 bất cứ lúc nào."; }
-    else { start = "a2-13"; msg = "Trình độ của bạn khá tốt. Đã mở đến <b>A2 – Bài 13</b>. Hãy làm bài thi qua chặng A2 để xác nhận."; }
+    else if (n <= 16) { start = "b1-1"; msg = "Bạn đã nắm chắc A2. Bắt đầu từ <b>B1 – Bài 1</b>. Nếu thấy khó, hãy làm bài thi qua chặng A2 để ôn lại."; }
+    else if (n <= 19) { start = "b2-1"; msg = "Trình độ của bạn tốt. Bắt đầu từ <b>B2 – Bài 1</b>. Các chặng trước vẫn mở để bạn ôn."; }
+    else { start = "c1-1"; msg = "Rất ấn tượng! Bạn có thể học thẳng <b>C1 – Nâng cao</b>. Hãy làm bài thi qua chặng B2 để xác nhận."; }
     S.placement = n; ORDER.slice(0, ORDER.indexOf(start) + 1).forEach(id => S.unlocked[id] = true);
     h = `<h1>Kết quả: ${n}/${P.tot} câu đúng</h1><p>${msg}</p>`; btns = `<button class="btn primary full lg" onclick="openIntro('${start}')">Bắt đầu học</button><button class="btn full" onclick="nav('road')">Xem lộ trình</button>`;
   }
@@ -563,4 +566,8 @@ function doInstall() { if (!installEvt) return; installEvt.prompt(); installEvt.
 if ("serviceWorker" in navigator && location.protocol.startsWith("http")) window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
 if (window.matchMedia) try { matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => applyTheme()); } catch (e) {}
 document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") last = Date.now(); });
+/* Không để số tách khỏi đơn vị khi xuống dòng */
+const NB1 = /(\d+(?:[.,]\d+)?%?)\s(phút|giờ|câu|từ|bài|ngày|tháng|năm|thẻ|lượt|cặp|XP|lần|chặng|cây|lỗi|đơn|trên)/g, NB2 = /(Chặng|Bài|Cấp|Bước|câu|chặng|bài|Đơn)\s(\d)/g;
+function keepTogether(root) { const w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT); let n; while ((n = w.nextNode())) { const t = n.nodeValue; if (/\d/.test(t)) { const u = t.replace(NB1, "$1\u00a0$2").replace(NB2, "$1\u00a0$2"); if (u !== t) n.nodeValue = u; } } }
+new MutationObserver(ms => ms.forEach(m => m.addedNodes.forEach(x => { if (x.nodeType === 1) keepTogether(x); else if (x.nodeType === 3 && x.parentNode) keepTogether(x.parentNode); }))).observe(document.documentElement, { childList: true, subtree: true });
 document.addEventListener("DOMContentLoaded", render);

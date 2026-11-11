@@ -1,5 +1,5 @@
 /* Đề viết: [đề bài, từ khóa (dùng / cho cách viết khác), số từ tối thiểu, bài mẫu] */
-const WRITING = {
+window.WRITING = Object.assign(window.WRITING || {}, {
 "a1-1":["Viết một đoạn hội thoại ngắn: bạn chào và làm quen với một người bạn mới.","hello/hi;my name is/i am;nice to meet you;how are you",15,"A: Hello! My name is Hoa. What is your name?\nB: Hi, Hoa. I am Tom. Nice to meet you.\nA: Nice to meet you too. How are you?\nB: I am fine, thank you."],
 "a1-2":["Giới thiệu bản thân: tên, quê ở đâu, đang sống ở đâu, làm gì.","my name is;from;live in;i am",20,"Hello! My name is Nam. I am from Vietnam. I live in Can Tho. I am a student. I speak Vietnamese and a little English."],
 "a1-3":["Viết về tuổi của bạn và tuổi của hai người trong gia đình.","years old;my;i am",18,"I am twenty-eight years old. My father is fifty-six years old. My sister is twenty-five years old. We live in Hue."],
@@ -48,4 +48,4 @@ const WRITING = {
 "a2-22":["Giải thích 4 từ mà không nói ra từ đó, dùng who / which / where.","who;which/that;where",25,"1. It's a person who teaches students. 2. It's a machine which keeps food cold. 3. It's a place where you can see doctors. 4. It's a thing that you use to cut food."],
 "a2-23":["Viết về một lễ hội ở Việt Nam và điều gia đình bạn từng làm trước đây.","festival/tet;used to;people;nowadays",35,"Tet is the most important festival in Vietnam. When I was a child, my family used to make banh chung together. People decorate their houses with flowers and visit relatives. Nowadays, we are busier, but we still give lucky money to children."],
 "a2-24":["Kể một câu chuyện đáng nhớ của bạn, dùng ít nhất 4 từ nối.","because/so;although/but/however;when/after/as soon as;in the end/eventually/finally",50,"Two years ago, I went to Hanoi for a job interview. Unfortunately, my train was late, so I arrived at the station at nine. Although I took a taxi, there was a traffic jam. When I finally arrived, I was twenty minutes late. However, the manager was kind and listened to me. In the end, I got the job!"]
-};
+});

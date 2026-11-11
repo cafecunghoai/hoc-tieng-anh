@@ -287,3 +287,8 @@ body.playing #nav{display:none}
 .mcard.en .face{color:var(--pri);font-size:17px}
 .mcard.up .back{transform:rotateY(180deg)}.mcard.up .face{transform:rotateY(0)}
 .mcard.ok .face{background:var(--good2);border-color:var(--good)}
+
+/* Typography: ngắt dòng có nghĩa, cân dòng */
+h1,h2,h3,h4,.q,.btn,.lab,.tag,.pill,.fbt,.gcard b,.choice b,.task b,.say h2,.postcard h2,.done h1,.stepn,.bdg span,.les .grow,.stall small{text-wrap:balance}
+p,li,small,.vi,.passage,.gram,.note,.choice small,.gcard small,.bubble p,.heard{text-wrap:pretty}
+.opt,.chip,.word b{text-wrap:balance}

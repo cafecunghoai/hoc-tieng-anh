@@ -6,7 +6,7 @@ function gamePool(min) {
   let p = Object.keys(S.cards).map(k => WMAP[k]).filter(Boolean);
   if (p.length < (min || 12)) { const extra = ALLW.filter(w => isOpen(w.lid) && !S.cards[w.en]); p = p.concat(extra); }
   if (p.length < (min || 12)) p = p.concat(ALLW.filter(w => w.lid.startsWith("a1-")).slice(0, 60));
-  return [...new Map(p.map(w => [w.en, w])).values()];
+  return [...new Map(p.filter(w => !/^-|-$/.test(w.en)).map(w => [w.en, w])).values()];
 }
 function exitGame() { G = null; nav("play"); }
 const gTop = (title, right) => `<div class="ptop"><button class="ib" onclick="exitGame()" aria-label="Thoát"><i class="ti ti-x"></i></button><b class="grow gtitle">${title}</b>${right || ""}</div>`;
