@@ -1,0 +1,18 @@
+{
+  "name": "Tiếng Anh Từ Số 0",
+  "short_name": "Tiếng Anh",
+  "description": "Lộ trình học tiếng Anh từ số 0 đến thành thạo: nghe, nói, đọc, viết và trò chơi gợi nhớ.",
+  "lang": "vi",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#F5F2EA",
+  "theme_color": "#0E6B5C",
+  "categories": ["education"],
+  "icons": [
+    {"src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png"},
+    {"src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png"},
+    {"src": "icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"}
+  ]
+}
