@@ -148,7 +148,10 @@ const Grader = (() => {
       // từ đứng ngay trước cụm chủ ngữ (trước từ hạn định nếu có)
       const before = nounSgA ? w(i - 3) : nounSg0 ? w(i - 2) : prev;
       // chủ ngữ ghép (my mother and my father go), tân ngữ của động từ sai khiến/tri giác (made my sister cry, let Lan go)
-      const compound = ["and", "or", "nor", "&"].includes(before);
+      // "and" nối hai chủ ngữ (my mother and my father go) — không phải "and" nối hai mệnh đề (…today and it make me tired)
+      const bw = nounSgA ? w(i - 4) : nounSg0 ? w(i - 3) : w(i - 2), bIdx = nounSgA ? i - 3 : nounSg0 ? i - 2 : i - 1;
+      const subjLike = x => SUBJ_PRON.concat(["me", "him", "her", "us", "them"]).includes(x) || SING_N.includes(x) || PERSON_N.includes(x) || isPlN(x) || PL_IRR.includes(x);
+      const compound = ["and", "or", "nor", "&"].includes(before) && (!["he", "she", "it"].includes(a) || nounSg0 || nounSgA || subjLike(bw) || NAMES.has(T[bIdx - 1] ? T[bIdx - 1].raw : "")) && !(T[bIdx] && /,/.test(T[bIdx].gap) && ["he", "she", "it"].includes(a));
       const causObj = CAUS.includes(before);
       const nounSg = (nounSg0 || nounSgA || nameSg) && !compound && !causObj;
       const sentTxt = (() => { let s0 = i; while (s0 > 0 && !T[s0].start) s0--; let e0 = i + 1; while (e0 < T.length && !T[e0].start) e0++; return T.slice(s0, e0).map(t => t.w).join(" "); })();
@@ -338,6 +341,27 @@ const Grader = (() => {
       }
       // so sánh kép
       if (a === "more" && COMP.includes(b)) add(i, i + 1, "grammar", "", `${T[i + 1].raw} đã là so sánh hơn, bỏ 'more'.`, "comp");
+      // the most good → the best; is more good than → better
+      if (a === "most" && /^(good|bad)$/.test(b) && /^(the|my|your|his|her|our|their)$/.test(prev)) add(i, i + 2, "grammar", b === "good" ? "best" : "worst", `So sánh nhất của ${b} là ${b === "good" ? "best" : "worst"} (không nói most ${b}).`, "comp");
+      if (a === "more" && /^(good|bad)$/.test(b) && c === "than" && !/^(good|bad)$/.test(w(i + 3)) && /^(is|are|was|were|be|'s|'re|much|even|feel|feels|felt|look|looks|seem|seems|get|gets|got)$/.test(prev)) add(i, i + 2, "grammar", b === "good" ? "better" : "worse", `So sánh hơn của ${b} là ${b === "good" ? "better" : "worse"} (không nói more ${b}).`, "comp");
+      // People in my city is → are (chủ ngữ số nhiều + cụm giới từ + động từ)
+      if ((["people", "children", "men", "women", "police"].includes(a) || isPlN(a) && PL_DET.includes(prev) && clauseStart(i - 1)) && (["people", "children", "men", "women", "police"].includes(a) ? clauseStart(i) || /^(the|my|our|their|many|most|some|young|old)$/.test(prev) && clauseStart(i - 1) : true) && PREP.includes(b) && !/^(of)$/.test(b)) {
+        for (let j = i + 2; j <= i + 5 && T[j]; j++) { if (!sameSent(i, j) || /[,;:]/.test(T[j].gap) || /^(who|that|which|where|when)$/.test(w(j))) break;
+          if (/^(is|was|has|doesn't|isn't|wasn't|hasn't)$/.test(w(j))) { const f = { is: "are", was: "were", has: "have", "doesn't": "don't", "isn't": "aren't", "wasn't": "weren't", "hasn't": "haven't" }[w(j)];
+            add(j, j + 1, "grammar", f, `Chủ ngữ là '${T[i].raw}' (số nhiều), cụm '${T.slice(i + 1, j).map(t => t.raw).join(" ")}' chỉ bổ nghĩa → dùng ${f}.`, /^(are|were)$/.test(f) ? "be" : "sva"); break; }
+          if (FIN.has(w(j)) || THIRD[w(j)] || PAST[w(j)] || BASE.includes(w(j)) && j > i + 2) break; }
+      }
+      // The film was so bored → boring (vật/sự việc gây ra cảm giác: tính từ -ing)
+      { const ED_ING = { bored: "boring", interested: "interesting", excited: "exciting", confused: "confusing", surprised: "surprising", disappointed: "disappointing", tired: "tiring", exhausted: "exhausting", annoyed: "annoying", frightened: "frightening", embarrassed: "embarrassing", amazed: "amazing" };
+        const THING = /^(film|movie|book|lesson|trip|game|party|story|match|show|job|lecture|program|programme|novel|journey|meeting|speech|song|exam|test|course|video|news|weekend|holiday|vacation|day|museum|subject)$/;
+        if ((THING.test(a) && /^(the|this|that|my|our|his|her|their|your|a|an)$/.test(prev) || /^(this|that)$/.test(a) && clauseStart(i)) && /^(is|was|'s|seems|seemed|looks|looked|sounds|sounded|became|got)$/.test(b)) {
+          let k = i + 2; if (/^(so|very|really|quite|too|extremely|a)$/.test(w(k))) k++; if (w(k) === "bit" && w(k - 1) === "a") k++;
+          const v = w(k); if (ED_ING[v] && sameSent(i, k) && !/^(with|by|for|as|to|of|at)$/.test(w(k + 1))) add(k, k + 1, "grammar", ED_ING[v], `Nói về vật/sự việc gây ra cảm giác dùng tính từ -ing: ${(/^(this|that)$/.test(a) ? "" : T[i - 1].raw + " ") + T[i].raw} ${T[i + 1].raw} ${ED_ING[v]} (người thì mới ${v}).`, "ing-ed"); } }
+      // I born in 1998 → I was born
+      if (b === "born" && (SUBJ_PRON.includes(a) && a !== "it" || NAMES.has(T[i].raw)) && T[i + 1] && !/[,;:]/.test(T[i + 1].gap)) { const be = /^(you|we|they)$/.test(a) ? "were" : "was"; add(i + 1, i + 2, "grammar", `${be} born`, `"Được sinh ra" là bị động: ${T[i].raw} ${be} born.`, "be"); }
+      // good in English → good at English
+      if (/^(good|bad|better|best|excellent|great|terrible|poor|weak|strong)$/.test(a) && b === "in" && T[i + 2] && (/^(english|maths|math|mathematics|science|music|sports|sport|history|physics|chemistry|biology|geography|art|literature|languages|french|chinese|japanese|korean|vietnamese|it|computers|football|tennis|badminton|chess|grammar|vocabulary|writing|speaking|reading|listening|singing|dancing|drawing|cooking|swimming|math)$/.test(c) || /[a-z]{3,}ing$/.test(c) && !/^(morning|evening|spring|building|thing|ceiling|everything|something|anything|nothing|clothing|meeting|wedding|beginning|during)$/.test(c)) && /^(am|is|are|was|were|'m|'s|'re|be|been|very|so|really|quite|not|get|got)$/.test(prev))
+        add(i + 1, i + 2, "grammar", "at", `Giỏi/kém môn gì, việc gì: ${a} at (không dùng ${a} in): ${a} at ${T[i + 2].raw}.`, "fixed");
       if (a === "most" && SUP.includes(b)) add(i, i + 1, "grammar", "", `${T[i + 1].raw} đã là so sánh nhất, bỏ 'most'.`, "comp");
       if (a === "very" && ["like", "love", "enjoy", "want", "hate", "likes", "loves", "enjoys"].includes(b)) add(i, i + 2, "word", "really " + b, "Không dùng 'very' trước động từ. Dùng 'really like' hoặc 'like ... very much'.", "very");
       // a / an
@@ -436,6 +460,15 @@ const Grader = (() => {
         const pst = b === "been" && wv(i + 2) === "to" ? "went" : b === "been" ? (/^(he|she|it)$/.test(wv(i - 1)) || a === "has" ? "was" : "were") : (Object.keys(PP).find(k => PP[k] === b) || b);
         const subj = /'ve$/.test(a) ? T[i].raw.split(/['’]/)[0] + " " : "";
         add(i, i + 2, "grammar", subj + pst, `Có mốc thời gian quá khứ đã kết thúc (yesterday, last..., ago, in + năm) → dùng quá khứ đơn: ${pst}, không dùng hiện tại hoàn thành.`, "perfect-past"); break; }
+      // Yesterday I don't go → didn't (mốc quá khứ trong cùng mệnh đề)
+      for (let i = s0; i < e0; i++) { const a = wv(i); if (!/^(don't|doesn't|do|does)$/.test(a) || /^(do|does)$/.test(a) && wv(i + 1) !== "not") continue;
+        if (/^(do|does)$/.test(a) && /^(what|where|when|why|how|who)$/.test(wv(i - 1))) continue;
+        let hit = false;
+        for (let k = i - 1; k >= s0; k--) { if (pastAt(k)) { hit = true; break; } if (/[,;:]/.test(T[k + 1].gap) && k + 1 !== i && !pastAt(s0) || /^(that|which|who|because|so|but|and|if|when|while|since|although)$/.test(wv(k))) break; }
+        if (!hit) for (let k = i + 1; k < Math.min(e0, i + 10); k++) { if (/[,;:]/.test(T[k].gap) || /^(that|which|who|whom|what|where|why|how|whether|because|so|but|and|if|when|while|since|although|now|today|anymore|usually|always|every)$/.test(wv(k)) || k > i + 1 && (FIN.has(wv(k)) || PAST[wv(k)] || /'(m|re|s|d)$/.test(wv(k)))) break; if (pastAt(k)) { hit = true; break; } }
+        if (!hit) continue; const neg = /n't$/.test(a);
+        add(i, i + 1, "grammar", neg ? "didn't" : "did", `Có mốc thời gian quá khứ (yesterday, last..., ago) → phủ định ở quá khứ: ${neg ? "didn't" : "did not"} + động từ nguyên mẫu.`, "tense");
+        const dupS = out.findIndex(x => x.i === i + 1 && x.key === "sva"); if (dupS >= 0) out.splice(dupS, 1); }
       // động từ nối bằng and sau một động từ đã gạch: We swim ... and eat
       for (let i = s0 + 1; i < e0 - 1; i++) if (wv(i) === "and" && BASE.includes(wv(i + 1)) && !["have", "do"].includes(wv(i + 1)) && !out.some(x => x.i === i + 1) && out.some(x => x.key === "tense" && x.i > s0 && x.i < i && x.i >= i - 6))
         add(i + 1, i + 2, "grammar", toPast(wv(i + 1)), `Đoạn này kể chuyện đã qua → dùng quá khứ đơn: ${toPast(wv(i + 1))}.`, "tense");
@@ -537,7 +570,7 @@ const Grader = (() => {
     }
     // 4. lạc đề: có opts.topic (đề + bài mẫu) mà bài gần như không dùng từ nào của chủ đề
     if (opt.topic) { const rv = relevance(text, opt.topic, opt.kw); res.relevance = rv;
-      if (rv.off) at(0, "Bài viết chưa bám sát đề bài. Hãy viết đúng nội dung đề yêu cầu.", "offtopic"); }
+      if (rv.off) at(0, rv.why === "generic" ? "Bài viết chưa bám sát đề bài: toàn câu chung chung, chưa nói cụ thể về nội dung đề hỏi." : "Bài viết chưa bám sát đề bài. Hãy viết đúng nội dung đề yêu cầu.", "offtopic"); }
     return res;
   }
 
@@ -597,7 +630,9 @@ const Grader = (() => {
     ["trí tuệ nhân tạo", "artificial intelligence technology algorithm data machine robot"], ["chính phủ", "government regulate law rule regulation policy state authority"], ["rác thải|nhựa", "plastic waste rubbish trash bottle bag litter recycle bin straw"],
     ["chuyến đi", "trip travel visit holiday vacation beach hotel sea mountain stay"], ["sắp đến thăm|người bạn nước ngoài", "visit foreign"],
     ["kỹ năng|nghề thủ công", "skill practical craft cook repair"], ["học sinh", "student school"], ["thực tập", "internship intern position resume apply application degree experience skill"], ["vị trí", "position"],
-    ["năm trước|ngày xưa", "ago before"], ["phim", "film movie subtitle"], ["giờ làm|học phí", "work tuition"]];
+    ["năm trước|ngày xưa", "ago before"], ["phim", "film movie subtitle"], ["lúc rảnh|thời gian rảnh", "hobby read book play sport music film movie game swim football badminton guitar draw"],
+    ["công nghệ|giao tiếp", "technology phone internet online message call video social media communicate chat app smartphone"], ["quyết định", "decision decide choose choice"],
+    ["ảnh hưởng", "influence teacher parent mentor"], ["giờ làm|học phí", "work tuition"]];
   const viRe = k => new RegExp("(^|[^\\p{L}])(" + k + ")(?=[^\\p{L}]|$)", "u");
   const VI_TOPIC_RE = VI_TOPIC.map(([k, en]) => [viRe(k), en]);
   // đề cho người viết tự chọn nội dung (một sản phẩm, một tin tức, một câu chuyện...): không kiểm tra lạc đề
@@ -623,8 +658,34 @@ const Grader = (() => {
     // bước 2: nếu có ngân hàng đề, chỉ coi là lạc đề khi bài hợp với một đề khác rõ hơn hẳn (tránh gạch nhầm bài đúng đề nhưng dùng từ khác bài mẫu)
     const all = Array.isArray(topic) ? topic.join("\n") : String(topic || ""); let best = null;
     if (low) bank().forEach(b => { if (b.m && all.includes(b.m)) return; const r = overlap(A, b.t); if (!best || r.rel > best.rel) best = Object.assign(r, { m: b.m }); });
-    const off = low && (!best || best.rel >= Math.max(0.25, o.rel + 0.15));
-    return { hit: o.hit, hitP: o.hitP, n: A.size, p: t.P.size, open: t.open, rel: o.rel, other: best ? best.rel : null, off };
+    const viaBank = low && (!best || best.rel >= Math.max(0.25, o.rel + 0.15));
+    // bước 3 (không cần ngân hàng đề): bài dài mà gần như không có từ của chủ đề → lạc đề rõ ràng (bài học thuộc về đề khác, bóng đá cho đề cấm ô tô...)
+    const fixed = !t.open && t.P.size >= 3, rel0 = A.size ? o.rel : 0;
+    const strong = fixed && A.size >= 12 && (o.rel < 0.12 || o.hitP === 0 && o.rel < 0.2);
+    // bước 4: bài "khuôn mẫu" chung chung: nhiều chữ nhưng rất ít từ nội dung, không có từ chủ đề nào
+    const words = (String(text).match(/[A-Za-z]+(?:['’][a-z]+)?/g) || []).length, dens = words ? A.size / words : 0;
+    const template = fixed && words >= 40 && o.hitP === 0 && rel0 < 0.2 && dens < 0.15;
+    const off = viaBank || strong || template;
+    return { hit: o.hit, hitP: o.hitP, n: A.size, p: t.P.size, open: t.open, rel: rel0, other: best ? best.rel : null, dens, off, why: off ? (template && !strong && !viaBank ? "generic" : "offtopic") : "" };
+  }
+
+  /* ---------- Câu trả lời nói/viết ngắn: có thành câu không, có nói về chủ đề không (cho app, ví dụ xsScore) ---------- */
+  // answerCheck(text, topic, kw) → { rel 0..1, topicHits, n, words, verbs, clauses, sentence, generic }
+  //   rel       : tỉ lệ từ nội dung của câu trả lời có trong chủ đề (topic = câu hỏi + bản dịch + gợi ý...; có thể là mảng)
+  //   topicHits : số từ nội dung (đã đưa về gốc) trùng với chủ đề; n: số từ nội dung khác nhau (không tính từ chung chung, từ gợi ý kw)
+  //   clauses   : số mệnh đề "chủ ngữ + động từ chia"; sentence = clauses ≥ 1 ("Football music movie." → false)
+  //   generic   : tỉ lệ từ chức năng/từ chung chung trong câu (bài khuôn mẫu "there are good sides and bad sides..." → cao)
+  const FIN = new Set(W("am is are was were be been do does did don't doesn't didn't have has had haven't hasn't can could will would should may might must shall can't cannot couldn't won't wouldn't shouldn't isn't aren't wasn't weren't"));
+  function answerCheck(text, topic, kw) {
+    const T = tokenize(String(text || "").normalize("NFC")), ex = new Set((kw || []).flatMap(k => k.toLowerCase().split(/[\/\s]+/)).filter(Boolean));
+    const isVerb = t => { if (!t) return false; const x = t.w; return FIN.has(x) || /'(m|re|s|ve|ll|d)$/.test(x) || /n't$/.test(x) || !!THIRD[x] || !!PAST[x] || BASE_X.includes(x) || /[a-z]{3,}ed$/.test(x); };
+    const isSubj = (k) => { const x = T[k].w; return SUBJ_PRON.includes(x) || /^(there|this|that|these|those|people|everyone|everybody|someone|nobody|who)$/.test(x) || NAMES.has(T[k].raw) || (k > 0 && DET.includes(T[k - 1].w) && !STOP.has(x)) || /^(i|you|he|she|it|we|they|there|that|what|who)'(m|re|s|ve|ll|d)$/.test(x); };
+    let verbs = 0, clauses = 0;
+    T.forEach((t, k) => { if (isVerb(t)) verbs++; if (!isSubj(k)) return; if (/'(m|re|s|ve|ll|d)$/.test(t.w)) { clauses++; return; }
+      let j = k + 1; if (T[j] && /^(always|usually|often|sometimes|never|really|also|just|still|often|rarely|already|not)$/.test(T[j].w)) j++; if (T[j] && !T[j].start && isVerb(T[j])) clauses++; });
+    const t = prepTopic(topic || "", ex), A = lemSet(text, ex), o = overlap(A, t);
+    const gen = T.filter(x => STOP.has(x.w) || GENERIC.has(x.w)).length;
+    return { rel: A.size ? +o.rel.toFixed(3) : 0, topicHits: o.hit, n: A.size, words: T.length, verbs, clauses, sentence: clauses >= 1, generic: T.length ? +(gen / T.length).toFixed(3) : 0 };
   }
 
   /* ---------- Rubric ---------- */
@@ -734,5 +795,5 @@ const Grader = (() => {
     ${r.spell ? "" : `<p class="sm muted">Chưa tải được từ điển chính tả, nên chưa kiểm tra chính tả.</p>`}
     <p class="sm muted">Máy chấm dựa trên tiêu chí của giáo viên: độ dài, cấu trúc, lỗi ngữ pháp thường gặp, chính tả, độ đa dạng từ và từ nối. Lỗi về ý tứ, văn phong sâu, hãy so thêm với bài mẫu.</p></div>`;
   }
-  return { grade, report, show, loadSpell, tokenize, rules, validFix, ing, ed, relevance };
+  return { grade, report, show, loadSpell, tokenize, rules, validFix, ing, ed, relevance, answerCheck };
 })();

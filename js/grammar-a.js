@@ -27,7 +27,7 @@ var GRAMMAR = window.GRAMMAR = (window.GRAMMAR || []).concat([
 "c|She is ___ engineer.|an|a;two;many|Engineer bắt đầu bằng âm nguyên âm /e/ → an.",
 "c|I have ___ umbrella.|an|a;two;many|Umbrella bắt đầu bằng âm nguyên âm → an.",
 "c|There are three ___ on the table.|boxes|box;boxs;boxies|Danh từ tận cùng bằng x thêm -es: boxes.",
-"c|Two ___ are playing in the garden.|children|childs;childrens;child|Child có số nhiều bất quy tắc: children.",
+"c|Two ___ are playing in the yard.|children|childs;childrens;child|Child có số nhiều bất quy tắc: children.",
 "f|I need two new ___ (watch).|watches||Tận cùng -ch thêm -es: watches.",
 "f|It takes ___ hour to get there. (a/an)|an||Hour có h câm, đọc bắt đầu bằng âm nguyên âm → an hour.",
 "e|I have a uncle in Hanoi and an aunt in Hue.|a uncle|an uncle|Uncle bắt đầu bằng âm nguyên âm /ʌ/ → an uncle.",
@@ -133,11 +133,11 @@ var GRAMMAR = window.GRAMMAR = (window.GRAMMAR || []).concat([
 "r|Viết thành câu hỏi: He came home late. → Did ...?|Did he come home late?||Did + S + V nguyên mẫu (come)."]},
 {id:"going-to", lv:"A1", t:"Be going to – dự định", lesson:"a1-24", sum:"am/is/are going to + V", items:[
 "c|I ___ visit my aunt next week.|am going to|going to;will going to;am go to|Dự định: am going to + V.",
-"c|She ___ study medicine.|is going to|are going to;going;goes to|She → is going to.",
+"c|She ___ study medicine.|is going to|are going to;going;is go to|She → is going to.",
 "c|What ___ you going to do this weekend?|are|do;will;is|Câu hỏi: What are you going to do?",
 "c|They aren't going to ___ a car.|buy|buying;bought;buys|Sau going to dùng động từ nguyên mẫu.",
 "f|We ___ (be going to / visit) our grandparents tomorrow.|are going to visit|'re going to visit|We + are going to + visit.",
-"f|Look at those clouds! It ___ (rain).|is going to rain|'s going to rain|Có dấu hiệu rõ ràng → be going to.",
+"f|Look at those clouds! It ___ (be going to / rain).|is going to rain|'s going to rain|Có dấu hiệu rõ ràng → be going to.",
 "e|He is going to buys a new bike.|buys|buy|Sau going to phải là động từ nguyên mẫu.",
 "r|Viết thành câu hỏi: She is going to learn Japanese. → Is ...?|Is she going to learn Japanese?||Đảo is lên trước chủ ngữ."]},
 {id:"compare", lv:"A2", t:"So sánh hơn và so sánh nhất", lesson:"a2-6", sum:"-er than / more ... than; the -est / the most", items:[
@@ -211,7 +211,7 @@ var GRAMMAR = window.GRAMMAR = (window.GRAMMAR || []).concat([
 "f|English ___ (speak) all over the world.|is spoken||Bị động: is + V3 (spoken).",
 "f|The letters ___ (send) yesterday.|were sent||Số nhiều, quá khứ: were + V3.",
 "e|This house was build in 1950.|build|built|Bị động cần V3: built.",
-"r|Viết sang bị động: Farmers grow rice in the Mekong Delta.|Rice is grown in the Mekong Delta.|Rice is grown in the Mekong Delta by farmers.;In the Mekong Delta, rice is grown.|Tân ngữ (rice) làm chủ ngữ + is + V3."]},
+"r|Viết sang bị động: Farmers grow rice in the Mekong Delta.|Rice is grown in the Mekong Delta.|Rice is grown in the Mekong Delta by farmers.;Rice is grown by farmers in the Mekong Delta.;In the Mekong Delta, rice is grown.|Tân ngữ (rice) làm chủ ngữ + is + V3."]},
 {id:"relative", lv:"A2", t:"Mệnh đề quan hệ who / which / where", lesson:"a2-22", sum:"who: người; which: vật; where: nơi chốn", items:[
 "c|A doctor is a person ___ helps sick people.|who|which;where;what|Chỉ người → who.",
 "c|This is the phone ___ I bought last week.|which|who;where;what|Chỉ vật → which (hoặc that).",
@@ -267,12 +267,12 @@ var GRAMMAR = window.GRAMMAR = (window.GRAMMAR || []).concat([
 "e|The match was canceled because of it was raining.|because of|because|Trước mệnh đề (it was raining) dùng because; because of + danh từ (because of the rain).",
 "r|Nối hai câu bằng because: We canceled the trip. There was a storm.|We canceled the trip because there was a storm.|Because there was a storm, we canceled the trip.|Because + nguyên nhân."]},
 {id:"polite", lv:"A2", t:"Yêu cầu lịch sự: Could you, Would you mind", lesson:"a2-13", sum:"Could you + V? Would you mind + V-ing?", items:[
-"c|___ you help me with this bag?|Could|Would you mind;Should;Must|Yêu cầu lịch sự: Could you + V?",
+"c|___ you help me with this bag? (yêu cầu lịch sự)|Could|Would you mind;Should;Must|Yêu cầu lịch sự: Could you + V?",
 "c|Would you mind ___ the window?|opening|to open;open;opened|Would you mind + V-ing.",
 "c|I'd like ___ a table for two.|to book|booking;book;books|Would like + to V.",
 "c|___ I use your phone?|May|Would;Am;Does|Xin phép lịch sự: May I...?",
 "f|Could you ___ (speak) more slowly, please?|speak||Could you + V nguyên mẫu.",
 "f|Would you mind ___ (wait) a moment?|waiting||Would you mind + V-ing.",
 "e|Would you mind to close the door?|to close|closing|Would you mind + V-ing: closing.",
-"r|Viết lịch sự hơn: Give me the menu.|Could you give me the menu, please?|Can I have the menu, please?;Could I have the menu, please?;Could you please give me the menu?;Can you give me the menu, please?;Could you give me the menu?;Would you give me the menu, please?;May I have the menu, please?;Could I see the menu, please?;Can I see the menu, please?;Would you mind giving me the menu?;Can you please give me the menu?;Could I get the menu, please?;Can I get the menu, please?;Could you pass me the menu, please?|Thêm Could you / Can I have và please."]}
+"r|Viết lịch sự hơn: Give me the menu.|Could you give me the menu, please?|Can I have the menu, please?;Could I have the menu, please?;Could you please give me the menu?;Can you give me the menu, please?;Could you give me the menu?;Would you give me the menu, please?;May I have the menu, please?;Could I see the menu, please?;Can I see the menu, please?;Would you mind giving me the menu?;Can you please give me the menu?;Could I get the menu, please?;Can I get the menu, please?;Could you pass me the menu, please?;Can I have the menu?;Could I have the menu?|Thêm Could you / Can I have và please."]}
 ]);

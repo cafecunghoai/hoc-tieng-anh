@@ -37,7 +37,10 @@ function geRange(s, bad) { const seg = (bad || s.bad.split("||")[0]).split(" ");
 function pickGe(k) {
   const s = P.steps[P.i]; if (P.ans) return; const [a, b] = geRange(s), ok = s.bad.split("||").some(bd => { const [x, y] = geRange(s, bd); return k >= x && k < y; });
   $$(".etok").forEach(x => x.disabled = true); if (P.kind !== "mock") for (let i = a; i < b; i++) $("#t" + i).classList.add("bad"); if (!ok && P.kind !== "mock") $("#t" + k).classList.add("pick");
-  const fixed = s.toks.slice(0, a).concat(s.corr.startsWith("(") ? [] : [s.corr], s.toks.slice(b)).join(" ").replace(/\s+([.,!?])/g, "$1");
+  // dấu câu dính ở cuối cụm sai (rains, / cat. / advice?) được giữ lại sau phần sửa
+  const tail = ((s.toks[b - 1] || "").match(/[.,!?]+$/) || [""])[0], del = s.corr.startsWith("("), corr = del ? "" : s.corr + (/[.,!?]$/.test(s.corr) ? "" : tail);
+  let fixed = s.toks.slice(0, a).concat(corr ? [corr] : [], s.toks.slice(b)).join(" ").replace(/\s+([.,!?])/g, "$1");
+  if (del && tail && !/[.,!?]$/.test(fixed)) fixed += tail;
   if (P.kind !== "mock") $(".etoks").insertAdjacentHTML("afterend", `<p class="geleg sm"><span class="lg bad">Từ sai ở đây</span>${ok ? "" : `<span class="lg pick">Bạn chọn</span>`}</p><p class="corr"><i class="ti ti-check"></i> ${esc(fixed)}</p>`);
   grade(ok, `<s>${esc(s.bad.split("||")[0])}</s> → ${esc(s.corr)}`);
 }
@@ -108,9 +111,10 @@ function startMock(lv) {
   pick(E.speak.read, 3).forEach(t => st.push({ type: "speak", sec: "speak", sk: "speak", en: t, vi: "Đọc to, rõ ràng câu trên.", pts: 1 }));
   const a = pick(E.speak.ask, 1)[0]; st.push({ type: "xs", sec: "speak", pts: 2, q: a[0], vi: a[1], kw: a[2].split(";"), min: a[3] });
   const tot = {}; st.forEach(s => { if (!s.sec || s.type === "xsec") return; tot[s.sec] = (tot[s.sec] || 0) + (s.type === "read" ? s.q.length : (s.pts || 1)); });
-  checkVoice(); P = { kind: "mock", lv, steps: st, i: 0, ok: 0, tot: 0, xp: 0, sk: {}, wrong: 0, sec: {}, secTot: tot, started: false, deadline: Date.now() + E.time * 60000 };
+  checkVoice(); P = { kind: "mock", lv, steps: st, i: 0, ok: 0, tot: 0, xp: 0, sk: {}, wrong: 0, sec: {}, secTot: tot, started: false, dur: E.time * 60000, t0: 0 };
   last = Date.now(); VIEW = null; render();
 }
+const mockLeft = () => !P ? 0 : P.t0 ? P.dur - (performance.now() - P.t0) : P.dur;
 function secAdd(sec, v) { if (!sec) return; P.sec[sec] = (P.sec[sec] || 0) + v; }
 function rXintro(s) {
   const E = EXAMS[s.lv];
@@ -124,7 +128,12 @@ function beginMock() { const E = EXAMS[P.lv]; if (!("speechSynthesis" in window)
   // đã biết danh sách giọng mà không có giọng tiếng Anh: chặn ngay; danh sách chưa tải xong thì kiểm tra lại khi tải xong
   loadV(); const noEn = () => voices.length && !voices.some(v => v.lang.toLowerCase().startsWith("en"));
   if (noEn()) { modal("Chưa thể thi phần Nghe", NOVOICE, "Đã hiểu", () => nav("exam"), false, "Đóng"); return; }
-  if (!voices.length) { const me = P; setTimeout(() => { loadV(); if (P === me && noEn() && !P.sec.listen) { clearInterval(P.tm); S.mockOpen = null; save(); P = null; modal("Chưa thể thi phần Nghe", NOVOICE, "Đã hiểu", () => nav("exam"), false, "Đóng"); } }, 1500); } P.deadline = Date.now() + E.time * 60000; P.started = true; S.mockOpen = { lv: P.lv, at: Date.now() }; save(); clearInterval(P.tm); P.tm = setInterval(() => { const t = $("#timer"); if (!P || P.kind !== "mock") return; if (t) { t.textContent = fmtTime(P.deadline - Date.now()); t.classList.toggle("warn", P.deadline - Date.now() < 120000); } const left = P.deadline - Date.now(); if (left < 120000 && !P.w2) { P.w2 = 1; toast("Còn 2 phút!"); } if (left < 30000 && !P.w3) { P.w3 = 1; toast("Còn 30 giây!"); } if (Date.now() >= P.deadline) timeUp(); }, 1000); P.i++; showStep(); }
+  if (!voices.length) { const me = P; setTimeout(() => { loadV(); if (P === me && noEn() && !P.sec.listen) { clearInterval(P.tm); S.mockOpen = null; save(); P = null; modal("Chưa thể thi phần Nghe", NOVOICE, "Đã hiểu", () => nav("exam"), false, "Đóng"); } }, 1500); } P.dur = E.time * 60000; P.t0 = performance.now(); P.started = true; S.mockOpen = { lv: P.lv, at: Date.now(), hb: Date.now(), w: WIN }; save(); clearInterval(P.tm);
+  // đồng hồ thi dùng performance.now(): chỉnh giờ máy lùi lại không kéo dài được bài thi; mỗi 5 giây ghi "đang thi" để cửa sổ khác không ghi nhầm là bỏ dở
+  P.tm = setInterval(() => { const t = $("#timer"); if (!P || P.kind !== "mock") return; const left = mockLeft(); if (t) { t.textContent = fmtTime(left); t.classList.toggle("warn", left < 120000); }
+    if (left < 120000 && !P.w2) { P.w2 = 1; toast("Còn 2 phút!"); } if (left < 30000 && !P.w3) { P.w3 = 1; toast("Còn 30 giây!"); }
+    if (S.mockOpen && Math.abs(Date.now() - (S.mockOpen.hb || 0)) > 5000) { S.mockOpen.hb = Date.now(); save(); }
+    if (left <= 0) timeUp(); }, 1000); P.i++; showStep(); }
 async function timeUp() {
   if (!P || P.kind !== "mock" || P.ending) return; P.ending = 1; clearInterval(P.tm);
   document.querySelectorAll(".modal").forEach(m => m.remove());
@@ -155,7 +164,7 @@ async function timeUp() {
   P.ans = true; P.i = P.steps.length; finishStudy();
 }
 function mockRefs() { const E = EXAMS[P.lv]; return E.read.map(r => r.t).concat(E.write.map(w => w[3]), E.listen.map(x => x.split("|")[0])); }
-function rXsec(s) { const n = Object.keys(SECN).indexOf(s.sec) + 1; return `<div class="xin"><div class="ico xl"><i class="ti ti-${SECI[s.sec]}"></i></div><p class="stepn">Phần ${n}/5</p><h1>${SECN[s.sec]}</h1><p class="muted">${{ listen: "Bấm loa để nghe. Mỗi câu được nghe tối đa 2 lần. Chọn đáp án rồi bấm Xác nhận.", read: "Đọc kỹ bài, chọn đáp án cho mọi câu hỏi rồi bấm Nộp. Trước khi nộp, bạn đổi đáp án được.", use: "Chọn đáp án đúng nhất rồi bấm Xác nhận.", write: "Viết đúng yêu cầu, đủ số từ, không dán văn bản. Máy chấm theo 4 tiêu chí: yêu cầu đề, ngữ pháp, từ vựng, mạch lạc.", speak: "Bấm micro rồi nói to, rõ ràng. Phần Nói cần micro để được chấm; không có micro thì lần thi không được ghi nhận đạt." }[s.sec]}</p></div>`; }
+function rXsec(s) { const n = Object.keys(SECN).indexOf(s.sec) + 1; return `<div class="xin"><div class="ico xl"><i class="ti ti-${SECI[s.sec]}"></i></div><p class="stepn">Phần ${n}/5</p><h1>${SECN[s.sec]}</h1><p class="muted">${{ listen: "Bấm loa để nghe. Mỗi câu được nghe tối đa 2 lần. Chọn đáp án rồi bấm Xác nhận.", read: "Đọc kỹ bài, chọn đáp án cho mọi câu hỏi rồi bấm Nộp. Trước khi nộp, bạn đổi đáp án được.", use: "Chọn đáp án đúng nhất rồi bấm Xác nhận.", write: "Viết đúng yêu cầu, đủ số từ, không dán văn bản. Máy chấm theo 4 tiêu chí: yêu cầu đề, ngữ pháp, từ vựng, mạch lạc.", speak: "Bấm micro rồi nói to, rõ ràng.<br>Phần Nói cần micro để được chấm.<br>Không có micro thì lần thi không được ghi nhận đạt." }[s.sec]}</p></div>`; }
 /* Nghe trong phòng thi: giới hạn số lần nghe */
 /* Đọc theo từng câu (giọng mạng của Chrome hay tự dừng khi một lượt đọc dài quá ~15 giây); cả bài tính là 1 lần nghe */
 function examPlay() {
@@ -178,7 +187,7 @@ function rXs(s) {
   <p class="sm muted c">Gợi ý nên dùng:</p>${kwChips(s.kw)}
   <div id="mic">${SR && !micBlocked ? `<button class="btn primary full lg" onclick="xsMic()"><i class="ti ti-microphone"></i> Bấm rồi nói</button>` : ""}<button class="link c" onclick="xsType()">${SR && !micBlocked ? "Không dùng micro được? Gõ câu trả lời" : "Gõ câu trả lời của bạn"}</button></div>`;
 }
-function xsType() { $("#mic").innerHTML = `<p class="sm muted c">Trả lời bằng cách gõ phím chỉ được tối đa 50% điểm, và lần thi này sẽ không được ghi nhận đạt.</p><textarea id="inp" rows="4" placeholder="Gõ câu trả lời bằng tiếng Anh" autocorrect="off" spellcheck="false" ${MOCK_GUARD} oninput="mockInput(this);$('#er').textContent=''"></textarea><p class="err" id="er"></p><button class="btn primary full" id="chk" onclick="xsSubmit($('#inp').value,true)">Nộp câu trả lời</button>`; }
+function xsType() { $("#mic").innerHTML = `<p class="sm muted c">Trả lời bằng cách gõ phím chỉ được tối đa 50% điểm, và lần thi này sẽ không được ghi nhận đạt.</p><textarea id="inp" rows="4" placeholder="Gõ câu trả lời bằng tiếng Anh" autocorrect="off" spellcheck="false" ${MOCK_GUARD} oninput="mockInput(this,event);$('#er').textContent=''"></textarea><p class="err" id="er"></p><button class="btn primary full" id="chk" onclick="xsSubmit($('#inp').value,true)">Nộp câu trả lời</button>`; }
 function xsMic() { $("#mic").innerHTML = `<div class="listening"><span class="dot"></span> Đang nghe... hãy nói câu trả lời</div><button class="link c" onclick="stopMic()">Dừng</button>`; const s = P.steps[P.i]; s.txt = s.txt || ""; listenMic(alts => { if (!P || P.steps[P.i] !== s) return; s.txt += " " + alts[0]; $("#mic").innerHTML = `<p class="heard">Máy nghe được: “${esc(s.txt.trim())}” (${wcount(s.txt)} từ)</p><div class="row2"><button class="btn" onclick="xsMic()"><i class="ti ti-microphone"></i> Nói tiếp</button><button class="btn primary" onclick="xsSubmit(P.steps[P.i].txt,false)">Nộp</button></div>`; }, () => { if (!P || P.steps[P.i] !== s) return; if (s.txt.trim()) { $("#mic").innerHTML = `<p class="heard">Máy nghe được: “${esc(s.txt.trim())}” (${wcount(s.txt)} từ)</p><div class="row2"><button class="btn" onclick="xsMic()"><i class="ti ti-microphone"></i> Nói tiếp</button><button class="btn primary" onclick="xsSubmit(P.steps[P.i].txt,false)">Nộp</button></div>`; return; } $("#mic").innerHTML = `<p class="muted c sm">Chưa nghe được gì.</p><button class="btn primary full" onclick="xsMic()"><i class="ti ti-microphone"></i> Thử lại</button><button class="link c" onclick="xsType()">Không dùng micro được? Gõ câu trả lời</button>`; }, { long: true, maxMs: 45000, onpart: t => { if (!P || P.steps[P.i] !== s) return; const l = $("#mic .listening"); if (l) l.innerHTML = `<span class="dot"></span> Đang nghe: “${esc(((s.txt || "") + " " + t).trim())}”`; } }); }
 /* Phần Nói – trả lời câu hỏi: từ chủ đề (gốc từ, khớp phần đầu) để biết câu trả lời có bám câu hỏi không */
 const XS_TOPIC = {
@@ -219,6 +228,11 @@ async function xsScore(s, text, typed) {
   else if (rep) { q = Math.min(q, 0.2); why = "Câu trả lời lặp lại cùng các từ."; }
   else if (topicHits < 2) { q = Math.min(q, 0.4); why = "Câu trả lời chưa bám sát câu hỏi."; }
   else if (content.length < 3) { q = Math.min(q, 0.3); why = "Câu trả lời quá ít ý."; }
+  // câu hỏi dài (B2–C1): cần ít nhất 3 gốc từ chủ đề; câu trả lời chung chung (nhiều từ chung, ít ý riêng) tối đa 60%
+  const ac = Grader.answerCheck ? Grader.answerCheck(text, [s.q, s.vi || "", XS_TOPIC[norm(s.q)] || ""], s.kw.flatMap(k => k.split("/"))) : null;
+  if (!why && ac && !ac.sentence) { q = Math.min(q, 0.3); why = "Câu trả lời cần là câu hoàn chỉnh (có chủ ngữ và động từ)."; }
+  if (!why && (topicHits < (s.min >= 25 ? 3 : 2) || (ac && ac.generic >= 0.72 && ac.n < 8))) { q = Math.min(q, 0.6); why = "Câu trả lời còn chung chung, chưa nói cụ thể về câu hỏi."; }
+  if (toks.length < 4 || r.n < s.min * 0.6) { q = Math.min(q, 0.5 * Math.min(1, r.n / s.min)); why = why || "Câu trả lời quá ngắn."; }
   if (typed) q = Math.min(q, 0.5);
   return { part: Math.round(q * s.pts * 100) / 100, res: { text, typed, q: Math.round(q * 100), r, why } };
 }
@@ -229,6 +243,27 @@ async function xsSubmit(text, typed) {
   if (!P || P.steps[P.i] !== s || P.ending) return;
   s.part = x.part; if (typed) s.unrated = 1; P.xsres = x.res;
   grade(x.res.q >= 99.9, "");
+}
+
+/* ---------- Nhận xét bài viết / câu trả lời nói ----------
+   Dùng Grader.report nhưng: lời nhận xét không tự mâu thuẫn khi điểm bị giới hạn, câu hướng dẫn "bấm vào chỗ gạch chân" chỉ khi có gạch chân,
+   mỗi khối nhận xét có ô giải thích lỗi riêng (hai khối trên cùng màn hình không lẫn lỗi của nhau).
+   o.xs: câu trả lời phần Nói – điểm hiện bằng %, không có 4 tiêu chí của bài viết, lời lẽ "câu trả lời" thay cho "bài viết" */
+const RTIPS = {};
+function rTip(id, n) { const x = (RTIPS[id] || [])[n], box = document.getElementById("errtip-" + id); if (!x || !box) return; box.innerHTML = `<b>${esc(x.word)}</b>${x.fix ? ` → <b class="g">${esc(x.fix)}</b>` : x.fix === "" ? ' → <b class="g">(bỏ đi)</b>' : ""}<br>${esc(x.msg)}`; box.classList.add("on"); }
+function myReport(r, opt, o) {
+  o = o || {}; const id = o.id || "w", marks = /<mark/.test(r.html || ""), nIss = (r.issues || []).length;
+  let c = String(r.comment || "");
+  if (o.xs) {
+    const kwm = (r.kwMiss || []).map(k => "“" + (k.split("/")[0] === "ing" ? "-ing" : k.split("/")[0]) + "”");
+    c = (o.why ? "" : o.q >= 80 ? "Câu trả lời tốt. " : o.q >= 50 ? "Câu trả lời đạt yêu cầu cơ bản. " : "Câu trả lời cần cải thiện thêm. ") + (nIss ? `Có ${nIss} lỗi cần sửa, xem bên dưới.` : "Không có lỗi ngữ pháp, chính tả.") + (kwm.length ? " Có thể dùng thêm: " + kwm.join(", ") + "." : "");
+  } else if (/điểm tối đa|giới hạn điểm|chép lại/.test(c)) c = c.replace(/^(Bài viết rất tốt!|Bài viết khá tốt\.|Bài viết đạt yêu cầu cơ bản\.)\s*/, "").replace("Không phát hiện lỗi nào. Tuyệt vời!", "Không có lỗi ngữ pháp, chính tả.");
+  RTIPS[id] = r.issues || [];
+  let h = Grader.report(Object.assign({}, r, { comment: c }), opt).replace(/onclick="Grader\.show\((\d+)\)"/g, `onclick="rTip('${id}',$1)"`).replace('id="errtip"', `id="errtip-${id}"`)
+    .replace(/<p class="lab">Bài của bạn · bấm vào chỗ gạch chân để xem cách sửa<\/p>/, `<p class="lab">${o.xs ? "Câu trả lời của bạn" : "Bài của bạn"}${marks ? " · bấm vào chỗ gạch chân để xem cách sửa" : ""}</p>`);
+  if (o.xs) h = h.replace(/<div class="gscore [a-z]+"><b>[^<]*<\/b><small>\/10<\/small><\/div>/, `<div class="gscore pct ${o.q >= 70 ? "hi" : o.q >= 50 ? "mid" : "lo"}"><b>${o.q}%</b></div>`)
+    .replace(/<div class="crit">[\s\S]*?<\/b><\/div>/g, "").replace(/<p class="sm muted">Máy chấm dựa trên[\s\S]*?<\/p>/, "");
+  return h;
 }
 
 /* ---------- Kết thúc: ngữ pháp và thi thử ---------- */
@@ -253,13 +288,13 @@ function finishStudy() {
   addXP(pass ? 150 : 30); save();
   const wr = P.wres, xs = P.xsres;
   const weak = Object.keys(skills).sort((a, b) => skills[a] - skills[b])[0];
-  const advice = { listen: "Mỗi ngày nghe 10–15 phút: làm lại các bài nghe chép trong bài học, dùng nút Nghe chậm.", read: "Đọc thêm các bài đọc trong lộ trình, gạch chân từ khóa trong câu hỏi trước khi đọc.", use: "Vào tab Ngữ pháp, luyện các chủ điểm cấp " + lv + " cho đến khi đạt 80%.", write: "Viết lại các đề trong bài học, sửa hết lỗi gạch chân và so với bài mẫu.", speak: "Luyện nói theo câu mẫu mỗi ngày, ghi âm và nghe lại giọng của mình." }[weak];
+  const advice = { listen: "Mỗi ngày nghe 10–15 phút.<br>Làm lại các bài nghe chép trong bài học, dùng nút Nghe\u00a0chậm.", read: "Đọc thêm các bài đọc trong lộ trình, gạch chân từ khóa trong câu hỏi trước khi đọc.", use: "Vào tab Ngữ pháp, luyện các chủ điểm cấp " + lv + " cho đến khi đạt 80%.", write: "Viết lại các đề trong bài học, sửa hết lỗi gạch chân và so với bài mẫu.", speak: "Luyện nói theo câu mẫu mỗi ngày, ghi âm và nghe lại giọng của mình." }[weak];
   app().innerHTML = `<div class="done${pass ? "" : " fail"}"><div class="ring xl" style="--p:${overall}"><span>${overall}%</span></div><h1>${merit ? "Đạt loại xuất sắc bài thi thử " + lv + "!" : pass ? "Chúc mừng! Bạn đạt bài thi thử " + lv : scorePass ? "Đủ điểm nhưng chưa được ghi nhận" : "Chưa đạt " + lv}</h1>
   <p class="muted">${pass ? "Đây là kết quả luyện tập, giúp bạn ước lượng trình độ " + lv + "." : scorePass ? "Phần Nói chưa được chấm bằng micro nên chưa thể ghi nhận đạt. Hãy thi lại trên Chrome có micro." : failWhy(ovRaw, raw)}</p>
-  <div class="card skbox">${Object.keys(SECN).map(x => `<div class="skrow"><i class="ti ti-${SECI[x]}"></i><span class="skn">${SECN[x]}</span><div class="bar grow ${skills[x] < 40 ? "lowbar" : ""}"><span style="width:${skills[x]}%"></span></div><b>${skills[x]}%${unrated && x === "speak" ? "*" : ""}</b></div>`).join("")}${unrated ? `<p class="sm muted">* Phần Nói có câu không chấm được bằng micro nên lần thi này không được ghi nhận đạt.</p>` : ""}</div>
-  <div class="card left"><p class="lab">Lời khuyên</p><p>Kỹ năng cần ưu tiên: <b>${SECN[weak]}</b>.<br>${advice}</p></div>
-  ${wr ? `<details class="card left"><summary><b>Bài viết: ${wr.r.total}/10</b> · xem nhận xét chi tiết</summary>${Grader.report(wr.r, wr.wr)}<div class="model"><b>Bài mẫu</b><p>${esc(wr.wr.model).replace(/\n/g, "<br>")}</p></div></details>` : ""}
-  ${xs ? `<details class="card left"><summary><b>Câu trả lời phần Nói: ${xs.q}%</b>${xs.typed ? " (gõ phím)" : ""}</summary>${xs.why ? `<p class="b">${xs.why}</p>` : ""}<p>“${esc(xs.text)}”</p>${Grader.report(xs.r, {})}</details>` : ""}
+  <div class="card skbox">${Object.keys(SECN).map(x => `<div class="skrow"><i class="ti ti-${SECI[x]}"></i><span class="skn">${SECN[x]}</span><div class="bar grow ${skills[x] < 40 ? "lowbar" : ""}"><span style="width:${skills[x]}%"></span></div><b>${skills[x]}%${unrated && x === "speak" ? "*" : ""}</b></div>`).join("")}${unrated ? `<p class="sm muted">* Có câu Nói không chấm được bằng micro,<br>nên lần thi này không được ghi nhận đạt.</p>` : ""}</div>
+  <div class="card left"><p class="lab">Lời khuyên</p><p>${skills[weak] >= 80 ? (LV[LV.indexOf(lv) + 1] ? `Bạn làm tốt cả 5 kỹ năng.<br>Hãy thử sức với bài thi thử cấp ${LV[LV.indexOf(lv) + 1]}.` : "Bạn làm tốt cả 5 kỹ năng.<br>Hãy giữ nhịp ôn tập mỗi ngày để duy trì trình độ.") : `Kỹ năng cần ưu tiên: <b>${SECN[weak]}</b>.<br>${advice}`}</p></div>
+  ${wr ? `<details class="card left"><summary><b>Bài viết: ${wr.r.total}/10</b> · xem nhận xét chi tiết</summary>${myReport(wr.r, wr.wr, { id: "wr" })}<div class="model"><b>Bài mẫu</b><p>${esc(wr.wr.model).replace(/\n/g, "<br>")}</p></div></details>` : ""}
+  ${xs ? `<details class="card left"><summary><b>Câu trả lời phần Nói: ${xs.q}%</b>${xs.typed ? " (gõ phím)" : ""}</summary>${xs.why ? `<p class="b">${xs.why}</p>` : ""}${myReport(xs.r, {}, { xs: 1, id: "xs", q: xs.q, why: xs.why })}</details>` : ""}
   <div class="stack">${pass ? `<button class="btn primary full lg" onclick="showCert('${lv}')"><i class="ti ti-certificate"></i> Xem giấy ghi nhận</button>` : `<button class="btn primary full lg" onclick="startMock('${lv}')"><i class="ti ti-refresh"></i> Thi lại</button>`}<button class="btn full" onclick="nav('exam')">Về trang Thi thử</button></div></div>`;
   P = null; document.body.classList.add("playing"); window.scrollTo(0, 0);
   if (pass) { beep("done"); confetti(); } checkBadges(); checkDay();
@@ -280,5 +315,10 @@ function showCert(lv) {
 }
 
 /* Tải lại / đóng trang giữa bài thi: lần thi đó được ghi là chưa đạt (không "làm lại cho tới khi đẹp") */
-(function recoverMock() { const m = S.mockOpen; if (!m) return; S.mockOpen = null; (S.exams[m.lv] = S.exams[m.lv] || []).push({ at: m.at || Date.now(), overall: 0, skills: {}, pass: false, aborted: 1 }); save(); setTimeout(() => toast(`Bài thi thử ${m.lv} lần trước bị bỏ dở nên được ghi là chưa đạt.`, 5000), 700); })();
+/* Bài thi đang chạy ở cửa sổ khác (nhịp "đang thi" mới trong 90 giây, không phải tab này tải lại): chưa ghi, kiểm tra lại sau */
+function recoverMock() { let m = S.mockOpen; try { const c = JSON.parse(localStorage.getItem(KEY) || "null"); if (c && c.mockOpen && m && c.mockOpen.at === m.at) m = S.mockOpen = Object.assign({}, m, { hb: +c.mockOpen.hb || 0 }); } catch (e) {} if (!m) return;
+  const age = Date.now() - (m.hb || 0); if (m.w && m.w !== WIN && m.hb && age >= 0 && age < 90000) { setTimeout(recoverMock, 95000); return; }
+  if (P && P.kind === "mock") return;
+  S.mockOpen = null; (S.exams[m.lv] = S.exams[m.lv] || []).push({ at: m.at || Date.now(), overall: 0, skills: {}, pass: false, aborted: 1 }); save(); setTimeout(() => toast(`Bài thi thử ${m.lv} lần trước bị bỏ dở nên được ghi là chưa đạt.`, 5000), 700); }
+recoverMock();
 window.addEventListener("beforeunload", e => { if (P && P.kind === "mock" && P.started) { e.preventDefault(); e.returnValue = ""; } });

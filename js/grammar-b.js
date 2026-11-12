@@ -41,7 +41,7 @@ var GRAMMAR = window.GRAMMAR = (window.GRAMMAR || []).concat([
 "c|A new school ___ in our village.|has been built|has built;is build;have been built|Đã được xây (kết quả hiện tại) → has been built.",
 "c|The results ___ next week.|will be announced|will announce;will be announce;will announced|Tương lai bị động: will be + V3.",
 "c|Tickets ___ online.|can be bought|can buy;can bought;can be buy|Modal bị động: can be + V3.",
-"f|The meeting ___ (already / cancel).|has already been canceled|'s already been canceled;was already canceled|Hiện tại hoàn thành bị động: has (already) been + V3.",
+"f|The meeting ___ (already / cancel).|has already been canceled|'s already been canceled;was already canceled;has been canceled already|Hiện tại hoàn thành bị động: has (already) been + V3.",
 "f|All forms must ___ (sign) before Friday.|be signed||Must + be + V3.",
 "e|The house is painting this week.|is painting|is being painted|Ngôi nhà được sơn (bị động) → is being painted.",
 "r|Viết sang bị động: Someone has stolen my bike.|My bike has been stolen.|My bike's been stolen.;My bike was stolen.|Has + been + V3."]},
@@ -161,7 +161,7 @@ var GRAMMAR = window.GRAMMAR = (window.GRAMMAR || []).concat([
 "f|Under no circumstances ___ you open this door.|should|must;can;may|Under no circumstances + should + S + V.",
 "f|Little ___ I know that my life was about to change.|did||Little + did + S + V.",
 "e|Never I have heard such nonsense.|I have|have I|Never ở đầu câu → đảo: Never have I heard.",
-"r|Viết lại bắt đầu bằng Hardly: As soon as I got home, the phone rang.|Hardly had I gotten home when the phone rang.|Hardly had I got home when the phone rang.;Hardly had I arrived home when the phone rang.|Hardly + had + S + V3 + when."]},
+"r|Viết lại bắt đầu bằng Hardly: As soon as I got home, the phone rang.|Hardly had I gotten home when the phone rang.|Hardly had I got home when the phone rang.;Hardly had I arrived home when the phone rang.;Hardly had I reached home when the phone rang.|Hardly + had + S + V3 + when."]},
 {id:"cleft", lv:"B2", t:"Câu chẻ", lesson:"b2-7", sum:"What I need is...; It was X who/that...", items:[
 "c|___ I need is a long vacation.|What|That;Which;It|What + mệnh đề + is...",
 "c|It was my grandmother ___ taught me to cook.|who|which;what;whom she|It was + người + who.",
@@ -197,7 +197,7 @@ var GRAMMAR = window.GRAMMAR = (window.GRAMMAR || []).concat([
 "f|Coffee ___ be harmful to some people. (có thể)|may|might;could;can|Nói thận trọng → may / might / could / can.",
 "f|She appears ___ (be) very confident.|to be||Appear + to V.",
 "e|Young people tends to use social media a lot.|tends|tend|Young people là số nhiều → tend.",
-"r|Viết lại thận trọng hơn: Coffee is bad for you. → Too much coffee ...|Too much coffee may be bad for you.|Too much coffee might be bad for you.;Too much coffee can be bad for you.;Too much coffee may be bad for some people.;Too much coffee might be bad for some people.;Too much coffee can be bad for some people.;Too much coffee could be bad for you.;Too much coffee may be bad for your health.;Too much coffee tends to be bad for you.|Thêm may / might để bớt khẳng định tuyệt đối."]},
+"r|Viết lại thận trọng hơn: Coffee is bad for you. → Too much coffee ...|Too much coffee may be bad for you.|Too much coffee might be bad for you.;Too much coffee can be bad for you.;Too much coffee may be bad for some people.;Too much coffee might be bad for some people.;Too much coffee can be bad for some people.;Too much coffee could be bad for you.;Too much coffee may be bad for your health.;Too much coffee tends to be bad for you.;Too much coffee could be bad for your health.;Too much coffee might be bad for your health.;Too much coffee can be bad for your health.|Thêm may / might để bớt khẳng định tuyệt đối."]},
 {id:"nominal", lv:"C1", t:"Danh từ hóa", lesson:"c1-4", sum:"decide → decision; reduce → reduction...", items:[
 "c|The ___ of the metro has reduced traffic.|introduction|introduce;introducing;introduced|Sau the cần danh từ: introduction.",
 "c|There has been a significant ___ in air quality.|improvement|improve;improving;improved|A/an + adj + danh từ.",

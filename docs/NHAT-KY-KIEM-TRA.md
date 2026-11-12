@@ -108,3 +108,18 @@ Vòng này dùng 6 trợ lý soát độc lập, không tham gia làm app: giáo
 | Máy chấm bài viết | 11 câu đúng bị bắt nhầm, 24 lỗi bỏ sót | 0 bắt nhầm, 0 bỏ sót trên bộ kiểm tra 300+ câu |
 | Giao diện | ~40 chỗ xuống dòng tách từ, chữ trên nút thiếu tương phản | Danh sách 2.000+ từ ghép không bị tách; đạt chuẩn tương phản WCAG AA ở cả chế độ sáng và tối |
 | Chức năng | 6 lỗi nghiêm trọng (chép chính tả bỏ đuôi -s/-ed vẫn đúng, Enter bỏ qua phần sửa lỗi...) | Chấm chính xác từng từ; nhiều lỗi thao tác nhanh, hết giờ, khôi phục dữ liệu đã sửa |
+
+## Vòng 13 – Soát độc lập lần 3
+
+4 trợ lý mới (2 giáo viên, 1 chuyên gia giao diện, 1 kỹ sư kiểm thử) soát lại từ đầu. Không còn lỗi dạy sai. Các lỗi tìm được và đã sửa:
+
+| Phát hiện | Cách sửa |
+|---|---|
+| Từ đồng nghĩa diễn đạt khác nhau (cheap/inexpensive, said/told...) vẫn có thể cùng là đáp án | Dùng từ điển đồng nghĩa WordNet (Princeton) tự tìm 266 cặp đồng nghĩa trong toàn bộ từ vựng, cộng thêm danh sách tay; mô phỏng 62.000 câu hỏi từ vựng: câu nào cũng đủ 4 lựa chọn, không trùng nghĩa |
+| So khớp dạng viết tắt nhận cả câu sai ("He is been", "If I would known") | Chỉ hiểu 'd/'s theo từ đứng sau; các câu sai bị từ chối |
+| Gõ sai 1 chữ thành một từ khác có thật (bought/brought, these/those) vẫn "gần đúng" | Tính là sai |
+| Bài viết học thuộc sẵn, lạc đề, khuôn mẫu chung chung vẫn 9,5 điểm khi thi | Kiểm tra bám đề: 13/13 bài lạc đề bị chặn, 0/69 bài đúng đề bị bắt nhầm |
+| Phần Nói chỉ liệt kê vài từ vẫn 60% | Kiểm tra câu có chủ ngữ, động từ và đúng chủ đề |
+| Bài đọc trong bài học: đáp án đúng thường dài nhất (50–56% ở B1–C1) | Viết lại 44 câu, còn khoảng 30% |
+| Mở app 2 cửa sổ làm mất tiến độ; mạng chậm có thể trộn bản cũ và mới | Gộp dữ liệu giữa các cửa sổ; tệp có đánh số phiên bản |
+| Câu sửa lỗi mất dấu phẩy; thông báo che nút khi thanh đáp án trượt lên; nhận xét phần Nói dùng nhầm lời bài Viết | Đã sửa |

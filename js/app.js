@@ -25,7 +25,7 @@ const VIMAP = {}; ALLW.forEach(w => (VIMAP[w.vi] = VIMAP[w.vi] || new Set()).add
 /* ---------- Trạng thái ---------- */
 function def() {
   return { v: 2, onb: false, done: {}, unlocked: {}, cards: {}, days: {}, log: {}, stagePassed: {}, placement: null, xp: 0, badges: {},
-    cnt: { speak: 0, write: 0, review: 0, perfect: 0 }, skill: {}, mistakes: {}, resume: null, dayDone: {}, hideInstall: false, game: { best: {}, post: {}, plays: 0 }, gram: {}, exams: {}, certs: {}, name: "", voiceWarned: 0, mockOpen: null,
+    cnt: { speak: 0, write: 0, review: 0, perfect: 0 }, skill: {}, mistakes: {}, resume: null, dayDone: {}, hideInstall: false, game: { best: {}, post: {}, plays: 0 }, gram: {}, exams: {}, certs: {}, name: "", voiceWarned: 0, mockOpen: null, _rev: 0, _wipe: 0,
     settings: { rate: 0.9, accent: "en-US", goal: 60, theme: "auto", sound: true } };
 }
 function merge(x) { const d = def(); Object.keys(d).forEach(k => { if (x[k] !== undefined) d[k] = (typeof d[k] === "object" && d[k] && !Array.isArray(d[k]) && k !== "resume") ? Object.assign(d[k], x[k]) : x[k]; }); if (Object.keys(d.done).length) d.onb = true; return sanitize(d); }
@@ -62,13 +62,62 @@ function sanitize(d) {
   Object.keys(d.skill).forEach(k => { const v = d.skill[k]; if (!Array.isArray(v)) { delete d.skill[k]; return; } d.skill[k] = [num(v[0], 0, 0, 1e9) | 0, num(v[1], 0, 0, 1e9) | 0]; });
   Object.keys(d.badges).forEach(k => d.badges[k] = num(d.badges[k], 1, 0, 9e15));
   if (d.placement !== null && d.placement !== "zero") d.placement = num(d.placement, 0, 0, 100);
-  if (d.mockOpen && (typeof d.mockOpen !== "object" || !["A1", "A2", "B1", "B2", "C1"].includes(d.mockOpen.lv))) d.mockOpen = null; else if (d.mockOpen) d.mockOpen = { lv: d.mockOpen.lv, at: num(d.mockOpen.at, 0, 0, 9e15) };
+  if (d.mockOpen && (typeof d.mockOpen !== "object" || !["A1", "A2", "B1", "B2", "C1"].includes(d.mockOpen.lv))) d.mockOpen = null; else if (d.mockOpen) d.mockOpen = { lv: d.mockOpen.lv, at: num(d.mockOpen.at, 0, 0, 9e15), hb: num(d.mockOpen.hb, 0, 0, 9e15), w: String(d.mockOpen.w || "").slice(0, 12) };
+  if (MIG_READY) migrateContent(d);
+  d._rev = Math.floor(num(d._rev, 0, 0, 1e12)); d._wipe = num(d._wipe, 0, 0, 9e15);
   if (d.resume && (typeof d.resume !== "object" || typeof d.resume.id !== "string" || !d.resume.P || !Array.isArray(d.resume.P.steps))) d.resume = null;
   return d;
 }
-function load() { try { const x = JSON.parse(localStorage.getItem(KEY)); if (x && x.done) return merge(x); } catch (e) {} return def(); }
-let S = load();
-function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
+/* Dữ liệu lưu bị hỏng (không đọc được): giữ một bản sao riêng, không ghi đè mất, và báo cho người học */
+/* Nội dung đã sửa qua các bản cập nhật: lỗi sai và thẻ ôn lưu từ bản cũ được đổi sang câu / đáp án hiện tại,
+   hoặc bỏ đi nếu câu, từ đó không còn (để "Luyện lại lỗi sai" không chấm đúng theo đáp án cũ) */
+var MIG_READY;
+function migrateContent(d) {
+  const M = migrateContent.m || (migrateContent.m = (() => { const g = new Map(); if (typeof GRAMMAR !== "undefined") GRAMMAR.forEach(T => T.items.forEach(x => g.set(x.split("|")[1], x)));
+    return { g, sents: new Set(ORDER.flatMap(id => (LES[id].S || []).map(s => s.en))) }; })());
+  const us = k => k.split(" ").map(w => usSpell(w.toLowerCase()) === w.toLowerCase() ? w : usSpell(w.toLowerCase())).join(" ");
+  Object.keys(d.mistakes).forEach(k => { const m = d.mistakes[k];
+    if (m.t === "gram") { const cur = M.g.get(m.g.split("|")[1]); if (cur) m.g = cur; else delete d.mistakes[k]; }
+    else if (m.t === "sent") { if (!M.sents.has(m.en) && !WMAP[m.en]) delete d.mistakes[k]; }
+    else if (!WMAP[m.en]) { const n = us(m.en); delete d.mistakes[k]; if (WMAP[n] && !d.mistakes[n]) d.mistakes[n] = Object.assign(m, { en: n, vi: WMAP[n].vi }); } });
+  Object.keys(d.cards).forEach(k => { if (WMAP[k]) return; const n = us(k), c = d.cards[k]; delete d.cards[k]; if (WMAP[n] && !d.cards[n]) d.cards[n] = Object.assign(c, { vi: WMAP[n].vi }); });
+}
+function load() { let raw = null; try { raw = localStorage.getItem(KEY); const x = JSON.parse(raw); if (x && x.done) return merge(x); } catch (e) {}
+  if (raw && raw !== "null") { try { localStorage.setItem(KEY + "_broken_" + Date.now(), raw); } catch (e) {} load.broken = 1; }
+  return def(); }
+let S = load(), REV = +S._rev || 0, XPBASE = S.xp;
+/* Hai cửa sổ cùng mở (app đã cài + tab trình duyệt): cửa sổ khác đã ghi bản mới hơn thì gộp vào trước khi ghi,
+   lấy tiến độ cao hơn của từng bài, không xóa tiến độ mà cửa sổ kia vừa học */
+function mergeOther(o) {
+  const mx = (a, b) => Math.max(+a || 0, +b || 0);
+  Object.keys(o.done).forEach(k => { if (!S.done[k] || o.done[k].best > S.done[k].best) S.done[k] = o.done[k]; });
+  Object.keys(o.cards).forEach(k => { if (!WMAP[k]) return; const a = S.cards[k], b = o.cards[k]; if (!a || b.box > a.box || (b.box === a.box && b.due > a.due)) S.cards[k] = b; });
+  S.xp = Math.max(S.xp, (+o.xp || 0) + Math.max(0, S.xp - XPBASE)); // XP cộng dồn: phần cửa sổ này vừa nhận cộng vào bản của cửa sổ kia
+  ["unlocked", "stagePassed", "badges", "dayDone"].forEach(f => { S[f] = Object.assign({}, o[f] || {}, S[f]); });
+  Object.keys(o.certs).forEach(k => { if (!S.certs[k] || o.certs[k].overall > S.certs[k].overall) S.certs[k] = o.certs[k]; });
+  Object.keys(o.exams).forEach(k => { const have = new Set((S.exams[k] || []).map(a => a.at)); S.exams[k] = (S.exams[k] || []).concat(o.exams[k].filter(a => !have.has(a.at))).sort((a, b) => a.at - b.at); });
+  Object.keys(o.gram).forEach(k => S.gram[k] = mx(S.gram[k], o.gram[k]));
+  Object.keys(o.days).forEach(k => S.days[k] = mx(S.days[k], o.days[k]));
+  Object.keys(o.log).forEach(k => { const a = S.log[k] || (S.log[k] = { lessons: 0, xp: 0 }); a.lessons = mx(a.lessons, o.log[k].lessons); a.xp = mx(a.xp, o.log[k].xp); });
+  Object.keys(o.cnt).forEach(k => S.cnt[k] = mx(S.cnt[k], o.cnt[k]));
+  Object.keys(o.skill).forEach(k => { const a = S.skill[k], b = o.skill[k]; if (!a || b[1] > a[1]) S.skill[k] = b; });
+  Object.keys(o.mistakes).forEach(k => { if (!S.mistakes[k] && o.mistakes[k].at > (REV_AT || 0)) S.mistakes[k] = o.mistakes[k]; });
+  Object.keys(o.game.best || {}).forEach(k => { const a = S.game.best[k], b = o.game.best[k]; S.game.best[k] = k === "memory" ? (a ? Math.min(a, b) : b) : mx(a, b); });
+  S.game.plays = mx(S.game.plays, o.game.plays);
+  if (!S.name && o.name) S.name = o.name; if (S.onb === false && o.onb) S.onb = true;
+  if ((!S.mockOpen || S.mockOpen.w !== WIN) && o.mockOpen && o.mockOpen.w !== WIN && (!S.mockOpen || o.mockOpen.at >= S.mockOpen.at)) S.mockOpen = o.mockOpen;
+  else if (S.mockOpen && S.mockOpen.w !== WIN && !o.mockOpen) S.mockOpen = null; // cửa sổ kia đã thi xong
+}
+let REV_AT = Date.now(); /* mã cửa sổ: giữ nguyên khi tải lại cùng một tab (sessionStorage), khác nhau giữa hai cửa sổ */
+const WIN = (() => { let w = ""; try { w = sessionStorage.getItem("hta_win") || ""; if (!w) { w = Math.random().toString(36).slice(2, 10); sessionStorage.setItem("hta_win", w); } } catch (e) { w = Math.random().toString(36).slice(2, 10); } return w; })();
+/* force: ghi đè có chủ ý (xóa tiến độ, khôi phục từ bản sao lưu) */
+function save(force) { try {
+  if (!force) { const raw = localStorage.getItem(KEY), cur = raw && JSON.parse(raw); if (cur && cur.done && (+cur._rev || 0) > REV) { const o = merge(cur); if (o._wipe !== S._wipe) S = o; else mergeOther(o); REV = +cur._rev; } }
+  S._rev = REV = REV + 1; REV_AT = Date.now(); XPBASE = S.xp; localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
+window.addEventListener("storage", e => { if (e.key !== KEY || !e.newValue) return;
+  if (!P && (typeof G === "undefined" || !G) && !VIEW) { try { const x = JSON.parse(e.newValue); if (x && x.done) { S = merge(x); REV = +S._rev || 0; XPBASE = S.xp; const a = document.activeElement; if (!a || !/^(INPUT|TEXTAREA)$/.test(a.tagName)) render(); } } catch (er) {} }
+  else if (!storage1) { storage1 = 1; toast("Ứng dụng đang mở ở một cửa sổ khác.<br>Hãy chỉ dùng một cửa sổ để không bị lẫn tiến độ.", 5000); } });
+let storage1 = 0;
 
 /* ---------- Tiện ích ---------- */
 const shuffle = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
@@ -85,15 +134,15 @@ function toastFit() { const t = $("#toast"); if (t && t.classList.contains("on")
 /* Thông báo nằm ở khoảng trống phía dưới: trên thanh điều hướng / thanh kết quả, không che nút bấm, không che tiêu đề */
 function placeToast(t) {
   const vh = innerHeight, a = app().getBoundingClientRect(), cx = a.width ? a.left + a.width / 2 : innerWidth / 2;
-  t.style.left = cx + "px"; t.style.top = "0px";
+  t.style.left = cx + "px"; t.style.top = "0px"; t.classList.remove("slim");
   const nav = $("#nav"), nr = nav && getComputedStyle(nav).display !== "none" ? nav.getBoundingClientRect() : null, fb = $("#fb.on");
-  let bottom = vh - 12; if (nr && nr.top > vh / 2) bottom = nr.top - 10; if (fb) bottom = Math.min(bottom, fb.getBoundingClientRect().top - 10);
+  let bottom = vh - 12; if (nr && nr.top > vh / 2) bottom = nr.top - 10; if (fb) bottom = Math.min(bottom, innerHeight - fb.offsetHeight - 10); // vị trí khi thanh đã trượt lên hết (đang trượt thì rect còn ở dưới màn hình)
   const h = t.offsetHeight, w = t.offsetWidth, L = cx - w / 2 - 6, R = cx + w / 2 + 6, pt = $(".ptop"), top0 = (pt ? pt.getBoundingClientRect().bottom : 0) + 8;
-  const hits = $$("button,.btn,input,textarea,select,a[href],[onclick]").filter(e => !e.closest("#toast,#nav,#fb,.modal")).map(e => e.getBoundingClientRect()).filter(r => r.height && r.height < 140 && r.right > L && r.left < R && r.bottom > top0 && r.top < bottom);
+  const hits = $$("button,.btn,input,textarea,select,a[href],[onclick],h1,h2,h3,h4,.lab,.sec").filter(e => !e.closest("#toast,#nav,#fb,.modal")).map(e => e.getBoundingClientRect()).filter(r => r.height && r.height < 140 && r.right > L && r.left < R && r.bottom > top0 && r.top < bottom);
   let y = bottom;
   for (let k = 0; k < 16; k++) { const hit = hits.filter(r => r.bottom > y - h - 6 && r.top < y); if (!hit.length) break; y = Math.min(...hit.map(r => r.top)) - 8; }
   // không còn chỗ trống: đè lên giữa thanh tiêu đề (thanh tiến độ, không phải nút) nếu đủ hẹp, nếu không thì ngay dưới thanh
-  if (y - h < top0) { const pr = pt && pt.getBoundingClientRect(); y = pr && w < pr.width - 140 && h <= pr.height + 8 ? pr.top + (pr.height + h) / 2 : top0 + h; }
+  if (y - h < top0) { const pr = pt && pt.getBoundingClientRect(); if (pr && w < pr.width - 140 && h <= pr.height + 12) { t.classList.add("slim"); const h2 = t.offsetHeight; t.style.top = Math.round(Math.max(2, pr.top + (pr.height - h2) / 2)) + "px"; return; } y = top0 + h; }
   t.style.top = Math.round(y - h) + "px";
 }
 function glossParts(v) { return String(v).toLowerCase().replace(/\([^)]*\)/g, m => "," + m.slice(1, -1) + ",").split(/[,;/]|\s+hoặc\s+/).map(x => x.trim()).filter(x => x.length > 1); }
@@ -101,8 +150,8 @@ const NEVER = [["hello", "hi"], ["thank you", "thanks"], ["sorry", "excuse me"],
   ["recently", "lately"], ["whether", "if"], ["must be", "no doubt"], ["lead to", "result in"], ["make a decision", "make up your mind", "decide"], ["looking back", "in hindsight", "in retrospect", "hindsight"], ["breathtaking", "spectacular", "stunning"], ["it seems that", "it appears that", "seem"], ["implement", "roll out"], ["unquestionably", "there is little doubt that"], ["likewise", "similarly"], ["moving on", "turning now to"],
   ["get up", "wake up"], ["right now", "at the moment"], ["street", "road"], ["do", "work"], ["rarely", "hardly ever"], ["a week", "weekly"], ["abroad", "foreign"], ["mustn't", "forbidden"], ["regards", "sincerely", "best wishes"], ["unless", "otherwise"], ["goodbye", "bye", "see you"], ["price", "cost"], ["habit", "routine"], ["later", "in the future", "one day"], ["predict", "forecast"], ["luggage", "suitcase"], ["required", "necessary"], ["deliver", "delivery"], ["trash", "waste"], ["confused", "embarrassed"], ["made in", "produced"], ["tool", "device", "machine"], ["tradition", "custom"],
   ["allegedly", "supposedly", "reportedly"],
-  ["even though", "although", "though", "much as"], ["actually", "genuinely", "in fact"], ["carry on", "go on doing", "keep on"], ["acknowledge", "admittedly", "concede"], ["happy", "fun"], ["speak", "talk"]];
-const never = (a, b) => { a = a.toLowerCase(); b = b.toLowerCase(); return NEVER.some(g => g.includes(a) && g.includes(b)); };
+  ["even though", "although", "though", "much as"], ["actually", "genuinely", "in fact"], ["carry on", "go on doing", "keep on"], ["acknowledge", "admittedly", "concede"], ["happy", "fun"], ["speak", "talk"], ["picture", "photo"], ["oppose", "against", "be against"], ["adapt", "get used to", "adjust"], ["soon", "later", "in a while"], ["saw", "watched"], ["nervous", "stressed", "worried", "anxious"], ["now", "at the moment", "right now"], ["cup", "glass"], ["suddenly", "all of a sudden"], ["strength", "advantage"], ["absolutely", "i agree with you", "exactly"], ["gasp", "breathless"], ["granted", "admittedly"], ["somewhat", "slightly", "relatively", "rather", "fairly"], ["tone down", "soften"], ["logical", "valid", "reasonable"], ["remind", "reminded"], ["complain", "make a complaint"], ["depend on", "rely on", "count on"], ["furthermore", "in addition", "moreover", "besides", "what is more"], ["consequently", "thus", "hence", "therefore", "as a result"], ["contraction", "abbreviation"], ["holiday", "vacation"], ["cheap", "inexpensive"], ["said", "told"], ["interesting", "exciting"], ["the main idea", "gist", "key point", "main point", "point"]];
+const never = (a, b) => { a = a.toLowerCase(); b = b.toLowerCase(); return a === b || (window.SYN && ((SYN[a] || []).includes(b) || (SYN[b] || []).includes(a))) || NEVER.some(g => g.includes(a) && g.includes(b)); };
 /* Hai nghĩa gần như trùng nhau: các âm tiết của phần nghĩa này nằm liền nhau trong phần nghĩa kia
    (vui ⊂ vui vẻ, hủy ⊂ bị hủy, có vẻ ⊂ có vẻ như, ăn ⊂ đã ăn, dẫn đến ⊂ dẫn đến kết quả) */
 const glossNear = (a, b) => a !== b && ((" " + a + " ").includes(" " + b + " ") || (" " + b + " ").includes(" " + a + " "));
@@ -129,19 +178,78 @@ function norm(s) {
   s = s.replace(/\b(twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety)[\s-](one|two|three|four|five|six|seven|eight|nine)\b/g, (m, a, b) => String(NUMS[a] + NUMS[b]));
   s = s.replace(/-/g, " ").replace(/\b[a-z]+\b/g, w => NUMS[w] !== undefined ? String(NUMS[w]) : usSpell(w));
   s = s.replace(/\b(?:(a|1)|(\d+)) (hundred|thousand|million)\b/g, (m, a, n, u) => String((n ? +n : 1) * { hundred: 100, thousand: 1000, million: 1e6 }[u]));
+  // two hundred thousand = 200,000; three million five hundred thousand chỉ ghép từng cặp
+  s = s.replace(/\b(\d+) (thousand|million)\b/g, (m, n, u) => String(+n * (u === "thousand" ? 1000 : 1e6)));
   return s.replace(/\s+/g, " ").trim();
 }
 function lev(a, b) { const m = a.length, n = b.length; if (!m) return n; if (!n) return m; let p = Array(n + 1).fill(0).map((_, i) => i); for (let i = 1; i <= m; i++) { const c = [i]; for (let j = 1; j <= n; j++) c[j] = Math.min(p[j] + 1, c[j - 1] + 1, p[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1)); p = c; } return p[n]; }
-/* 'd = would hoặc had, 's = is hoặc has: tạo mọi cách hiểu (dùng cho cả câu người học gõ và đáp án) */
-const RE_D = /\b(i|you|he|she|we|they|it|who|there|that)['’]d\b/gi, RE_S = /\b(he|she|it|there|what|that|who|where|here|how|when|why|somebody|someone|everyone|everybody|nobody)['’]s\b/gi;
-function normAlts(t) {
-  const x = String(t), v = [x];
-  if (RE_D.test(x)) v.push(...v.map(y => y.replace(RE_D, "$1 had"))); RE_D.lastIndex = 0;
-  if (RE_S.test(x)) v.push(...v.map(y => y.replace(RE_S, "$1 has"))); RE_S.lastIndex = 0;
-  const r = v.map(norm);
+/* 'd = would hoặc had, 's = is hoặc has. Cách hiểu chọn theo từ đứng sau:
+   'd + V3 / better / been → had, 'd + V nguyên mẫu / like / rather → would; 's + V3 / been / got → has, còn lại → is.
+   Đáp án: chỉ lấy cách hiểu đúng ngữ pháp (để "He is been", "If I would known", "I had like" không thành đúng).
+   Câu người học gõ dạng viết tắt: viết tắt luôn đúng, nên nhận cả hai cách hiểu hợp với từ đứng sau. */
+const RE_C = /^(i|you|he|she|we|they|it|who|there|that|what|where|here|how|when|why|somebody|someone|everyone|everybody|nobody)['’](d|s)$/i;
+const C_ADV = new Set("already just never ever always also still not really recently finally probably definitely only even often usually sometimes nearly almost completely totally certainly actually rather".split(" "));
+const PP_SET = new Set("been done gone seen taken given eaten written broken chosen spoken forgotten forgiven gotten got fallen driven ridden risen hidden beaten bitten frozen stolen woken shaken shown known grown thrown flown drawn drunk sung rung sunk swum begun worn torn withdrawn undertaken lain made had said paid bought brought caught taught thought fought sought built sent spent lent meant met felt kept slept left lost found heard held told sold stood understood sat won hung led fed burnt learnt dreamt dealt dug lit laid shot stuck struck shone spelt spilt smelt mistaken proven".split(" "));
+const PP_AMB = new Set("come become run overcome read put cut set hit hurt let shut quit cost spread bet upset broadcast forecast".split(" "));
+const BASE_ED = new Set("need feed seed speed bleed breed weed shed wed exceed proceed succeed embed red bed shred".split(" "));
+const S_IS = new Set("tired bored married interested worried excited scared surprised pleased annoyed confused embarrassed disappointed satisfied called named located used supposed based allowed required expected designed considered situated involved concerned prepared dressed engaged amazed shocked frightened exhausted relaxed qualified crowded".split(" "));
+const S_INTR = new Set("gone come become happened arrived lived worked stayed died fallen risen changed started begun grown been got gotten had".split(" "));
+const C_PREP = new Set("in on at of for with by from to into about and but or so than as because when if since".split(" "));
+const isPP = w => PP_SET.has(w) || (/[a-z]{2}ed$/.test(w) && !BASE_ED.has(w));
+function cReadings(c, w, after, lenient) {
+  if (c === "d") {
+    if (!w) return ["would"];
+    if (/^(better|been|had|got|gotten)$/.test(w)) return lenient ? ["had", "would"] : ["had"];
+    if (PP_AMB.has(w)) return ["would", "had"];
+    if (isPP(w)) return lenient ? ["had", "would"] : ["had"];
+    // người học viết tắt had là động từ chính (I'd more time, I'd my hair cut): không phải lỗi
+    if (lenient && /^(more|a|an|the|my|your|his|her|our|their|no|some|enough|lots|plenty|any|two|three|many|much|little|few)$/.test(w)) return ["had", "would"];
+    return ["would"];
+  }
+  if (!w) return ["is"];
+  if (/^(been|got|gotten|had)$/.test(w)) return lenient ? ["has", "is"] : ["has"];
+  if (/ing$/.test(w) || S_IS.has(w)) return ["is"];
+  if (PP_AMB.has(w) && !/^(come|become|run|overcome)$/.test(w)) return ["is", "has"];
+  if (isPP(w) || PP_AMB.has(w)) { if (lenient) return ["has", "is"]; return (!after || C_PREP.has(after)) && !S_INTR.has(w) && !PP_AMB.has(w) ? ["has", "is"] : ["has"]; }
+  return ["is"];
+}
+function expandC(x, lenient) {
+  const tk = String(x).split(/\s+/).filter(Boolean), ch = tk.map(t => [t]);
+  const clean = t => (t || "").toLowerCase().replace(/[’‘]/g, "'").replace(/^[("“'‘]+/, "").replace(/[^a-z'-]+$/, "");
+  const ends = t => /[.,;:!?…)"”]$/.test(t || "");
+  tk.forEach((t, i) => {
+    let m = clean(t).match(RE_C);
+    // danh từ + 's + been/gone/got: chắc chắn là has (My bike's been stolen), không phải sở hữu cách
+    if (!m && /^[a-z]+['’]s$/.test(clean(t)) && !ends(t) && /^(been|gone|got|gotten)$/.test(clean(tk[i + 1]))) m = [0, 0, "s"];
+    if (!m) return;
+    const tail = t.match(/[^A-Za-z'’]*$/)[0];
+    let k = i + 1; if (!ends(t)) while (k < tk.length && C_ADV.has(clean(tk[k])) && !ends(tk[k])) k++;
+    const w = ends(t) || k >= tk.length ? "" : clean(tk[k]), after = !w || ends(tk[k]) || k + 1 >= tk.length ? "" : clean(tk[k + 1]);
+    const lead = t.slice(0, t.length - tail.length).replace(/['’](d|s)$/i, "");
+    ch[i] = cReadings(m[2].toLowerCase(), w, after, lenient).map(r => lead + " " + r + tail);
+  });
+  let v = [""]; ch.forEach(c => { v = v.flatMap(p => c.map(x => p ? p + " " + x : x)).slice(0, 32); });
+  return v;
+}
+function normAlts(t, lenient) {
+  const x = String(t), r = expandC(x, lenient).map(norm);
   // từ có gạch nối viết liền (check-out / checkout, T-shirt / Tshirt)
   if (/[a-z]-[a-z]/i.test(x)) r.push(norm(x.replace(/([a-z])-(?=[a-z])/gi, "$1")));
   return [...new Set(r)];
+}
+/* Gõ sai một chữ mà ra một từ có thật (know/now, bought/brought, these/those) là dùng sai từ, không phải lỗi gõ */
+const CONFUSE = "know now knew new no bought brought these those then than were where we're wear quite quiet live life lose loose sit seat advice advise affect effect affects effects thought though through threw caught taught bitter better chose choose choice began begin begun spoke speak broke break take taken took give gave given lend borrow leave live alone along accept except desert dessert later latter lightning lightening dairy diary weather whether their there they're your you're its it's of off form from angel angle cloth clothes clothe breath breathe price prize sight site rise raise lay lie fell feel fill full pool pull sheep ship bead bed bad beat bit heat hit leave leaf worker worked light right could would should cold hold hole whole word world sleep slip steal steel work walk wonder wander".split(" ");
+let KNOWN = null;
+function known() { if (KNOWN) return KNOWN; const k = new Set(CONFUSE), add = t => norm(t).split(" ").forEach(w => w && !/^\d+$/.test(w) && k.add(w));
+  ORDER.forEach(id => { (LES[id].S || []).forEach(s => add(s.en)); if (LES[id].r) add(LES[id].r.t); }); ALLW.forEach(w => add(w.en)); IRR.forEach(g => g.forEach(add));
+  return (KNOWN = k); }
+/* Từ điển chính tả (nếu đã tải, không tự tải): chỉ dùng dạng gốc trong tệp .dic, và dạng -s của từ có cờ S */
+function spellKnown(w) {
+  try {
+    if (!spellKnown.set) { const d = Object.getOwnPropertyDescriptor(window, "SPELL_DIC"); if (!d || typeof d.value !== "string") return false;
+      const st = new Map(); d.value.split("\n").forEach(l => { const m = l.match(/^([A-Za-z]+)(?:\/(\S*))?/); if (m) st.set(m[1].toLowerCase(), (st.get(m[1].toLowerCase()) || "") + (m[2] || "")); }); spellKnown.set = st; }
+    const st = spellKnown.set; if (st.has(w)) return true; const b = w.replace(/s$/, ""); return b !== w && /[SM]/.test(st.get(b) || "");
+  } catch (e) { return false; }
 }
 function compare1(a, b) {
   if (a === b) return 2;
@@ -151,17 +259,20 @@ function compare1(a, b) {
   for (let k = 0; k < B.length; k++) {
     const x = A[k], y = B[k]; if (x === y) continue;
     if (y.length < 5 || /^\d+$/.test(y) || lev(x, y) > 1 || stem(x) === stem(y) || x + "s" === y || y + "s" === x) return 0;
+    if (known().has(x) || spellKnown(x)) return 0;
     typos++;
   }
   return typos <= Math.max(1, Math.floor(B.length / 6)) ? 1 : 0;
 }
-function compare(input, target) { const A = normAlts(input), B = normAlts(target); let best = 0; for (const a of A) for (const b of B) { best = Math.max(best, a === b ? 2 : compare1(a, b)); if (best === 2) return 2; } return best; }
+function compare(input, target) { const A = normAlts(input, true), B = normAlts(target); let best = 0; for (const a of A) for (const b of B) { best = Math.max(best, a === b ? 2 : compare1(a, b)); if (best === 2) return 2; } return best; }
 function lcsWords(a, b) { const m = a.length, n = b.length, t = Array(m + 1).fill(0).map(() => Array(n + 1).fill(0)); for (let i = 1; i <= m; i++) for (let j = 1; j <= n; j++) t[i][j] = a[i - 1] === b[j - 1] ? t[i - 1][j - 1] + 1 : Math.max(t[i - 1][j], t[i][j - 1]); return t[m][n]; }
 function speakScore(target, heard) { const a = norm(target).split(" "), b = norm(heard).split(" "); return Math.round(lcsWords(a, b) / a.length * 100); }
 function diffWords(target, heard) { const h = new Set(norm(heard).split(" ")); return target.split(" ").map(w => h.has(norm(w)) ? `<span class="okw">${esc(w)}</span>` : `<span class="badw">${esc(w)}</span>`).join(" "); }
 
 /* ---------- Âm thanh ---------- */
 let voices = [];
+/* Máy không có giọng đọc tiếng Anh (trình duyệt trong Zalo/Facebook): bỏ câu nghe chép, thay câu nghe-chọn bằng câu chọn nghĩa */
+const noTTS = () => { if (!("speechSynthesis" in window)) return true; try { loadV(); } catch (e) {} return voices.length > 0 && !voices.some(v => /^en/i.test(v.lang)); };
 function loadV() { try { voices = speechSynthesis.getVoices(); } catch (e) {} }
 if ("speechSynthesis" in window) { loadV(); try { speechSynthesis.onvoiceschanged = loadV; } catch (e) {} }
 const IPA_US = { hot: "hɑːt", dog: "dɔːɡ", car: "kɑːr", door: "dɔːr", bird: "bɝːd", go: "ɡoʊ", here: "hɪr", hair: "her", mother: "ˈmʌðɚ", chair: "tʃer", job: "dʒɑːb", dogs: "dɔːɡz", worked: "wɝːkt", wanted: "ˈwɑːntɪd", water: "ˈwɑːt̬ɚ", hotel: "hoʊˈtel", banana: "bəˈnænə", computer: "kəmˈpjuːt̬ɚ", coffee: "ˈkɑːfi", teacher: "ˈtiːtʃɚ", important: "ɪmˈpɔːrtnt", O: "oʊ", R: "ɑːr", Z: "ziː" };
@@ -391,7 +502,7 @@ function vBook() {
   let h = `<header class="page"><button class="link back" onclick="nav('review')"><i class="ti ti-arrow-left"></i> Ôn tập</button><h1>Sổ tay</h1></header><div class="seg big">${[["words", "Từ vựng"], ["mist", "Lỗi sai"], ["gram", "Ngữ pháp"]].map(x => `<button class="${BK.seg === x[0] ? "on" : ""}" onclick="BK.seg='${x[0]}';render()">${x[1]}</button>`).join("")}</div>`;
   if (BK.seg === "words") {
     h += `<div class="search"><i class="ti ti-search"></i><input id="q" placeholder="Tìm từ tiếng Anh hoặc tiếng Việt" value="${esc(BK.q)}" oninput="BK.q=this.value;BK.lim=150;drawWords()"></div>
-    <div class="chips2">${[["learned", "Đã học"], ["weak", "Đang yếu"], ["master", "Đã thuộc"], ["all", "Tất cả"]].map(x => `<button class="${BK.f === x[0] ? "on" : ""}" onclick="BK.f='${x[0]}';BK.lim=150;render()">${x[1]}</button>`).join("")}</div><p class="sm muted memleg"><span class="memd" aria-hidden="true"><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i></span> Mức nhớ: càng nhiều vạch càng nhớ lâu</p><div id="wl"></div>`;
+    <div class="chips2">${[["all", "Tất cả"], ["learned", "Đã học"], ["weak", "Đang yếu"], ["master", "Đã thuộc"]].map(x => `<button class="${BK.f === x[0] ? "on" : ""}" onclick="BK.f='${x[0]}';BK.lim=150;render()">${x[1]}</button>`).join("")}</div><p class="sm muted memleg"><span class="memd" aria-hidden="true"><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i></span> Mức nhớ: càng nhiều vạch càng nhớ lâu</p><div id="wl"></div>`;
     app().innerHTML = h; drawWords(); return;
   }
   if (BK.seg === "mist") {
@@ -439,7 +550,7 @@ function vMe() {
   <h4 class="sec">Sao lưu tiến độ</h4><section class="card set"><p class="muted sm">Tiến độ lưu trên trình duyệt của máy này. Muốn học trên máy khác, hãy tải tệp sao lưu rồi mở ở máy kia.</p>
   <div class="row2"><button class="btn" onclick="exportFile()"><i class="ti ti-download"></i> Tải tệp</button><button class="btn" onclick="exportCode()"><i class="ti ti-copy"></i> Chép mã</button></div>
   <label class="btn full fileb"><i class="ti ti-upload"></i> Khôi phục từ tệp<input type="file" accept=".json,application/json" onchange="importFile(this)"></label>
-  <textarea id="bk" rows="2" placeholder="Hoặc dán mã sao lưu vào đây"></textarea><p class="err" id="bkerr"></p><button class="btn full" onclick="importCode()">Khôi phục từ mã</button>
+  <textarea id="bk" rows="2" placeholder="Hoặc dán mã sao lưu vào đây" oninput="$('#bkerr').textContent=''"></textarea><p class="err" id="bkerr"></p><button class="btn full" onclick="importCode()">Khôi phục từ mã</button>
   <button class="btn full danger" onclick="askReset()"><i class="ti ti-trash"></i> Xóa toàn bộ tiến độ</button></section>
   <p class="note">Tiếng Anh Từ Số 0 · nội dung bám khung CEFR và danh sách từ Oxford 3000<br><a class="foot" href="https://github.com/cafecunghoai/hoc-tieng-anh">Mã nguồn trên GitHub</a></p>`;
   app().innerHTML = h;
@@ -447,12 +558,12 @@ function vMe() {
 const isIOS = () => /iphone|ipad|ipod/i.test(navigator.userAgent) && !window.navigator.standalone;
 const backupStr = () => JSON.stringify(Object.assign({}, S, { resume: null, mockOpen: null }));
 function exportFile() { try { const b = new Blob([backupStr()], { type: "application/json" }), a = document.createElement("a"); a.href = URL.createObjectURL(b); a.download = "sao-luu-tieng-anh-" + today() + ".json"; document.body.appendChild(a); a.click(); a.remove(); toast("Đã tải tệp sao lưu"); } catch (e) { exportCode(); } }
-function exportCode() { const c = btoa(unescape(encodeURIComponent(backupStr()))); const t = $("#bk"); t.value = c; t.select(); try { navigator.clipboard.writeText(c).then(() => toast("Đã chép mã sao lưu"), () => toast("Hãy tự chép đoạn mã trong ô")); } catch (e) { toast("Hãy tự chép đoạn mã trong ô"); } }
+function exportCode() { const c = btoa(unescape(encodeURIComponent(backupStr()))); const t = $("#bk"); if ($("#bkerr")) $("#bkerr").textContent = ""; t.value = c; t.select(); try { navigator.clipboard.writeText(c).then(() => toast("Đã chép mã sao lưu"), () => toast("Hãy tự chép đoạn mã trong ô")); } catch (e) { toast("Hãy tự chép đoạn mã trong ô"); } }
 /* Mã sao lưu đến từ bên ngoài: không nhận phần "học tiếp" (chứa HTML của bài học) */
-function restore(x) { if (!x || typeof x !== "object" || !x.done) throw 0; S = merge(Object.assign({}, x, { resume: null, mockOpen: null })); S.onb = true; save(); nav("home"); toast("Đã khôi phục tiến độ"); }
+function restore(x) { if (!x || typeof x !== "object" || !x.done) throw 0; S = merge(Object.assign({}, x, { resume: null, mockOpen: null })); S.onb = true; S._rev = REV; S._wipe = Date.now(); save(true); nav("home"); toast("Đã khôi phục tiến độ"); }
 function importFile(inp) { const f = inp.files[0]; if (!f) return; const r = new FileReader(); r.onload = () => { try { restore(JSON.parse(r.result)); } catch (e) { $("#bkerr").textContent = "Tệp không đúng định dạng sao lưu."; } }; r.readAsText(f); }
 function importCode() { const v = $("#bk").value.trim(), e = $("#bkerr"); if (!v) { e.textContent = "Dán mã sao lưu vào ô trước."; return; } try { restore(JSON.parse(decodeURIComponent(escape(atob(v))))); } catch (er) { e.textContent = "Mã không đúng. Hãy kiểm tra lại."; } }
-function askReset() { modal("Xóa toàn bộ tiến độ?", "Mọi bài đã học, thẻ ôn, XP và huy hiệu sẽ mất.<br>Không thể hoàn tác.", "Xóa hết", () => { S = def(); save(); OB = 0; nav("home"); }, true, "Giữ lại"); }
+function askReset() { modal("Xóa toàn bộ tiến độ?", "Mọi bài đã học, thẻ ôn, XP và huy hiệu sẽ mất.<br>Không thể hoàn tác.", "Xóa hết", () => { S = def(); S._rev = REV; S._wipe = Date.now(); save(true); OB = 0; nav("home"); }, true, "Giữ lại"); }
 function modal(t, m, ok, fn, danger, cancel, fnCancel) { const d = document.createElement("div"); d.className = "modal"; d.innerHTML = `<div class="box"><h3>${t}</h3><p>${m}</p><div class="row2"><button class="btn" id="mno">${cancel || "Không"}</button><button class="btn ${danger ? "dangerf" : "primary"}" id="mok">${ok}</button></div></div>`; document.body.appendChild(d); d.querySelector("#mno").onclick = () => { d.remove(); if (fnCancel) fnCancel(); }; d.querySelector("#mok").onclick = () => { if (fn() !== false) d.remove(); }; }
 
 /* ---------- Giới thiệu bài ---------- */
@@ -485,18 +596,19 @@ function buildLesson(L) {
   for (let i = 0; i < W.length; i += 5) st.push({ type: "words", items: W.slice(i, i + 5), from: i + 1, total: W.length });
   st.push({ type: "gram", html: L.g });
   if (typeof GRAMMAR !== "undefined") { const its = GRAMMAR.filter(T => T.lesson === L.id).flatMap(T => T.items.map(x => [x, T])); const pickT = t => shuffle(its.filter(x => x[0][0] === t))[0]; ["c", "f", "e", "r"].forEach(t => { const x = pickT(t); if (x) st.push(gStep(x[0], x[1])); }); }
-  if (L.kind === "letters") { pick(W, 10).forEach(w => st.push(mqListen(w, W))); L.S.forEach(s => st.push({ type: "speak", sk: "speak", en: s.en, vi: s.vi })); return st; }
+  const nv = noTTS(), lis = (w, p) => nv ? mqMeaning(w, p) : mqListen(w, p);
+  if (L.kind === "letters") { pick(W, 10).forEach(w => st.push(lis(w, W))); L.S.forEach(s => st.push({ type: "speak", sk: "speak", en: s.en, vi: s.vi })); return st; }
   pick(W, 6).forEach(w => st.push(mqMeaning(w, pool)));
   pick(W, 3).forEach(w => st.push(mqReverse(w, pool)));
-  pick(W.filter(w => !/^-|-$|=/.test(w.en) && !w.en.includes("-") || /\w-\w/.test(w.en)), 5).forEach(w => st.push(mqListen(w, pool)));
+  pick(W.filter(w => !/^-|-$|=/.test(w.en) && !w.en.includes("-") || /\w-\w/.test(w.en)), 5).forEach(w => st.push(lis(w, pool)));
   if (L.stage === "s0") {
-    pick(W, 4).forEach(w => st.push({ type: "dict", sk: "listen", label: "Nghe và gõ lại từ", en: w.en, vi: w.vi }));
+    if (!nv) pick(W, 4).forEach(w => st.push({ type: "dict", sk: "listen", label: "Nghe và gõ lại từ", en: w.en, vi: w.vi }));
     pick(W, 4).forEach(w => st.push({ type: "speak", sk: "speak", en: w.en, vi: w.vi, ipa: w.ipa }));
     L.S.forEach(s => st.push({ type: "speak", sk: "speak", en: s.en, vi: s.vi }));
     return st;
   }
   const ss = shuffle(L.S);
-  ss.slice(0, 2).forEach(s => st.push({ type: "dict", sk: "listen", label: "Nghe và gõ lại câu", en: s.en, vi: s.vi }));
+  if (!nv) ss.slice(0, 2).forEach(s => st.push({ type: "dict", sk: "listen", label: "Nghe và gõ lại câu", en: s.en, vi: s.vi }));
   ss.slice(2, 5).forEach(s => st.push({ type: "speak", sk: "speak", en: s.en, vi: s.vi }));
   if (L.r) st.push(mkRead(L.r));
   shuffle(L.S).slice(0, 2).forEach(s => st.push({ type: "order", sk: "write", en: s.en, vi: s.vi }));
@@ -507,12 +619,12 @@ function buildLesson(L) {
 /* Bài đọc: giữ đủ mọi phương án của đề (các phương án là cả cụm, không lọc theo nghĩa như thẻ từ) */
 function mkRead(r) { return { type: "read", sk: "read", t: r.t, q: r.q.map(x => { const p = x.split("|"), o = shuffle([...new Set(p.slice(1).filter(Boolean))]); return { q: p[0], o, a: o.indexOf(p[1]) }; }) }; }
 function newP(kind, steps, extra) { toastOff(); P = Object.assign({ kind, steps, i: 0, ok: 0, tot: 0, xp: 0, sk: {}, wrong: 0 }, extra || {}); last = Date.now(); VIEW = null; render(); }
-function startLesson(id) { if (!isOpen(id)) { toast("Bài này chưa mở"); return; } checkVoice(); if (S.resume && S.resume.id === id) S.resume = null; newP("lesson", buildLesson(LES[id]), { id }); }
+function startLesson(id) { if (!isOpen(id)) { toast("Bài này chưa mở"); return; } checkVoice(); if (noTTS()) setTimeout(() => toast("Máy chưa có giọng đọc tiếng Anh nên bài này bỏ các câu nghe chép,<br>thay câu chọn từ nghe được bằng câu chọn nghĩa.", 5000), 400); if (S.resume && S.resume.id === id) S.resume = null; newP("lesson", buildLesson(LES[id]), { id }); }
 function resumeLesson() { const r = S.resume; P = r.P; last = Date.now(); VIEW = null; render(); }
 function startReview(extra) {
   const keys = extra ? pick(Object.keys(S.cards), 10) : dueCards().sort((a, b) => S.cards[a].due - S.cards[b].due).slice(0, 20);
   if (!keys.length) { toast("Chưa có thẻ để ôn"); return; }
-  const steps = shuffle(keys).map((k, i) => { const w = WMAP[k] || { en: k, vi: S.cards[k].vi }; const s = i % 3 === 2 ? mqListen(w, ALLW) : i % 3 === 1 ? mqReverse(w, ALLW) : mqMeaning(w, ALLW); s.card = k; return s; });
+  const steps = shuffle(keys).map((k, i) => { const w = WMAP[k] || { en: k, vi: S.cards[k].vi }; const s = i % 3 === 2 && !noTTS() ? mqListen(w, ALLW) : i % 3 === 1 ? mqReverse(w, ALLW) : mqMeaning(w, ALLW); s.card = k; return s; });
   newP("review", steps);
 }
 function startMistakes() {
@@ -525,9 +637,9 @@ function startExam(sid) {
   const W = [], Ss = []; Ls.forEach(L => { L.W.forEach(w => W.push(w)); L.S.forEach(s => Ss.push(s)); });
   const steps = [];
   pick(W, 8).forEach(w => steps.push(mqMeaning(w, W)));
-  pick(W, 4).forEach(w => steps.push(mqListen(w, W)));
-  if (sid === "s0") pick(W, 8).forEach(w => steps.push({ type: "dict", sk: "listen", label: "Nghe và gõ lại từ", en: w.en, vi: w.vi }));
-  else { pick(Ss, 3).forEach(s => steps.push({ type: "order", sk: "write", en: s.en, vi: s.vi })); pick(Ss, 3).forEach(s => steps.push({ type: "trans", sk: "write", en: s.en, vi: s.vi })); pick(Ss, 2).forEach(s => steps.push({ type: "dict", sk: "listen", label: "Nghe và gõ lại câu", en: s.en, vi: s.vi })); const rl = pick(Ls.filter(L => L.r), 1)[0]; if (rl) steps.push(mkRead(rl.r)); }
+  const nv = noTTS(); pick(W, 4).forEach(w => steps.push(nv ? mqReverse(w, W) : mqListen(w, W)));
+  if (sid === "s0" && !nv) pick(W, 8).forEach(w => steps.push({ type: "dict", sk: "listen", label: "Nghe và gõ lại từ", en: w.en, vi: w.vi }));
+  else { pick(Ss, 3).forEach(s => steps.push({ type: "order", sk: "write", en: s.en, vi: s.vi })); pick(Ss, 3).forEach(s => steps.push({ type: "trans", sk: "write", en: s.en, vi: s.vi })); if (!nv) pick(Ss, 2).forEach(s => steps.push({ type: "dict", sk: "listen", label: "Nghe và gõ lại câu", en: s.en, vi: s.vi })); const rl = pick(Ls.filter(L => L.r), 1)[0]; if (rl) steps.push(mkRead(rl.r)); }
   newP("exam", shuffle(steps), { sid });
 }
 const IDK = "Tôi chưa biết";
@@ -549,7 +661,7 @@ function showStep() {
   if (P.i >= P.steps.length) return finish();
   const s = P.steps[P.i]; P.ans = false; P.lockUntil = P.kind === "mock" ? Date.now() + 400 : 0;
   const title = P.kind === "lesson" ? esc(LES[P.id].t) : P.kind === "gram" ? esc(P.title) : P.kind === "mock" ? "Thi thử " + P.lv + (SECN[s.sec] ? " · " + SECN[s.sec] : "") : { review: "Ôn từ vựng", exam: "Kiểm tra vượt chặng" + (P.sid ? " · " + stageOf(P.sid).name : ""), place: "Kiểm tra đầu vào", mist: "Luyện lại lỗi sai" }[P.kind];
-  let h = `<div class="ptop"><button class="ib" onclick="quit()" aria-label="Thoát"><i class="ti ti-x"></i></button><div class="bar grow"><span style="width:${P.i / P.steps.length * 100}%"></span></div>${P.kind === "mock" ? `<span class="timer" id="timer">${fmtTime(P.deadline - Date.now())}</span>` : progTxt()}</div><p class="ptitle">${title}${s.r ? ' · <span class="retry">làm lại câu sai</span>' : ""}</p><div class="pbody">`;
+  let h = `<div class="ptop"><button class="ib" onclick="quit()" aria-label="Thoát"><i class="ti ti-x"></i></button><div class="bar grow"><span style="width:${P.i / P.steps.length * 100}%"></span></div>${P.kind === "mock" ? `<span class="timer" id="timer">${fmtTime(mockLeft())}</span>` : progTxt()}</div><p class="ptitle">${title}${s.r ? ' · <span class="retry">làm lại câu sai</span>' : ""}</p><div class="pbody">`;
   h += ({ words: rWords, gram: rGram, mcq: rMcq, dict: rDict, trans: rTrans, order: rOrder, speak: rSpeak, read: rRead, write: rWrite, gf: rGf, ge: rGe, gr: rGr, xs: rXs, xintro: rXintro, xsec: rXsec })[s.type](s);
   h += `</div><div id="fb" class="fb" role="status"></div>`;
   app().innerHTML = h; window.scrollTo(0, 0);
@@ -563,7 +675,7 @@ function showStep() {
 }
 const baseN = p => p.steps.filter(s => !s.r).length;
 function progTxt() { const b = baseN(P), rq = P.steps.length - b; return P.i < b ? `<span class="muted sm prog">${P.i + 1}/${b}${rq ? ` <span class="requeue">+${rq} làm lại</span>` : ""}</span>` : `<span class="muted sm prog"><span class="requeue">Làm lại ${P.i - b + 1}/${rq}</span></span>`; }
-function cont(cls, msg) { const f = $("#fb"); f.className = "fb on " + (cls || ""); f.innerHTML = `<div class="fbin">${msg || ""}<button class="btn primary full lg" id="nextb" onclick="nextStep()">Tiếp tục <span class="kbd">Enter</span></button></div>`; fitFb(); toastFit(); }
+function cont(cls, msg) { const f = $("#fb"); f.className = "fb on " + (cls || ""); f.innerHTML = `<div class="fbin">${msg || ""}<button class="btn primary full lg" id="nextb" onclick="nextStep()">Tiếp tục <span class="kbd">Enter</span></button></div>`; fitFb(); toastFit(); setTimeout(toastFit, 280); }
 /* Thanh kết quả không được che đáp án: chừa chỗ phía dưới và cuộn để thấy đáp án đúng và lựa chọn của bạn */
 function fitFb() {
   const f = $("#fb"), pb = $(".pbody"); if (!f || !pb) return;
@@ -580,7 +692,7 @@ function grade(ok, ans, note, extra, neutral) {
   if (!s.r) { P.tot++; if (ok) P.ok++; if (s.sk) { addSkill(s.sk, ok); const v = P.sk[s.sk] || (P.sk[s.sk] = [0, 0]); v[1]++; if (ok) v[0]++; } }
   if (ok && P.kind !== "place") { const g = s.r ? 3 : s.card ? 5 : 10; P.xp += g; }
   if (!ok) P.wrong++;
-  if (s.card) { const c = S.cards[s.card], wasDue = c.due <= Date.now(); if (ok) { if (wasDue) c.box = Math.min(7, c.box + 1); c.due = Math.max(c.due, Date.now() + INT[c.box] * DAY); S.cnt.review++; } else { c.box = 1; c.due = Date.now() + 10 * 60000; } }
+  if (s.card) { const c = S.cards[s.card], wasDue = c.due <= Date.now(); if (ok) { if (wasDue) c.box = Math.min(7, c.box + 1); c.due = Math.max(c.due, Date.now() + INT[c.box] * DAY); S.cnt.review++; } else { c.box = Math.min(c.box, 1); c.due = Date.now() + 10 * 60000; } }
   if (s.fix) { const m = S.mistakes[s.fix]; if (m) { if (ok) { m.n--; if (m.n <= 0) delete S.mistakes[s.fix]; } else m.n++; } }
   if (!ok && P.kind !== "place" && !s.fix) recordMistake(s);
   if (!ok && (P.kind === "lesson" || P.kind === "gram") && ["mcq", "dict", "trans", "order", "gf", "ge", "gr"].includes(s.type) && (s.r || 0) < 2) requeue(s);
@@ -652,13 +764,13 @@ function chip(k) { const s = P.steps[P.i]; if (P.ans) return; s.ans.push(s.pool.
 function unchip(k) { const s = P.steps[P.i]; if (P.ans) return; s.pool.push(s.ans.splice(k, 1)[0]); drawOrder(); }
 function checkOrder() { const s = P.steps[P.i]; if (s.pool.length) { $("#er").textContent = "Hãy xếp hết các từ trước."; return; } $("#er").textContent = ""; $("#chk").remove(); const got = norm(s.ans.map(c => c.w).join(" ")), want = norm(s.en), mv = x => { const m = x.match(/^(today|tomorrow|yesterday|now|sometimes|usually|tonight|then|finally|first|unfortunately|fortunately|luckily) (.+)$/); return m ? m[2] + " " + m[1] : x; }, ok = got === want || mv(got) === mv(want);
   // Sai thứ tự: hai dòng riêng, dòng của bạn tô đỏ những từ đứng sai chỗ
-  if (!ok) { const want2 = orderWords(s.en), mine = s.ans.map(c => c.w); $("#ln").insertAdjacentHTML("afterend", `<div class="diffbox"><p class="lab">Bạn xếp</p><p class="diff">${mine.map((w, i) => norm(w) === norm(want2[i] || "") ? `<span>${esc(w)}</span>` : `<span class="dx">${esc(w)}</span>`).join(" ")}</p><p class="lab">Câu đúng</p><p><b>${esc(s.en)}</b></p><p class="sm muted"><span class="dx">Gạch đỏ</span> là từ đứng sai chỗ.</p></div>`); }
+  if (!ok) { const want2 = orderWords(s.en), mine = s.ans.map(c => c.w); $("#ln").insertAdjacentHTML("afterend", `<div class="diffbox"><p class="lab">Bạn xếp</p><p class="diff">${mine.map((w, i) => norm(w) === norm(want2[i] || "") ? `<span>${esc(w)}</span>` : `<span class="dmv">${esc(w)}</span>`).join(" ")}</p><p class="lab">Câu đúng</p><p><b>${esc(s.en)}</b></p><p class="sm muted"><span class="dmv">Gạch dưới đỏ</span> là từ đứng sai chỗ.</p></div>`); }
   grade(ok, esc(s.en)); say(s.en); }
 function rSpeak(s) {
   return `<p class="lab"><i class="ti ti-microphone"></i> Nói · Nghe mẫu rồi nói theo</p><div class="say"><h2 id="sayt">${esc(s.en)}</h2>${s.ipa ? `<p class="ipa">/${esc(s.ipa)}/</p>` : ""}<p class="vi">${esc(s.vi)}</p></div>${P.kind === "mock" ? "" : `<div class="c">${spk(s.en, "xl")}${slowBtn(s.en)}</div>`}
   <div id="mic">${SR && !micBlocked ? `<button class="btn primary full lg" onclick="doMic()"><i class="ti ti-microphone"></i> Bấm rồi nói</button><button class="link c" onclick="$('#mic').innerHTML=selfRate()">Không dùng micro được?</button>` : selfRate()}</div>`;
 }
-function selfRate(msg) { if (P && P.kind === "mock") return `<p class="muted c sm">${msg ? msg + "<br>" : ""}Không có micro nên câu này không được chấm.<br>Lần thi này sẽ không được công nhận đạt.</p><button class="btn primary full" onclick="const s=P.steps[P.i];s.part=0;s.unrated=1;grade(false,'')">Tiếp tục</button>`; return `<p class="muted c sm">${msg || "Nghe mẫu, nói to theo 2–3 lần cho trôi chảy, rồi tự đánh giá."}</p><div class="row2"><button class="btn" onclick="grade(false,'')">Chưa được</button><button class="btn primary" onclick="grade(true,'','Tốt lắm! Giữ nhịp như vậy nhé.')">Nói được rồi</button></div>`; }
+function selfRate(msg) { if (P && P.kind === "mock") return `<p class="muted c sm">${msg ? msg + "<br>" : ""}Không có micro nên câu này không được chấm.<br>Lần thi này sẽ không được ghi nhận đạt.</p><button class="btn primary full" onclick="const s=P.steps[P.i];s.part=0;s.unrated=1;grade(false,'')">Tiếp tục</button>`; return `<p class="muted c sm">${msg || "Nghe mẫu, nói to theo 2–3 lần cho trôi chảy, rồi tự đánh giá."}</p><div class="row2"><button class="btn" onclick="grade(false,'')">Chưa được</button><button class="btn primary" onclick="grade(true,'','Tốt lắm! Giữ nhịp như vậy nhé.')">Nói được rồi</button></div>`; }
 function doMic() {
   const s = P.steps[P.i]; $("#mic").innerHTML = `<div class="listening"><span class="dot"></span> Đang nghe... hãy nói câu trên</div><button class="link c" onclick="stopMic()">Dừng</button>`;
   listenMic(alts => {
@@ -730,13 +842,21 @@ function kwLine(min, n) { const k = Math.max(1, Math.ceil(n * 0.7)); return `Ít
 const NOPASTE = "Bài thi không cho dán văn bản, hãy tự gõ.";
 function mockBefore(e) { if (!P || P.kind !== "mock") return; const t = e.inputType || "", d = e.data || (e.dataTransfer && e.dataTransfer.getData && e.dataTransfer.getData("text")) || "";
   if (/^insertFrom/.test(t) || ((t === "insertText" || t === "insertReplacementText" || t === "insertCompositionText") && d.length > 25)) { e.preventDefault(); toast(NOPASTE); } }
-function mockInput(el) { if (!P || P.kind !== "mock") return true; const prev = el._prev || ""; if (el.value.length - prev.length > 25) { el.value = prev; toast(NOPASTE); return false; } el._prev = el.value; return true; }
-const MOCK_GUARD = `onpaste="event.preventDefault();toast(NOPASTE)" ondrop="event.preventDefault();toast(NOPASTE)" onbeforeinput="mockBefore(event)"`;
+/* Hoàn tác / làm lại (Ctrl+Z, phím hoàn tác, lắc máy) chỉ khôi phục chữ chính người học gõ (dán không vào được ngăn hoàn tác).
+   Chèn nhiều mảng nhỏ liên tiếp (dán từng đoạn 25 ký tự) mà gần như không gõ phím: cũng chặn */
+function mockInput(el, ev) { if (!P || P.kind !== "mock") return true; const t = (ev && ev.inputType) || "", prev = el._prev || "", add = el.value.length - prev.length, now = performance.now();
+  if (/^history(Undo|Redo)$/.test(t)) { el._prev = el.value; el._burst = []; return true; }
+  if (add > 25) { el.value = prev; toast(NOPASTE); return false; }
+  if (add > 0) { const b = (el._burst = (el._burst || []).filter(x => now - x[0] < 2000)); b.push([now, add, prev]);
+    el._keys = (el._keys || []).filter(x => now - x < 2000); const chars = b.reduce((a, x) => a + x[1], 0);
+    if (chars > 60 && el._keys.length < chars / 3) { el.value = b[0][2]; el._burst = []; el._prev = el.value; toast(NOPASTE); return false; } }
+  el._prev = el.value; return true; }
+const MOCK_GUARD = `onpaste="event.preventDefault();toast(NOPASTE)" ondrop="event.preventDefault();toast(NOPASTE)" onbeforeinput="mockBefore(event)" onkeydown="(this._keys=this._keys||[]).push(performance.now())"`;
 function rWrite(s) {
   const w = s.wr;
   const mock = P.kind === "mock";
   return `<p class="lab"><i class="ti ti-pencil"></i> Viết · ${mock ? "Bài viết" : "Viết đoạn văn ngắn"}</p><div class="say left">${w.en ? `<p><b>${esc(w.en)}</b></p><p class="sm muted">${esc(w.p)}</p>` : `<p><b>${esc(w.p)}</b></p>`}<p class="sm muted">${kwLine(w.min, w.kw.length)}</p>${kwChips(w.kw)}</div>
-  <textarea id="inp" rows="6" placeholder="Viết bằng tiếng Anh..." oninput="${mock ? "mockInput(this);" : ""}$('#wc').textContent=wcount(this.value)+' / ${w.min} từ';$('#er').textContent=''" autocapitalize="sentences" spellcheck="${mock ? "false" : "true"}" ${mock ? `autocorrect="off" ${MOCK_GUARD}` : ""}></textarea><p class="sm muted" id="wc">0 / ${w.min} từ</p><p class="err" id="er"></p><div id="wres"></div>
+  <textarea id="inp" rows="6" placeholder="Viết bằng tiếng Anh..." oninput="${mock ? "mockInput(this,event);" : ""}$('#wc').textContent=wcount(this.value)+' / ${w.min} từ';$('#er').textContent=''" autocapitalize="sentences" spellcheck="${mock ? "false" : "true"}" ${mock ? `autocorrect="off" ${MOCK_GUARD}` : ""}></textarea><p class="sm muted" id="wc">0 / ${w.min} từ</p><p class="err" id="er"></p><div id="wres"></div>
   <button class="btn primary full" id="chk" onclick="checkWrite()">${P.kind === "mock" ? "Nộp bài viết" : "Chấm bài"}</button>${P.kind === "mock" ? "" : `<button class="link" id="skipm" onclick="showModel()">Xem bài mẫu và bỏ qua</button>`}`;
 }
 async function checkWrite() {
@@ -750,7 +870,7 @@ async function checkWrite() {
   if (sk) sk.style.visibility = "";
   if (P.kind === "mock") { P.wres = { r, text: v, wr: w }; s.part = r.total / 10 * (s.pts || 10); grade(r.total >= 10, ""); return; }
   if (btn) { btn.disabled = false; btn.innerHTML = "Chấm lại"; }
-  $("#wres").innerHTML = Grader.report(r, w);
+  $("#wres").innerHTML = myReport(r, w, { id: "les" });
   const pass = r.total >= 5 && r.n >= w.min * 0.8;
   s.tries = (s.tries || 0) + 1;
   if (pass) { $("#er").textContent = ""; if (btn) btn.remove(); const sk2 = $("#skipm"); if (sk2) sk2.remove(); $("#inp").disabled = true; showModelBox(); grade(true, "", `Đạt ${r.total}/10 điểm!`); }
@@ -786,21 +906,21 @@ function finish() {
     const n = P.ok; let start, msg; const c = { a1: 0, a2: 0, b1: 0, b2: 0, c1: 0 }, lvd = P.steps.some(s => s.lv); P.steps.forEach(s => { if (s.lv && s.got && !s.r) c[s.lv] = (c[s.lv] || 0) + 1; });
     if (lvd) {
       // 9/11 câu A1 là đã vững A1; một hai câu sơ suất ở A1 không kéo người học giỏi xuống thấp
-      if (c.a1 <= 3) { start = "s0-1"; msg = "Bạn nên bắt đầu từ <b>Chặng 0 – Làm quen âm</b> để có nền phát âm chắc."; }
+      if (c.a1 <= 3) { start = "s0-1"; msg = "Bạn nên bắt đầu từ <b>Chặng&nbsp;0&nbsp;– Làm&nbsp;quen&nbsp;âm</b> để có nền phát âm chắc."; }
       else if (c.a1 <= 6) { start = "a1-1"; msg = "Bạn đã có chút nền. Bắt đầu từ <b>A1 – Bài 1</b>. Chặng 0 vẫn mở để bạn luyện phát âm."; }
       else if (c.a1 <= 8 && c.a2 <= 2) { start = "a1-13"; msg = "Bạn nắm khá tốt phần đầu A1. Đã mở đến <b>A1 – Bài 13</b>."; }
       else if (c.a2 <= 2) { start = "a2-1"; msg = "Bạn đã vững A1! Bắt đầu từ <b>A2 – Bài 1</b>. Bạn có thể quay lại ôn A1 bất cứ lúc nào."; }
-      else if (c.b1 <= 1) { start = "b1-1"; msg = "Bạn đã nắm chắc A2. Bắt đầu từ <b>B1 – Bài 1</b>. Nếu thấy khó, hãy làm bài kiểm tra vượt chặng A2 để ôn lại."; }
+      else if (c.b1 <= 1) { start = "b1-1"; msg = "Bạn đã nắm chắc A2. Bắt đầu từ <b>B1 – Bài 1</b>. Nếu thấy khó, hãy quay lại ôn các bài A2."; }
       else if (c.b2 <= 2 || c.b2 + c.c1 <= 5) { start = "b2-1"; msg = "Trình độ của bạn tốt. Bắt đầu từ <b>B2 – Bài 1</b>. Các chặng trước vẫn mở để bạn ôn."; }
-      else { start = "c1-1"; msg = "Rất ấn tượng! Bạn có thể học thẳng <b>C1 – Nâng cao</b>. Hãy làm bài kiểm tra vượt chặng B2 để xác nhận."; }
+      else { start = "c1-1"; msg = "Rất ấn tượng! Bạn có thể học thẳng <b>C1 – Nâng cao</b>. Nếu muốn chắc chắn, hãy làm bài kiểm tra vượt chặng B2 trong Lộ trình."; }
     }
-    else if (n <= 3) { start = "s0-1"; msg = "Bạn nên bắt đầu từ <b>Chặng 0 – Làm quen âm</b> để có nền phát âm chắc."; }
+    else if (n <= 3) { start = "s0-1"; msg = "Bạn nên bắt đầu từ <b>Chặng&nbsp;0&nbsp;– Làm&nbsp;quen&nbsp;âm</b> để có nền phát âm chắc."; }
     else if (n <= 7) { start = "a1-1"; msg = "Bạn đã có chút nền. Bắt đầu từ <b>A1 – Bài 1</b>. Chặng 0 vẫn mở để bạn luyện phát âm."; }
     else if (n <= 10) { start = "a1-13"; msg = "Bạn nắm khá tốt phần đầu A1. Đã mở đến <b>A1 – Bài 13</b>."; }
     else if (n <= 13) { start = "a2-1"; msg = "Bạn đã vững A1! Bắt đầu từ <b>A2 – Bài 1</b>. Bạn có thể quay lại ôn A1 bất cứ lúc nào."; }
-    else if (n <= 16) { start = "b1-1"; msg = "Bạn đã nắm chắc A2. Bắt đầu từ <b>B1 – Bài 1</b>. Nếu thấy khó, hãy làm bài kiểm tra vượt chặng A2 để ôn lại."; }
+    else if (n <= 16) { start = "b1-1"; msg = "Bạn đã nắm chắc A2. Bắt đầu từ <b>B1 – Bài 1</b>. Nếu thấy khó, hãy quay lại ôn các bài A2."; }
     else if (n <= 19) { start = "b2-1"; msg = "Trình độ của bạn tốt. Bắt đầu từ <b>B2 – Bài 1</b>. Các chặng trước vẫn mở để bạn ôn."; }
-    else { start = "c1-1"; msg = "Rất ấn tượng! Bạn có thể học thẳng <b>C1 – Nâng cao</b>. Hãy làm bài kiểm tra vượt chặng B2 để xác nhận."; }
+    else { start = "c1-1"; msg = "Rất ấn tượng! Bạn có thể học thẳng <b>C1 – Nâng cao</b>. Nếu muốn chắc chắn, hãy làm bài kiểm tra vượt chặng B2 trong Lộ trình."; }
     S.placement = n; ORDER.slice(0, ORDER.indexOf(start) + 1).forEach(id => S.unlocked[id] = true);
     h = `<h1>Kết quả: ${n}/${P.tot} câu đúng</h1><p>${msg}</p>`; btns = `<button class="btn primary full lg" onclick="openIntro('${start}')">Bắt đầu học</button><button class="btn full" onclick="nav('road')">Xem lộ trình</button>`;
   }
@@ -842,12 +962,15 @@ if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
 }
 if (window.matchMedia) try { matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => applyTheme()); } catch (e) {}
 document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") last = Date.now(); });
+MIG_READY = true; try { migrateContent(S); } catch (e) {}
+if (load.broken) setTimeout(() => toast("Dữ liệu học cũ trên máy bị hỏng nên không đọc được.<br>App đã giữ lại một bản sao. Nếu có mã hoặc tệp sao lưu, hãy khôi phục trong Hồ sơ.", 8000), 900);
 /* ================= Ngắt dòng có nghĩa =================
    Chỉ đụng tới chữ tiếng Việt: không tách từ ghép, số đi với đơn vị, không để một âm tiết mồ côi ở dòng cuối,
    không để dấu "·" hay chữ đầu câu mới bị treo ở cuối dòng. Chữ tiếng Anh, ô nhập liệu, bài đọc không bị đổi. */
 const VI_CH = /[àáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđ]/i;
 /* Từ ghép 2–3 âm tiết (Viet74K ∩ chữ trong app, đã lọc bỏ cụm hư từ ghép sai) */
 const VWORDS = new Set("an toàn|anh chị|anh chị em|ba mươi|ba tuần|ban công|ban đêm|bao giờ|bao gồm|bao lâu|bao nhiêu|biên bản|biên lai|biên tập|biên tập viên|biến đổi|biến động|biết tiếng|biết ơn|biển báo|biểu tượng|biện minh|biện pháp|buồn bực|buổi chiều|buổi sáng|buổi trưa|buổi tối|bà ngoại|bà nội|bài giảng|bài hát|bài học|bài kiểm tra|bài mẫu|bài nghe|bài thi|bài tập|bài viết|bài đọc|bàn chân|bàn giao|bàn phím|bàn tay|bàn thờ|bác bỏ|bác sĩ|bám sát|bán hoa|bán hàng|bánh chưng|bánh mì|bánh ngọt|bánh trung thu|báo chí|báo cáo|báo hiệu|bát tràng|bát đĩa|bây giờ|bãi biển|bên cạnh|bên dưới|bên ngoài|bên trong|bình luận|bình thường|bình tĩnh|bình đẳng|bí mật|bí ẩn|bóng đá|bóp méo|bù nhìn|bút chì|bơi lội|bưu kiện|bưu thiếp|bưu điện|bước ngoặt|bước đầu|bướng bỉnh|bạn bè|bạn học|bạn thân|bạn đọc|bản chất|bản năng|bản thân|bản tin|bản xứ|bản đồ|bảng chữ cái|bảo dưỡng|bảo hiểm|bảo hành|bảo mật|bảo tàng|bảo vệ|bấm loa|bấm nút|bấm vào|bất bình|bất bình đẳng|bất chấp|bất cẩn|bất cứ|bất kể|bất lịch sự|bất ngờ|bất tiện|bầu không khí|bầu trời|bậc thầy|bận rộn|bật hơi|bắt buộc|bắt cá|bắt nguồn|bắt đầu|bắt đầu từ|bằng chứng|bằng cấp|bến tre|bền chặt|bền vững|bệnh nhân|bệnh viện|bị thương|bị động|bỏ chạy|bỏ dở|bỏ lỗi|bỏ lỡ|bỏ phiếu|bỏ qua|bỏ quên|bỏ sót|bỏ thuốc|bỏ đi|bố cục|bố mẹ|bốc đồng|bối cảnh|bối rối|bốn mươi|bồi thường|bổ sung|bổ trợ|bỗng nhiên|bộ ba|bộ luật|bộ phận|bờ biển|bởi vì|bữa tiệc|bực mình|ca sĩ|cao cấp|cao nhất|cao tốc|cha mẹ|chi phí|chi tiêu|chi tiết|chi trả|chia bài|chia sẻ|chiến dịch|chiến lược|chiếu phim|cho mượn|cho phép|cho rằng|cho đến|choáng ngợp|chuyên gia|chuyên môn|chuyên mục|chuyên nghiệp|chuyên ngành|chuyến xe|chuyển khoản|chuyển nhà|chuyển tiếp|chuyển đổi|chuẩn bị|chuẩn xác|chuỗi ngày|chào hỏi|chào mừng|chán quá|cháy nắng|châm biếm|châm chọc|chân răng|chân váy|chí minh|chính phủ|chính quyền|chính sách|chính thức|chính tả|chính xác|chó mèo|chóng mặt|chú rể|chú ý|chúc mừng|chúng ta|chúng tôi|chăm chỉ|chăm sóc|chưa từng|chương trình|chạy thoát|chạy đua|chấm bài|chấm dứt|chấm phần|chấm điểm|chấn thương|chấp nhận|chất liệu|chất lượng|chất thải|chất đạm|chậm nhất là|chậm rãi|chậm tiến|chậm trễ|chắc chắn|chắc hẳn|chẳng bao lâu|chẳng hạn|chặng đường|chặt chẽ|chế biến|chế độ|chỉ cần|chỉ dẫn|chỉ số|chỉ trích|chị em|chị gái|chịu đựng|chọn lọc|chống lại|chỗ ngồi|chỗ trống|chợ nổi|chụp ảnh|chủ nghĩa|chủ ngữ|chủ nhật|chủ quan|chủ sở hữu|chủ trì|chủ yếu|chủ điểm|chủ đích|chủ đề|chủ động|chức năng|chứng chỉ|chứng khoán|chứng kiến|chứng minh|chứng nhận|chừng mực|chữ cái|chữ viết|con cái|con gái|con người|con sông|con số|con tàu|con đường|cung cấp|cuối bài|cuối cùng|cuối tuần|cuộc họp|cuộc sống|cuộc đua|cuộc đời|cà chua|cà phê|cà phê sữa|cà rốt|cà vạt|cài đặt|cá nhân|cách diễn|cái bàn|cái gì|cái răng|cánh tay|cánh đồng|cáo buộc|cân bằng|cân nhắc|câu chuyện|câu hỏi|câu kết|câu lạc bộ|câu nói|câu sai|câu trả lời|câu ví|câu văn|cây bút|cây non|còn lại|có lý|có lẽ|có lỗi|có lợi|có mặt|có nghĩa|có phải|có sẵn|có thể|có vấn đề|có vẻ|cô dâu|cô đơn|cô đọng|côn trùng|công bố|công chúng|công cộng|công kích|công nghiệp|công nghệ|công nhân|công nhận|công sở|công sức|công thức|công trình|công ty|công viên|công việc|cù lao|cù lao xanh|cùng lúc|cùng nhau|căn cứ|căn hộ|căng thẳng|cũng vậy|cơ bản|cơ chế|cơ hội|cơ sở|cơ thể|cơm chiên|cư dân|cải thiện|cải tạo|cảm giác|cảm kích|cảm lạnh|cảm nhận|cảm thấy|cảm xúc|cảm động|cảm ơn|cảnh báo|cảnh sát|cảnh tỉnh|cấm đoán|cấp độ|cất cánh|cất lời|cấu thành|cấu trúc|cấu tạo|cần thiết|cần thơ|cầu lông|cầu thang|cẩn thận|cập nhật|cậu bé|cắn răng|cắt cổ|cắt giảm|cắt tóc|cẳng chân|cố gắng|cố tình|cố vấn|cố ý|cố định|cốt lõi|cốt truyện|cổ họng|cổ phiếu|cổ xưa|cột mốc|cởi mở|cụ thể|cụm từ|củng cố|cửa hàng|cửa ngõ|cửa ra|cửa sổ|cửu long|danh sách|danh từ|dao hai lưỡi|di cư|di sản|dinh dưỡng|diễn giải|diễn thuyết|diễn tả|diễn tập|diễn viên|diễn đạt|do đó|doanh nghiệp|doanh số|du khách|du lịch|duy nhất|duy trì|dài hạn|dàn ý|dành dụm|dân nghèo|dân số|dù cho|dù sao|dùng từ|dưa hấu|dưa leo|dường như|dược sĩ|dấu chấm|dấu câu|dấu hiệu|dấu phẩy|dấy lên|dần dần|dẫn dắt|dễ chịu|dễ dàng|dễ hiểu|dễ ợt|dị ứng|dịch vụ|dọn dẹp|dụng cụ|dữ liệu|dự báo|dự kiến|dự tính|dự án|dự đoán|dự định|e ngại|em bé|em gái|em họ|ghen tị|ghi chép|ghi nhận|ghi nhớ|ghi âm|gia sư|gia tài|gia tăng|gia đình|giai thoại|gian lận|giao diện|giao hàng|giao thông|giao tiếp|giá cả|giá thị trường|giá trị|gián tiếp|giáo dục|giáo viên|giúp đỡ|giả sử|giả thuyết|giả vờ|giả định|giải lao|giải pháp|giải quyết|giải thích|giảm chi|giảm giá|giảm nhẹ|giảm thiểu|giảm đau|giản dị|giảng viên|giấc mơ|giấc ngủ|giấy ghi nhận|giận dữ|giặt giũ|giọng nói|giọng điệu|giọng đọc|giọt nước|giỏ hàng|giới hạn|giới thiệu|giới từ|giờ giấc|giờ ăn|giờ đây|giữ lại|giữ nguyên|giữ ý|giữa chừng|gây bệnh|góp phần|góp ý|gượng gạo|gạch chân|gạch đầu dòng|gạo nếp|gạt bỏ|gấp đôi|gần như|gần đây|gốc rễ|gốc từ|gợi ý|hai mươi|hai mặt|hiếu khách|hiển nhiên|hiển thị|hiểu biết|hiểu lầm|hiện hành|hiện tượng|hiện tại|hiện đại|hiệu quả|hiệu suất|hiệu trưởng|hoa đào|hoang dã|hoài bão|hoài niệm|hoàn chỉnh|hoàn cảnh|hoàn hảo|hoàn lại|hoàn thành|hoàn toàn|hoàn tác|hoàng đế|hoảng loạn|hung hăng|huy hiệu|huyết áp|hy vọng|hà nội|hài hước|hài lòng|hàm răng|hàm ý|hàn huyên|hàng không|hàng nghìn|hàng xóm|hành chính|hành doanh|hành trình|hành tây|hành vi|hành động|hào hứng|hào phóng|há hốc|hình dung|hình như|hình thức|hình ảnh|hòn đảo|hôm nay|hôm qua|hôm sau|hôm trước|hùng biện|hút bụi|hơn hẳn|hơn hết|hơn nữa|hơn thế nữa|hư hại|hư hỏng|hướng dẫn|hướng dẫn viên|hạ tầng|hạn chế|hạn hán|hạn hẹp|hạn định|hạt giống|hạt tiêu|hải phòng|hải quan|hầu hết|hầu như|hậu quả|hậu tố|hắt hơi|hằng ngày|hết giờ|hết sức|hệ thống|họ hàng|học bổng|học giới|học hiệu|học hành|học kỳ|học lại|học phí|học sinh|học thuật|học tập|học viên|họp báo|hỏng mắt|hối hận|hối tiếc|hồ sơ|hồi hộp|hồi lâu|hồi phục|hồi tưởng|hổn hển|hỗ trợ|hỗn hợp|hộ chiếu|hội an|hội chợ|hội nghị|hội thoại|hội tụ|hộp thư|hợp lý|hợp lệ|hợp tác|hợp đồng|hụt hơi|hủy bỏ|hữu thanh|hữu ích|im lặng|keo kiệt|khi nào|khiếu nại|kho báu|kho ôn tập|khoa học|khoai tây|khoảng cách|khoảng trống|khu phố|khu vực|khuyến khích|khuyến nghị|khuyết thiếu|khuôn mẫu|khuôn mặt|khác biệt|khác nhau|khách du|khách hàng|khách quan|khách sạn|khái quát|khái quát hóa|khám bệnh|khám phá|khán giả|kháng sinh|khéo léo|khét tiếng|khí hậu|khích lệ|khó hiểu|khó khăn|khó xử|khó đọc|khôi phục|khôn ngoan|không gian|không hề|không khí|không những|không phải|không thể|không thể nào|khả năng|khả thi|khảo sát|khẩn cấp|khẩu ngữ|khẩu phần|khẳng định|khỏe mạnh|khối lượng|khởi hành|khởi động|khủng hoảng|kim loại|kinh nghiệm|kinh ngạc|kinh thành|kinh tế|kinh đô|kiên nhẫn|kiên quyết|kiêu ngạo|kiến thức|kiến trúc|kiểm chứng|kiểm tra|kiệt sức|kiệt tác|kéo dài|kích cỡ|kích hoạt|kích thước|ký hiệu|kẻ trộm|kế hoạch|kế tiếp|kết bạn|kết hôn|kết hợp|kết luận|kết nối|kết quả|kết thúc|kết trái|kể chuyện|kể lại|kể từ|kịch bản|kịch tính|kỷ luật|kỷ lục|kỷ niệm|kỹ năng|kỹ sư|kỹ thuật|lan truyền|linh hoạt|linh động|liên hệ|liên kết|liên lạc|liên quan|liên tiếp|liên tục|liệt kê|lo lắng|lo ngại|lo âu|loại bỏ|loại từ|luyện lại|luyện tập|luôn luôn|luẩn quẩn|luận thuyết|luận điểm|luật lệ|làm bài|làm bằng|làm cho|làm chủ|làm gì|làm hỏng|làm lại|làm ngơ|làm phiền|làm quen|làm ra|làm tin|làm tình|làm việc|làm xong|làm đổ|làm ơn|làm ẩu|lành mạnh|lái xe|lâm sàng|lâu dài|lâu đài|lãi suất|lãng phí|lãnh đạo|lên giọng|lên đường|lì xì|lòng vòng|lôi cuốn|lúc này|lúc đó|lý do|lý lịch|lý thuyết|lý tưởng|lăn bánh|lăng mộ|lĩnh vực|lũ lụt|lưu loát|lưu niệm|lưu ý|lương thực|lười biếng|lưỡi mềm|lưỡng lự|lược bỏ|lạc đà|lạc đường|lạc đề|lạm dụng|lạm phát|lấy làm|lấy lại|lần lượt|lập kế|lập luận|lập trường|lập tức|lật thẻ|lắng nghe|lắp đặt|lặp lại|lẽ ra|lễ hội|lễ tân|lịch sự|lịch trình|lịch đại|lối sống|lỗ hổng|lỗi sai|lộ trình|lớn lên|lớp học|lời giải|lời hứa|lời khuyên|lời nói|lỡ cơ|lợi nhuận|lợi thế|lợi ích|lừa đảo|lửa bền|lửa nhỏ|lựa chọn|manh mối|may mắn|minh họa|miêu tả|miền nam|miền tây|miễn dịch|miễn là|miễn phí|miệt mài|mong chờ|mong muốn|mong đợi|mua sắm|muối bỏ bể|muộn màng|mà còn|màn hình|màu sắc|mái tóc|mát mẻ|máy bay|máy móc|máy nghe|máy tính|mâu thuẫn|mãn tính|móc túi|món hàng|món ăn|mô phỏng|mô tả|môi trường|môn học|mùa hè|mùa khô|mùa thu|mùa xuân|mùa đông|măng tô|mơ hồ|mưa như trút|mươi lăm|mười lăm|mạch lạc|mạo từ|mất công|mất ngủ|mấu chốt|mầm non|mẫu đơn|mật khẩu|mắc kẹt|mắc lỗi|mặc dù|mặt khác|mặt trời|mặt đất|mệnh lệnh|mệnh đề|mệt mỏi|mỉa mai|mỉm cười|mồ hôi|mỗi ngày|mỗi tuần|một chút|một cách|một lần|một mình|một mặt|một số|một ít|mới nảy mầm|mới đó|mở cửa|mở miệng|mở rộng|mở đường|mở đầu|mục tiêu|mục đích|mức lương|mức nhớ|mức độ|mực nước|ngay lập tức|nghe chậm|nghe nói|nghe thấy|nghe thử|nghi ngờ|nghiêm khắc|nghiêm nghị|nghiêm trọng|nghiêm túc|nghiên cứu|nghèo đói|nghìn năm|nghĩ ra|nghĩa là|nghĩa vụ|nghề nghiệp|nghỉ hưu|nghỉ ngơi|nghỉ việc|nghị luận|nghịch lý|nghịch ngợm|ngoài ra|ngoài trời|ngoại giao|ngoại hình|ngoại ngữ|ngoại phạm|ngoại động|ngoại động từ|ngoạn mục|nguy cơ|nguy hiểm|nguyên liệu|nguyên mẫu|nguyên nhân|nguyên văn|nguyên âm|nguyên đán|nguồn tin|ngày càng|ngày kia|ngày lễ|ngày mai|ngày nay|ngày sinh|ngày tháng|ngày thường|ngày trước|ngày xưa|ngân hàng|ngân hàng đề|ngân sách|ngôi nhà|ngôi thứ|ngôi thứ ba|ngôn ngữ|ngôn từ|ngăn kéo|người già|người học|người làm|người lạ|người lớn|người máy|người nhà|người phát ngôn|người ta|người thân|ngược lại|ngượng ngùng|ngạc nhiên|ngần ngại|ngẫu nhiên|ngập lụt|ngắn gọn|ngắn hạn|ngắt lời|ngọn đuốc|ngọn đèn|ngộ độc|ngụ ý|ngủ dậy|ngủ gục|ngủ ngon|ngủ quên|ngủ thiếp|ngữ cảnh|ngữ pháp|ngữ điệu|nhanh chóng|nhiên liệu|nhiệm vụ|nhiệt độ|nhu cầu|nhà báo|nhà bếp|nhà cửa|nhà ga|nhà hàng|nhà máy|nhà ngoại|nhà thuốc|nhà thơ|nhà ở|nhàm chán|nhân chứng|nhân quả|nhân tạo|nhân viên|nhân vật|nhân đạo|nhã nhặn|nhìn chung|nhìn nhận|nhìn thấy|nhút nhát|như nhau|như thế|như vậy|nhược điểm|nhượng bộ|nhạc cụ|nhạt nhẽo|nhạy cảm|nhảy dù|nhảy múa|nhấn mạnh|nhất là|nhận lời|nhận ra|nhận thức|nhận xét|nhập khẩu|nhắc lại|nhắc nhở|nhắn tin|nhẹ lời|nhẹ nhàng|nhẹ nhõm|nhộn nhịp|nhớ lâu|nhớ lại|nhớ nhà|ninh bình|niềm tin|nào đó|nâng cao|nâng cấp|né tránh|nói chuyện|nói cách khác|nói khéo|nói lẫn|nói ra|nói rào|nói rõ|nói theo|nói thật|nói thẳng|nói to|nông dân|nông thôn|núi non|nút bấm|năm mươi|năm nay|năm ngoái|năm năm|năm qua|năm tuổi|năm tới|năng lượng|năng lực|nước cam|nước dừa|nước mưa|nước mắm|nước mặn|nước ngoài|nước sạch|nước ép|nảy mầm|nấu cơm|nấu ăn|nắm chắc|nắm vững|nặng nề|nối âm|nồi cơm điện|nổi bật|nổi tiếng|nỗ lực|nội dung|nửa đêm|nữ sinh|pha chế|phi công|phiên chợ|phiên âm|phiêu lưu|phiến diện|phong cách|phong cảnh|phong phú|phong tục|phàn nàn|phá hủy|phá kỷ lục|phá vỡ|phác thảo|pháo hoa|phát hiện|phát minh|phát ngôn|phát sóng|phát triển|phát âm|phân tích|phân từ|phê bình|phê duyệt|phòng khi|phòng khách|phòng ngủ|phóng viên|phù hợp|phúc lợi|phương pháp|phương tiện|phạm vi|phản biện|phản hồi|phản tác dụng|phản đối|phản ứng|phản ứng thế|phần lớn|phần nào|phần thưởng|phần trăm|phẩm chất|phỏng vấn|phổ biến|phổ thông|phụ lục|phụ nữ|phụ thuộc|phụ âm|phụ đề|phục hồi|phục vụ|phủ nhận|phủ định|phức tạp|qua sông|quan hệ|quan ngại|quan niệm|quan trọng|quan tâm|quan điểm|quanh năm|quay lại|quy hoạch|quy tắc|quy định|quyên góp|quyết tâm|quyết đoán|quyết định|quá hạn|quá khứ|quá mức|quá tay|quá trình|quá tải|quát mắng|quê hương|quản lý|quảng cáo|quần bò|quần soóc|quần áo|quầy hàng|quốc gia|quốc nội|quốc tế|ra hiệu|ra lệnh|ra mắt|ra vào|ra đi|ra đời|riêng lẻ|riêng tư|run rẩy|ruộng lúa|rào đón|rác thải|rõ ràng|rút gọn|rút tiền|rước đèn|rườm rà|rập khuôn|rắc rối|rốt cuộc|rộng rãi|rủi ro|rực rỡ|sai khiến|sai lầm|sang hình|sang số|sao chép|sao lưu|sau này|sau đó|sinh hoạt|sinh học|sinh nhật|sinh viên|sinh vật|siêu thị|siêu đẳng|so sánh|so với|soi xét|suy giảm|suy luận|suy nghĩ|suy thoái|suy yếu|suy đoán|suýt soát|sài gòn|sáng kiến|sáng lập|sáng suốt|sáng sớm|sân bay|sân chơi|sâu xa|sông cửu long|sông nước|sơ cấp|sơ mi|sơ yếu|sưu tập|sản phẩm|sản xuất|sắc bén|sắc thái|sắp quên|sắp xếp|sẵn có|sẵn sàng|số hiệu|số liệu|số lượng|số nhiều|số ít|sống sót|sống động|sổ tay|sở hữu|sở thích|sở thú|sợ hãi|sụp đổ|sứ quán|sức khỏe|sức mua|sử dụng|sửa chữa|sửa lỗi|sửa sang|sự cố|sự kiện|sự nghiệp|sự thật|sự việc|tai nạn|tai thính|tao nhã|tham dự|tham khảo|tham nhũng|thanh thiếu niên|thanh thản|thanh toán|thanh điệu|thao túng|thay thế|thay vì|thay đổi|then chốt|theo dõi|theo kịp|theo như|thi công|thi thử|thiên kiến|thiên lệch|thiên nhiên|thiên vị|thiết bị|thiết kế|thiết lập|thiết yếu|thiếu niên|thiện trí|thon thả|thoải mái|thu hút|thu nhập|thuyết phục|thuyết trình|thuật ngữ|thuật số|thuốc lá|thành công|thành danh|thành lập|thành ngữ|thành phố|thành thạo|thành thật|thành tích|thách thức|thái quá|thái độ|tháng ba|tháng bảy|tháng chín|tháng hai|tháng mười|tháng mười hai|tháng mười một|tháng năm|tháng sáu|tháng trước|tháng tám|tháng tư|thâm hụt|thân mật|thân thiện|thân ái|thèm muốn|thì thầm|thí điểm|thích nghi|thích thú|thói quen|thô lỗ|thôi thúc|thông báo|thông cáo|thông công|thông dụng|thông minh|thông thường|thông tin|thú vị|thúc đẩy|thăm dò|thăng chức|thư giãn|thư thái|thư viện|thư điện tử|thưa hơn|thương lượng|thường dùng|thường ngày|thường thường|thường xuyên|thưởng thức|thảo luận|thất bại|thất hứa|thất lạc|thất nghiệp|thất vọng|thần đồng|thầy giáo|thẩm định|thận trọng|thập kỷ|thật ra|thật sự|thắng cuộc|thắt lưng|thẳng thắn|thẳng thừng|thặng dư|thế giới|thế hệ|thế kỷ|thế nào|thể diện|thể dục|thể hiện|thể hình|thể thao|thỉnh thoảng|thị thực|thị trường|thỏa hiệp|thỏa thuận|thống kê|thống nhất|thờ cúng|thời gian|thời lượng|thời tiết|thời trang|thời điểm|thở dài|thợ may|thợ máy|thợ điện|thủ công|thủ pháp|thủ tục|thủ đô|thủy tinh|thứ ba|thứ bảy|thứ hai|thứ năm|thứ sáu|thứ tư|thứ tự|thức dậy|thức giả|thức uống|thừa nhận|thử lại|thử nghiệm|thử thách|thực hiện|thực phẩm|thực ra|thực sự|thực tập|thực tế|thực đơn|tin chắc|tin cậy|tin dùng|tin tức|tin đồn|tinh gọn|tinh thần|tinh tế|tiêu chí|tiêu cực|tiêu dùng|tiêu thụ|tiêu đề|tiến bộ|tiến độ|tiếng anh|tiếng lóng|tiếng việt|tiếng động|tiếng ồn|tiếp cận|tiếp diễn|tiếp quản|tiếp theo|tiếp tục|tiếp xúc|tiết chế|tiết kiệm|tiết lộ|tiết phụ|tiền bạc|tiền giang|tiền mặt|tiền thưởng|tiền tiêu|tiền tố|tiền đề|tiểu học|tiểu thuyết|tiện lợi|tiện ích|toàn bộ|toàn cầu|toàn diện|toàn phần|tra cứu|trang chủ|trang lứa|trang phục|trang trí|trang trọng|tranh cãi|tranh luận|trao đổi|tri giác|triều đại|triển khai|triển lãm|triệu chứng|triệu phú|trong suốt|trung bình|trung cấp|trung học|trung lập|trung thực|trung tâm|trung tính|trung ương|truy cập|truyền miệng|truyền thuyết|truyền thông|truyền thống|truyền đạt|truyện ngắn|tràn ngập|tràn đầy|trách nhiệm|trái cây|trái lại|trái nghĩa|trái ngược|trái tim|tráng miệng|trân trọng|trì hoãn|trình bày|trình báo|trình duyệt|trình tự|trình độ|trí nhớ|trí nhớ thép|trí tuệ|trích dẫn|trò chuyện|trò chơi|trôi chảy|trùng lặp|trăm năm|trước hết|trước khi|trước đây|trường học|trường hợp|trạng thái|trạng từ|trả lại|trả lời|trải nghiệm|trầm lặng|trật tự|trắc nghiệm|trẻ con|trẻ em|trẻ trung|trọn vẹn|trọng tâm|trọng âm|trốn thoát|trớ trêu|trở lên|trở ngại|trở nên|trở thành|trở đi|trợ cấp|trợ động từ|trừ khi|trừu tượng|trực tiếp|trực tuyến|tu từ|tuy nhiên|tuy vậy|tuyên bố|tuyển dụng|tuyệt chủng|tuyệt diệu|tuyệt vời|tuyệt đối|tuần trước|tuổi thơ|tài chính|tài khoản|tài liệu|tài xế|tàu hỏa|tàu điện|tác dụng|tác giả|tác động|tái chế|tái tạo|tán thành|tâm lý|tâm thành|tân ngữ|tây nguyên|tên chữ|tên riêng|tìm kiếm|tìm ra|tìm thấy|tình bạn|tình cờ|tình huống|tình hình|tình nguyện|tình thế|tình tiết|tình trạng|tích cực|tích hợp|tích lũy|tính chất|tính cách|tính giờ|tính nết|tính từ|tò mò|tóm lược|tóm lại|tóm tắt|tôn trọng|túi xách|tăng trưởng|tăng tốc|tư cách|tư duy|tương lai|tương quan|tương tự|tương đương|tương đối|tương đồng|tương ứng|tường thuật|tưởng tượng|tại nhà|tạm biệt|tạm thời|tạp chí|tất cả|tất yếu|tầm nhìn|tầm phào|tần suất|tận cùng|tập thể|tập thể dục|tập trung|tế nhị|tết nguyên đán|tỉ lệ|tỉnh giấc|tị nạn|tọa lạc|tọc mạch|tốc độ|tối qua|tối thiểu|tối đa|tốn kém|tốt bụng|tốt nghiệp|tổ chức|tổ tiên|tổ ấm|tổng hợp|tổng quan|tổng sản phẩm|tổng thể|tổng thời gian|tủ lạnh|tức giận|tức thì|từ bỏ|từ chối|từ chức|từ nối|từ thiện|từ trái nghĩa|từ vựng|từ điển|từ đồng nghĩa|tự hào|tự hỏi|tự nhiên|tự tin|tự tôn|tự xưng|tự đánh giá|tự động|tự động hóa|tỷ giá|tỷ lệ|uy tín|uyển ngữ|uống thuốc|vai trò|van nài|viên bao|viết hoa|việc làm|việc nhà|viện dẫn|viện trợ|vui lòng|vui sướng|vui vẻ|vào sổ|vì sao|vì thế|vì vậy|ví dụ|vòi sen|vòm miệng|vòng luẩn quẩn|vòng quanh|vô cùng|vô hình|vô thanh|vô trách nhiệm|vô tình|vô tư|văn bản|văn bằng|văn giới|văn học|văn phong|văn phòng|văn tự|vĩnh long|vũng tàu|vượt chặng|vượt qua|vạch trần|vải bông|vấn đề|vất vả|vận chuyển|vận động|vật liệu|vật lộn|vắng mặt|về quê|về sau|về trang|vệ sinh|vị trí|vội vàng|vội vã|vụ án|vứt bỏ|vừa mới|vừa phải|vừa qua|vừa rồi|vừa vặn|vững chắc|vững ngữ pháp|vững vàng|xa cách|xanh dương|xanh tốt|xao nhãng|xe buýt|xe hơi|xe lăn|xe máy|xe điện|xe đạp|xem lại|xem xét|xin lỗi|xin phép|xin việc|xoay xở|xu hướng|xuyên việt|xuất hiện|xuất khẩu|xuất phát|xuất sắc|xuất trình|xuống dòng|xuống giọng|xác lập|xác minh|xác nhận|xác định|xách tay|xây dựng|xã hội|xã luận|xảy ra|xấu hổ|xếp hàng|xổ số|xứ dừa|xử lý|y tá|y tế|yên bình|yên lặng|yên tĩnh|yêu cầu|yêu thích|yêu thương|yếu tố|ách tắc|ánh sáng|áo dài|áo khoác|áo mưa|áo sơ mi|áo thun|áo xanh|áp dụng|áp lực|âm cuối|âm nhạc|âm thanh|âm tiết|âm đầu|ít nhất|ít nói|ô nhiễm|ô tô|ôn tập|ông bà|ông ngoại|ông nội|ùn tắc|ý chí|ý kiến|ý nghĩa|ý thức|ý tưởng|ý tứ|ăn mừng|ăn trộm|đa dạng|đa dạng hóa|đang yếu|đau bụng|đau lưng|đau đầu|đe dọa|đi bộ|đi chơi|đi chợ|đi dọc|đi học|đi kèm|đi làm|đi lại|đi nghỉ|đi theo|đi thăm|đi thẳng|đi vào|đi vắng|điềm tĩnh|điều chỉnh|điều hành|điều hòa|điều khoản|điều kiện|điều phối|điều tra|điểm cao|điểm dừng|điện thoại|điện tử|đoán chừng|đoạn văn|đuổi theo|đà lạt|đà nẵng|đàm phán|đàn ông|đào tạo|đá bóng|đám cưới|đám mây|đám đông|đáng kể|đáng ngờ|đáng tin|đáng tiếc|đáng tiền|đánh dấu|đánh giá|đánh liều|đánh răng|đánh rơi|đánh trứng|đánh vần|đáp án|đáp ứng|đã thuộc|đã vững|đèn bàn|đèn dầu|đèn lồng|đèn điện|đòi hỏi|đóng cửa|đóng góp|đóng vai|đô la|đô thị|đô thị hóa|đôi bên|đông dân|đông đúc|đúng giờ|đúng lúc|đăng ký|đơn giản|đơn hàng|đơn thuốc|đơn vị|đơn xin|đưa ra|đưa tin|đương nhiên|đường cao|đường cao tốc|đường dây|đường sắt|đường đi|đại chúng|đại dương|đại học|đại sứ|đại sứ quán|đại thể|đại từ|đại ý|đạo văn|đất nước|đầu bài|đầu bếp|đầu lưỡi|đầu tiên|đầu tư|đầu vào|đầu đọc|đầy đủ|đắt đỏ|đặc biệt|đặc trưng|đặc ân|đặt hàng|đếm được|đến hạn|đến mức|đến nay|đến nơi|đề bài|đề cập|đề mục|đề nghị|đề xuất|đều đặn|đều đều|để lại|để lộ|để mắt|để ý|địa chỉ|địa danh|địa phương|địa điểm|định dạng|định kiến|định nghĩa|đọc bài|đọc to|đỏ hoe|đối chiếu|đối chứng|đối diện|đối lập|đối phó|đối phương|đồ dùng|đồ gốm|đồ uống|đồ vật|đồ ăn|đồng bằng|đồng cảm|đồng hồ|đồng nghiệp|đồng nghĩa|đồng phục|đồng tiền|đồng ý|đồng đội|đổ bộ|đổ lỗi|đổi mới|đổi ý|độ chính xác|độ dài|độ nhớ|độ tin cậy|độc giả|độc lập|độc quyền|động cơ|động lực|động từ|động vật|đột nhiên|đột phá|đời sống|đủ số|đứng dậy|đứng giữa|đứng đầu|ưu tiên|ưu điểm|ước lượng|ước mơ|ước nguyện|ước tính|ướt sũng|ảnh hưởng|ảnh ẩn|ấm áp|ấn tượng|ẩn dụ|ập đến|ồn ào|ổn định|ở lại|ủng hộ|ứng dụng|ứng phó|ứng tuyển|ứng viên".split("|"));
+["người nói", "người bạn", "bạn mới", "người bạn mới", "ghi nhận", "công nhận"].forEach(w => VWORDS.add(w));
 const VFUNC = new Set("và của là các những không để cho với ở một đã sẽ đang rất mỗi hoặc nhưng thì mà được bị khi nếu vì như theo trong trên dưới về đến từ".split(" "));
 const VUNIT = new Set("phút giờ giây câu từ bài ngày tuần tháng năm thẻ lượt cặp xp lần chặng cây lỗi đơn phần kỹ chủ điểm chữ âm".split(" "));
 const VLBL = /^(chặng|bài|cấp|bước|câu|đơn|phần|lần|ngày|tuần|đạt|thiếu|còn|mã|lớp|mục|top|lầu|tầng)$/i;
@@ -949,5 +1072,5 @@ function nextRect(el) { let n = el.nextSibling; while (n) { if (n.nodeType === 3
 function fixSeps() { fixSeps.q = 0; $$(".sep").forEach(sp => { const r = sp.getClientRects()[0]; if (!r) return; const nx = nextRect(sp); sp.classList.toggle("eol", !nx || nx.top > r.top + r.height * 0.5); }); }
 const queueSeps = () => { if (!fixSeps.q) { fixSeps.q = 1; requestAnimationFrame(() => requestAnimationFrame(fixSeps)); } };
 new MutationObserver(ms => { ms.forEach(m => m.addedNodes.forEach(x => { if (x.nodeType === 1 || (x.nodeType === 3 && x.parentNode)) keepTogether(x); })); queueSeps(); }).observe(document.documentElement, { childList: true, subtree: true });
-window.addEventListener("resize", queueSeps); document.addEventListener("toggle", e => { if (e.target.open) keepTogether(e.target); queueSeps(); }, true); if (document.fonts && document.fonts.ready) document.fonts.ready.then(queueSeps);
+window.addEventListener("resize", queueSeps); addEventListener("beforeprint", () => $$(".sep.eol").forEach(x => x.classList.remove("eol"))); addEventListener("afterprint", queueSeps); document.addEventListener("toggle", e => { if (e.target.open) keepTogether(e.target); queueSeps(); }, true); if (document.fonts && document.fonts.ready) document.fonts.ready.then(queueSeps);
 document.addEventListener("DOMContentLoaded", render);

@@ -492,3 +492,18 @@ a.foot{display:inline-block;padding:14px 8px}
 [data-theme=dark] .opt.picked .k{background:#8FA2FF;color:#0F1614;border-color:#8FA2FF}
 /* Màn hình thấp: nút Tiếp tục của phần chào mừng luôn thấy được */
 @media(max-height:700px){.onb .choice{padding:10px 14px;min-height:58px}.onb h1{font-size:24px}.onb .btn.primary.lg{position:sticky;bottom:12px;z-index:2;box-shadow:var(--sh2)}}
+/* Vòng 3 */
+/* Tìm lỗi sai: chỗ sai màu cam (xanh lá chỉ dùng cho "đúng"), bạn chọn sai màu đỏ */
+.etok.bad{background:var(--acc2);border-color:var(--acc);color:var(--acc-ink);text-decoration:line-through;text-decoration-color:var(--bad)}
+.geleg .bad::before{background:var(--acc)}
+/* Sắp xếp câu: từ đúng nhưng đứng sai chỗ thì gạch dưới lượn sóng (gạch ngang nghĩa là "bỏ đi") */
+.dmv{color:var(--bad);text-decoration:underline wavy var(--bad);text-underline-offset:4px;text-decoration-thickness:1.5px}
+/* Sổ tay: hàng nút lọc cuộn ngang, mờ dần ở mép phải để thấy còn nút */
+.chips2{-webkit-mask-image:linear-gradient(90deg,#000 85%,transparent);mask-image:linear-gradient(90deg,#000 85%,transparent);padding-right:28px}
+/* In giấy ghi nhận: dấu "·" luôn hiện */
+@media print{#cert .sep.eol{color:inherit!important}}
+/* Chào mừng trên màn hình thấp: nút Bắt đầu có nền che chữ phía sau */
+@media(max-height:700px){.onb .btn.primary.lg{bottom:10px;margin-bottom:10px;box-shadow:0 -14px 14px 6px var(--bg),0 10px 0 10px var(--bg)}}
+#toast.slim{padding:5px 14px;line-height:1.35}
+.gscore.pct b{font-size:19px;letter-spacing:-.02em}
+.done.fail .ring{background:conic-gradient(var(--warn,#C2410C) calc(var(--p)*1%),color-mix(in srgb,var(--warn,#C2410C) 16%,var(--card)) 0)}.done.fail .ring span{color:var(--warn,#C2410C)}
