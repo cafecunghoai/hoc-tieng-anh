@@ -88,3 +88,10 @@ Mỗi vòng, app được soát dưới ba vai: **chuyên gia dạy tiếng Anh*
 | Câu có trạng từ thời gian đặt đầu hoặc cuối đều đúng ("Today I am happy" / "I am happy today") nhưng chỉ chấp nhận một cách | Chấp nhận cả hai vị trí cho today, tomorrow, yesterday, now, usually, sometimes, finally... |
 | Màn hình chào mừng có chữ "lúc." rơi một mình xuống dòng; "Nghiêm túc · khuyến dùng" bị cắt đôi | Viết gọn lại câu, thêm các cụm không được tách (đúng lúc, sắp quên, đúng giờ) |
 | Tên cây trong Vườn từ vựng bị cắt cụt ("good aftern...") | Cho tên dài xuống tối đa 2 dòng |
+
+## Vòng 10 – Kiểm tra đầu vào và kết quả thi
+
+| Phát hiện | Cách sửa |
+|---|---|
+| Thi trượt chỉ báo chung chung "cần trung bình 60%, không kỹ năng nào dưới 40%", người học không biết mình thiếu ở đâu | Báo cụ thể như giáo viên: "Điểm trung bình còn thiếu 1%", "Viết 30% dưới mức tối thiểu 40%" |
+| Kiểm tra đầu vào: chạy thử 3 kiểu người học (đúng hết, sai hết, đúng một nửa) | Xếp lớp đúng: C1 (kèm khuyên thi xác nhận B2), Chặng 0, A2 |

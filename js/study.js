@@ -72,6 +72,12 @@ function openTopic(id) {
 function startTopic(id) { const T = GT[id]; const steps = T.items.map(x => gStep(x, T)); newP("gram", shuffle(steps.filter(s => s.type === "mcq")).concat(steps.filter(s => s.type === "gf"), steps.filter(s => s.type === "ge"), steps.filter(s => s.type === "gr")), { gid: id, title: T.t }); }
 function startGramQuiz(lv) { const its = GRAMMAR.filter(T => T.lv === lv).flatMap(T => T.items.map(x => [x, T])); newP("gram", pick(its, 15).map(x => gStep(x[0], x[1])), { title: "Kiểm tra ngữ pháp " + lv, quiz: lv }); }
 
+function failWhy(o, sk) {
+  const r = [], low = Object.keys(sk).filter(x => sk[x] < 40);
+  if (o < 60) r.push(`Điểm trung bình còn thiếu <b>${60 - o}%</b> để đạt 60%.`);
+  if (low.length > 2) r.push(`<b>${low.length} kỹ năng</b> dưới mức tối thiểu 40%.`); else if (low.length) r.push(`${low.map(x => SECN[x] + "\u00a0<b>" + sk[x] + "%</b>").join(", ")} dưới mức tối thiểu 40%.`);
+  return r.join("<br>");
+}
 /* ---------- Trang Thi thử ---------- */
 function vExam() {
   const certs = LV.filter(l => S.certs[l]);
@@ -157,7 +163,7 @@ function finishStudy() {
   const weak = Object.keys(skills).sort((a, b) => skills[a] - skills[b])[0];
   const advice = { listen: "Nghe mỗi ngày 10–15 phút: làm lại bài nghe chép trong các bài học, dùng nút Nghe chậm.", read: "Đọc thêm các bài đọc trong lộ trình, gạch chân từ khóa trong câu hỏi trước khi đọc.", use: "Vào tab Ngữ pháp, luyện các chủ điểm cấp " + lv + " cho đến khi đạt 80%.", write: "Viết lại các đề trong bài học, sửa hết lỗi gạch chân và so với bài mẫu.", speak: "Luyện nói nhại theo câu mẫu mỗi ngày, ghi âm và nghe lại giọng của mình." }[weak];
   app().innerHTML = `<div class="done"><div class="ring xl" style="--p:${overall}"><span>${overall}%</span></div><h1>${merit ? "Đạt xuất sắc " + lv + "!" : pass ? "Chúc mừng! Bạn đạt " + lv : "Chưa đạt " + lv}</h1>
-  <p class="muted">${pass ? "Bạn đã đáp ứng chuẩn năng lực " + lv + " theo khung CEFR." : "Cần trung bình từ 60% và không kỹ năng nào dưới 40%."}</p>
+  <p class="muted">${pass ? "Bạn đã đáp ứng chuẩn năng lực " + lv + " theo khung CEFR." : failWhy(overall, skills)}</p>
   <div class="card skbox">${Object.keys(SECN).map(x => `<div class="skrow"><i class="ti ti-${SECI[x]}"></i><span class="skn">${SECN[x]}</span><div class="bar grow ${skills[x] < 40 ? "lowbar" : ""}"><span style="width:${skills[x]}%"></span></div><b>${skills[x]}%</b></div>`).join("")}</div>
   <div class="card left"><p class="lab">Lời khuyên</p><p>Kỹ năng cần ưu tiên: <b>${SECN[weak]}</b>. ${advice}</p></div>
   ${wr ? `<details class="card left"><summary><b>Bài viết: ${wr.r.total}/10</b> · xem nhận xét chi tiết</summary>${Grader.report(wr.r, wr.wr)}<div class="model"><b>Bài mẫu</b><p>${esc(wr.wr.model).replace(/\n/g, "<br>")}</p></div></details>` : ""}
