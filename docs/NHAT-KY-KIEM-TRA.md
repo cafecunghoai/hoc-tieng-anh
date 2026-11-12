@@ -95,3 +95,16 @@ Mỗi vòng, app được soát dưới ba vai: **chuyên gia dạy tiếng Anh*
 |---|---|
 | Thi trượt chỉ báo chung chung "cần trung bình 60%, không kỹ năng nào dưới 40%", người học không biết mình thiếu ở đâu | Báo cụ thể như giáo viên: "Điểm trung bình còn thiếu 1%", "Viết 30% dưới mức tối thiểu 40%" |
 | Kiểm tra đầu vào: chạy thử 3 kiểu người học (đúng hết, sai hết, đúng một nửa) | Xếp lớp đúng: C1 (kèm khuyên thi xác nhận B2), Chặng 0, A2 |
+
+## Vòng 11–12 – Soát độc lập bởi nhiều chuyên gia
+
+Vòng này dùng 6 trợ lý soát độc lập, không tham gia làm app: giáo viên ngữ pháp, giáo viên trình độ 0–A2, giáo viên B1–C1, người chấm thi, chuyên gia giao diện kiêm người học, kỹ sư kiểm thử. Lỗi được sửa xong thì lại có một nhóm soát mới, chưa từng xem bài, soát lại lần 2.
+
+| Mảng | Vòng 1 tìm thấy | Đã sửa (tiêu biểu) |
+|---|---|---|
+| Ngữ pháp (448 câu) | 140 điểm, gồm quy tắc a/an dạy sai, ~30 câu có 2 đáp án đúng | Mỗi câu chỉ còn 1 đáp án đúng; chấp nhận mọi cách viết đúng (Anh, Mỹ, viết tắt) |
+| Bài học 0–A2, B1–C1 | 4 lỗi dạy sai, ~50 lỗi lớn | Sửa nghĩa từ, câu dịch, bài đọc; thống nhất tiếng Anh Mỹ; từ gần nghĩa không còn cùng xuất hiện làm "đáp án sai" |
+| Đề thi thử | 5 lỗi nghiêm trọng: chép bài vẫn 9/10, nói không cần micro vẫn đạt | Chặn chép/dán, lạc đề tối đa 4 điểm; phần Nói cần micro mới được ghi nhận; bài nghe/đọc B2–C1 dài và khó đúng trình độ; giấy ghi nhận ghi rõ là kết quả luyện tập |
+| Máy chấm bài viết | 11 câu đúng bị bắt nhầm, 24 lỗi bỏ sót | 0 bắt nhầm, 0 bỏ sót trên bộ kiểm tra 300+ câu |
+| Giao diện | ~40 chỗ xuống dòng tách từ, chữ trên nút thiếu tương phản | Danh sách 2.000+ từ ghép không bị tách; đạt chuẩn tương phản WCAG AA ở cả chế độ sáng và tối |
+| Chức năng | 6 lỗi nghiêm trọng (chép chính tả bỏ đuôi -s/-ed vẫn đúng, Enter bỏ qua phần sửa lỗi...) | Chấm chính xác từng từ; nhiều lỗi thao tác nhanh, hết giờ, khôi phục dữ liệu đã sửa |
