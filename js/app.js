@@ -4,8 +4,8 @@ const $ = s => document.querySelector(s);
 const $$ = s => [...document.querySelectorAll(s)];
 const app = () => $("#app");
 const DAY = 86400000, INT = [0, 1, 2, 4, 7, 15, 30, 60], KEY = "hoc_tieng_anh_v1";
-const SK = { vocab: "Từ vựng", listen: "Nghe", speak: "Nói", read: "Đọc", write: "Viết" };
-const SKI = { vocab: "cards", listen: "headphones", speak: "microphone", read: "book", write: "pencil" };
+const SK = { vocab: "Từ vựng", gram: "Ngữ pháp", listen: "Nghe", speak: "Nói", read: "Đọc", write: "Viết" };
+const SKI = { vocab: "cards", gram: "abc", listen: "headphones", speak: "microphone", read: "book", write: "pencil" };
 
 /* ---------- Dữ liệu bài học ---------- */
 const LES = {}, ORDER = [];
@@ -25,7 +25,7 @@ const VIMAP = {}; ALLW.forEach(w => (VIMAP[w.vi] = VIMAP[w.vi] || new Set()).add
 /* ---------- Trạng thái ---------- */
 function def() {
   return { v: 2, onb: false, done: {}, unlocked: {}, cards: {}, days: {}, log: {}, stagePassed: {}, placement: null, xp: 0, badges: {},
-    cnt: { speak: 0, write: 0, review: 0, perfect: 0 }, skill: {}, mistakes: {}, resume: null, dayDone: {}, hideInstall: false, game: { best: {}, post: {}, plays: 0 },
+    cnt: { speak: 0, write: 0, review: 0, perfect: 0 }, skill: {}, mistakes: {}, resume: null, dayDone: {}, hideInstall: false, game: { best: {}, post: {}, plays: 0 }, gram: {}, exams: {}, certs: {}, name: "",
     settings: { rate: 0.9, accent: "en-US", goal: 60, theme: "auto", sound: true } };
 }
 function merge(x) { const d = def(); Object.keys(d).forEach(k => { if (x[k] !== undefined) d[k] = (typeof d[k] === "object" && d[k] && !Array.isArray(d[k]) && k !== "resume") ? Object.assign(d[k], x[k]) : x[k]; }); if (Object.keys(d.done).length) d.onb = true; return d; }
@@ -145,6 +145,9 @@ const BADGES = [
   ["home", "home-heart", "Về tới nhà ngoại", "Hoàn thành chuyến xe về miền Tây", () => !!(S.game.best || {}).j_tay],
   ["xv", "map-2", "Xuyên Việt", "Đi hết chuyến xe Hà Nội – Sài Gòn", () => !!(S.game.best || {}).j_xv],
   ["mem", "cards", "Trí nhớ siêu đẳng", "Đạt 3 sao ở Lật thẻ hội chợ", () => !!(S.game.best || {}).memory3],
+  ["gram10", "abc", "Vững ngữ pháp", "Đạt từ 80% ở 10 chủ điểm ngữ pháp", () => Object.values(S.gram || {}).filter(v => v >= 80).length >= 10],
+  ["cert", "certificate", "Chứng nhận đầu tiên", "Đạt một bài thi thử theo khung CEFR", () => Object.keys(S.certs || {}).length >= 1],
+  ["certB2", "award", "Chuẩn B2", "Đạt bài thi thử B2 – sử dụng tiếng Anh độc lập", () => !!(S.certs || {}).B2],
   ["day", "calendar-check", "Ngày trọn vẹn", "Hoàn thành kế hoạch một ngày", () => Object.keys(S.dayDone).length >= 1]
 ];
 function checkBadges() { let got = []; BADGES.forEach(b => { if (!S.badges[b[0]] && b[4]()) { S.badges[b[0]] = Date.now(); got.push(b); } }); if (got.length) { save(); setTimeout(() => { toast(`<b>Huy hiệu mới:</b> ${got.map(b => b[2]).join(", ")}`, 3600); confetti(); beep("done"); }, 600); } }
@@ -177,7 +180,7 @@ function render() {
   if (!S.onb && !P) return vOnb();
   if (P) return showStep();
   if (VIEW) return VIEW();
-  ({ home: vHome, road: vRoad, play: vPlay, review: vReview, book: vBook, me: vMe })[TAB]();
+  ({ home: vHome, road: vRoad, gram: vGram, exam: vExam, play: vPlay, review: vReview, book: vBook, me: vMe })[TAB]();
 }
 function applyTheme() { const t = S.settings.theme; const dark = t === "dark" || (t === "auto" && window.matchMedia && matchMedia("(prefers-color-scheme: dark)").matches); document.documentElement.dataset.theme = dark ? "dark" : "light"; }
 
@@ -206,7 +209,7 @@ function vHome() {
   const n = nextLesson(), L = n && LES[n], st = L && stageOf(L.stage), lv = levelOf(S.xp), p = plan(), pd = p.filter(x => x.ok).length;
   const hr = new Date().getHours(), hi = hr < 11 ? "Chào buổi sáng" : hr < 14 ? "Chào buổi trưa" : hr < 18 ? "Chào buổi chiều" : "Chào buổi tối";
   const mk = Object.keys(S.mistakes).length, due = dueCards().length;
-  let h = `<header class="hero"><div><p class="muted">${hi}</p><h1>Hôm nay học gì nào?</h1></div><div class="streak" title="Chuỗi ngày học"><i class="ti ti-flame"></i><b>${streak()}</b><span>ngày</span></div></header>
+  let h = `<header class="hero"><div><p class="muted">${hi}</p><h1>Hôm nay học gì nào?</h1></div><div class="row"><div class="streak" title="Chuỗi ngày học"><i class="ti ti-flame"></i><b>${streak()}</b><span>ngày</span></div><button class="avatar" onclick="nav('me')" aria-label="Hồ sơ"><i class="ti ti-user-circle"></i></button></div></header>
   <section class="card lvl" onclick="nav('me')"><div class="lvn">${lv.n}</div><div class="grow"><p class="sm muted">Cấp ${lv.n} · ${levelName(lv.n)}</p><div class="bar sm"><span style="width:${lv.pct}%"></span></div><p class="sm muted">${S.xp} XP · còn ${lv.need} XP lên cấp</p></div></section>`;
   if (installEvt && !S.hideInstall) h += `<section class="card accent row"><i class="ti ti-device-mobile bigi"></i><div class="grow"><b>Cài app lên điện thoại</b><p class="sm">Mở nhanh từ màn hình chính, học cả khi không có mạng.</p></div><button class="btn primary" onclick="doInstall()">Cài</button><button class="ib" aria-label="Ẩn" onclick="S.hideInstall=true;save();render()"><i class="ti ti-x"></i></button></section>`;
   h += `<section class="card"><div class="row between"><h3>Kế hoạch hôm nay</h3><span class="pill ${pd === 3 ? "good" : ""}">${pd}/3</span></div>
@@ -309,6 +312,7 @@ function vMe() {
   <label>Giọng đọc</label><div class="seg">${[["en-US", "Anh – Mỹ"], ["en-GB", "Anh – Anh"]].map(x => `<button class="${S.settings.accent === x[0] ? "on" : ""}" onclick="S.settings.accent='${x[0]}';save();render()">${x[1]}</button>`).join("")}</div>
   <label>Tốc độ đọc <b id="rv">${S.settings.rate}</b></label><input type="range" min="0.6" max="1.2" step="0.1" value="${S.settings.rate}" oninput="S.settings.rate=+this.value;$('#rv').textContent=this.value;save()">
   <button class="btn full" onclick="say('Hello! Nice to meet you. How are you today?')"><i class="ti ti-volume"></i> Nghe thử giọng</button>
+  <label>Tên của bạn (in trên chứng nhận)</label><input class="inp" value="${esc(S.name || "")}" placeholder="Nhập họ tên" onchange="S.name=this.value.trim();save()">
   <label class="tg">Âm thanh đúng / sai <input type="checkbox" ${S.settings.sound ? "checked" : ""} onchange="S.settings.sound=this.checked;save()"></label></section>
   ${installEvt ? `<button class="btn primary full" onclick="doInstall()"><i class="ti ti-device-mobile"></i> Cài app lên màn hình chính</button>` : isIOS() ? `<section class="card sm"><b>Cài lên iPhone:</b> trong Safari bấm nút Chia sẻ <i class="ti ti-share"></i> rồi chọn “Thêm vào MH chính”.</section>` : ""}
   <h4 class="sec">Sao lưu tiến độ</h4><section class="card set"><p class="muted sm">Tiến độ lưu trên trình duyệt của máy này. Muốn học trên máy khác, hãy tải tệp sao lưu rồi mở ở máy kia.</p>
@@ -336,7 +340,7 @@ function openIntro(id) {
     const L = LES[id], st = stageOf(L.stage), rs = S.resume && S.resume.id === id ? S.resume : null, d = S.done[id];
     const tmp = document.createElement("div"); tmp.innerHTML = L.g; const heads = [...tmp.querySelectorAll("h4")].map(x => x.textContent);
     const focus = heads.length ? heads : [tmp.textContent.split(".")[0]];
-    const sk = L.stage === "s0" ? ["listen", "speak", "vocab"] : ["vocab", "listen", "speak", "read", "write"];
+    const sk = L.stage === "s0" ? ["listen", "speak", "vocab"] : ["vocab", "gram", "listen", "speak", "read", "write"];
     app().innerHTML = `<div class="ptop"><button class="ib" onclick="nav(TAB)" aria-label="Quay lại"><i class="ti ti-arrow-left"></i></button><span class="muted sm">${st.name} · Bài ${L.no}/${st.lessons.length}</span></div>
     <div class="intro"><h1>${esc(L.t)}</h1>${d ? `<p class="pill ${d.best >= 80 ? "good" : ""}">Điểm cao nhất: ${d.best}%</p>` : ""}
     <div class="skills">${sk.map(k => `<span><i class="ti ti-${SKI[k]}"></i>${SK[k]}</span>`).join("")}</div>
@@ -356,6 +360,7 @@ function buildLesson(L) {
   const st = [], W = L.W, pool = W.length >= 6 ? W : ALLW;
   for (let i = 0; i < W.length; i += 5) st.push({ type: "words", items: W.slice(i, i + 5), from: i + 1, total: W.length });
   st.push({ type: "gram", html: L.g });
+  if (typeof GRAMMAR !== "undefined") { const its = GRAMMAR.filter(T => T.lesson === L.id).flatMap(T => T.items.map(x => [x, T])); const pickT = t => shuffle(its.filter(x => x[0][0] === t))[0]; ["c", "f", "e", "r"].forEach(t => { const x = pickT(t); if (x) st.push(gStep(x[0], x[1])); }); }
   if (L.kind === "letters") { pick(W, 10).forEach(w => st.push(mqListen(w, W))); L.S.forEach(s => st.push({ type: "speak", sk: "speak", en: s.en, vi: s.vi })); return st; }
   pick(W, 6).forEach(w => st.push(mqMeaning(w, pool)));
   pick(W, 3).forEach(w => st.push(mqReverse(w, pool)));
@@ -387,7 +392,7 @@ function startReview(extra) {
 }
 function startMistakes() {
   const ms = Object.values(S.mistakes); if (!ms.length) { toast("Chưa có lỗi sai nào"); return; }
-  const steps = shuffle(ms).slice(0, 15).map((m, i) => { let s; if (m.t === "sent") s = i % 2 ? { type: "order", sk: "write", en: m.en, vi: m.vi } : { type: "trans", sk: "write", en: m.en, vi: m.vi }; else { const w = WMAP[m.en] || { en: m.en, vi: m.vi }; s = i % 2 ? mqReverse(w, ALLW) : mqMeaning(w, ALLW); } s.fix = m.en; return s; });
+  const steps = shuffle(ms).slice(0, 15).map((m, i) => { let s; if (m.t === "gram") { s = gStep(m.g, {}); s.fix = "g:" + m.g.split("|")[1]; return s; } if (m.t === "sent") s = i % 2 ? { type: "order", sk: "write", en: m.en, vi: m.vi } : { type: "trans", sk: "write", en: m.en, vi: m.vi }; else { const w = WMAP[m.en] || { en: m.en, vi: m.vi }; s = i % 2 ? mqReverse(w, ALLW) : mqMeaning(w, ALLW); } s.fix = m.en; return s; });
   newP("mist", steps);
 }
 function startExam(sid) {
@@ -408,19 +413,22 @@ function startPlacement() {
 /* ---------- Trình học ---------- */
 function quit() {
   if (P.kind === "lesson" && P.i > 0) { S.resume = { id: P.id, P: JSON.parse(JSON.stringify(P)) }; save(); toast("Đã lưu chỗ bạn đang học. Lần sau học tiếp nhé!"); const id = P.id; P = null; openIntro(id); }
+  else if (P.kind === "mock" && P.i > 0) modal("Bỏ dở bài thi?", "Kết quả bài thi này sẽ không được tính.", "Bỏ thi", () => { clearInterval(P.tm); P = null; nav("exam"); }, true);
+  else if (P.kind === "gram") { const g = P.gid; P = null; g ? openTopic(g) : nav("gram"); }
   else if (P.kind === "place" && P.i > 0) modal("Dừng bài kiểm tra?", "Bạn sẽ bắt đầu học từ Chặng 0.", "Dừng", () => { S.placement = "zero"; P = null; nav("home"); });
   else { P = null; render(); }
 }
 function showStep() {
   if (P.i >= P.steps.length) return finish();
   const s = P.steps[P.i]; P.ans = false;
-  const title = P.kind === "lesson" ? esc(LES[P.id].t) : { review: "Ôn từ vựng", exam: "Thi qua chặng " + (P.sid ? stageOf(P.sid).name : ""), place: "Kiểm tra đầu vào", mist: "Luyện lại lỗi sai" }[P.kind];
-  let h = `<div class="ptop"><button class="ib" onclick="quit()" aria-label="Thoát"><i class="ti ti-x"></i></button><div class="bar grow"><span style="width:${P.i / P.steps.length * 100}%"></span></div><span class="muted sm">${P.i + 1}/${P.steps.length}</span></div><p class="ptitle">${title}${s.r ? ' · <span class="retry">làm lại câu sai</span>' : ""}</p><div class="pbody">`;
-  h += ({ words: rWords, gram: rGram, mcq: rMcq, dict: rDict, trans: rTrans, order: rOrder, speak: rSpeak, read: rRead, write: rWrite })[s.type](s);
+  const title = P.kind === "lesson" ? esc(LES[P.id].t) : P.kind === "gram" ? esc(P.title) : P.kind === "mock" ? "Thi thử " + P.lv + (SECN[s.sec] ? " · " + SECN[s.sec] : "") : { review: "Ôn từ vựng", exam: "Thi qua chặng " + (P.sid ? stageOf(P.sid).name : ""), place: "Kiểm tra đầu vào", mist: "Luyện lại lỗi sai" }[P.kind];
+  let h = `<div class="ptop"><button class="ib" onclick="quit()" aria-label="Thoát"><i class="ti ti-x"></i></button><div class="bar grow"><span style="width:${P.i / P.steps.length * 100}%"></span></div>${P.kind === "mock" ? `<span class="timer" id="timer">${fmtTime(P.deadline - Date.now())}</span>` : `<span class="muted sm">${P.i + 1}/${P.steps.length}</span>`}</div><p class="ptitle">${title}${s.r ? ' · <span class="retry">làm lại câu sai</span>' : ""}</p><div class="pbody">`;
+  h += ({ words: rWords, gram: rGram, mcq: rMcq, dict: rDict, trans: rTrans, order: rOrder, speak: rSpeak, read: rRead, write: rWrite, gf: rGf, ge: rGe, gr: rGr, xs: rXs, xintro: rXintro, xsec: rXsec })[s.type](s);
   h += `</div><div id="fb" class="fb"></div>`;
   app().innerHTML = h; window.scrollTo(0, 0);
   if (s.type === "words" || s.type === "gram") cont();
-  if (s.autoplay) setTimeout(() => say(s.audio), 350);
+  if (s.type === "xsec") cont("", "");
+  if (s.autoplay) setTimeout(() => { if (P && P.steps[P.i] === s) s.limit ? examPlay() : say(s.audio); }, 350);
   if (s.type === "dict") setTimeout(() => say(s.en), 350);
   if (s.type === "order") drawOrder();
   if (P.kind === "lesson" && P.i > 0) { S.resume = { id: P.id, P: JSON.parse(JSON.stringify(P)) }; save(); }
@@ -436,16 +444,18 @@ function grade(ok, ans, note) {
   if (s.card) { const c = S.cards[s.card]; if (ok) { c.box = Math.min(7, c.box + 1); c.due = Date.now() + INT[c.box] * DAY; S.cnt.review++; } else { c.box = 1; c.due = Date.now() + 10 * 60000; } }
   if (s.fix) { const m = S.mistakes[s.fix]; if (m) { if (ok) { m.n--; if (m.n <= 0) delete S.mistakes[s.fix]; } else m.n++; } }
   if (!ok && P.kind !== "place" && !s.fix) recordMistake(s);
-  if (!ok && P.kind === "lesson" && ["mcq", "dict", "trans", "order"].includes(s.type) && (s.r || 0) < 2) requeue(s);
+  if (!ok && (P.kind === "lesson" || P.kind === "gram") && ["mcq", "dict", "trans", "order", "gf", "ge", "gr"].includes(s.type) && (s.r || 0) < 2) requeue(s);
+  if (P.kind === "mock") { secAdd(s.sec, ok ? (s.pts || 1) : (s.part || 0)); }
   if (ok && s.type === "speak") S.cnt.speak++;
   if (ok && s.type === "write") S.cnt.write++;
   save();
-  if (s.nofb) { beep("good"); nextStep(); return; }
+  if (s.nofb || P.kind === "mock") { if (P.kind !== "mock") beep("good"); nextStep(); return; }
   beep(ok ? "good" : "bad");
-  cont(ok ? "good" : "bad", `<p class="fbt"><i class="ti ti-${ok ? "circle-check" : "alert-circle"}"></i> ${ok ? (note || pick(["Chính xác!", "Tuyệt vời!", "Giỏi lắm!", "Đúng rồi!"], 1)[0]) : "Chưa đúng"}${ok && !s.r && P.kind !== "place" ? `<span class="xpg">+${s.card ? 5 : 10} XP</span>` : ""}</p>${!ok && ans ? `<p class="fba">Đáp án: <b>${ans}</b></p>` : ""}${!ok && P.kind === "lesson" && s.r !== undefined && (s.r || 0) < 2 && ["mcq", "dict", "trans", "order"].includes(s.type) ? `<p class="sm">Câu này sẽ quay lại cuối bài.</p>` : ""}`);
+  cont(ok ? "good" : "bad", `<p class="fbt"><i class="ti ti-${ok ? "circle-check" : "alert-circle"}"></i> ${ok ? (note || pick(["Chính xác!", "Tuyệt vời!", "Giỏi lắm!", "Đúng rồi!"], 1)[0]) : "Chưa đúng"}${ok && !s.r && P.kind !== "place" ? `<span class="xpg">+${s.card ? 5 : 10} XP</span>` : ""}</p>${!ok && ans ? `<p class="fba">Đáp án: <b>${ans}</b></p>` : ""}${s.why ? `<p class="why"><i class="ti ti-bulb"></i> ${esc(s.why)}</p>` : ""}${!ok && (P.kind === "lesson" || P.kind === "gram") && (s.r || 0) < 2 && ["mcq", "dict", "trans", "order", "gf", "ge", "gr"].includes(s.type) ? `<p class="sm">Câu này sẽ quay lại cuối bài.</p>` : ""}`);
 }
 function recordMistake(s) {
   let en, vi, t;
+  if (s.gi) { const k = "g:" + s.gi.split("|")[1]; const m = S.mistakes[k] || (S.mistakes[k] = { en: s.gi.split("|")[1].replace(/\|/g, ""), vi: "Ngữ pháp", t: "gram", g: s.gi, n: 0 }); m.n = Math.min(2, m.n + 1); m.at = Date.now(); return; }
   if (s.type === "mcq" && s.mk && WMAP[s.mk]) { en = s.mk; vi = WMAP[s.mk].vi; t = "word"; }
   else if (["dict", "trans", "order"].includes(s.type) && s.en.includes(" ")) { en = s.en; vi = s.vi; t = "sent"; }
   else return;
@@ -454,7 +464,7 @@ function recordMistake(s) {
 function requeue(s) {
   const c = JSON.parse(JSON.stringify(s)); c.r = (s.r || 0) + 1;
   if (c.type === "mcq") { const o = shuffle(c.o); c.a = o.indexOf(c.o[c.a]); c.o = o; }
-  delete c.pool; delete c.ans;
+  delete c.pool; delete c.ans; delete c.picked;
   P.steps.push(c);
 }
 const spk = (t, extra) => `<button class="spk ${extra || ""}" onclick="event.stopPropagation();say('${jsq(t)}')" aria-label="Nghe"><i class="ti ti-volume"></i></button>`;
@@ -462,17 +472,18 @@ const slowBtn = t => `<button class="link" onclick="say('${jsq(t)}',1)"><i class
 function rWords(s) { return `<p class="lab">Từ mới ${s.from}–${s.from + s.items.length - 1} / ${s.total} · bấm loa để nghe, nói to theo</p>` + s.items.map(w => `<div class="word">${spk(w.en)}<div class="grow"><b>${esc(w.en)}</b>${w.ipa ? `<span class="ipa">/${esc(w.ipa)}/</span>` : ""}<span class="vi">${esc(w.vi)}</span></div><button class="ib" onclick="say('${jsq(w.en)}',1)" aria-label="Nghe chậm"><i class="ti ti-snail"></i></button></div>`).join(""); }
 function rGram(s) { return `<p class="lab"><i class="ti ti-bulb"></i> Kiến thức trọng tâm</p><div class="gram">${s.html}</div>`; }
 function rMcq(s) {
-  return `<p class="lab">${s.sk ? `<i class="ti ti-${SKI[s.sk]}"></i> ${SK[s.sk]} · ` : ""}${s.label}</p>` + (s.q ? `<h2 class="q ${s.vq ? "vi" : ""}">${esc(s.q)}</h2>` : "") + (s.sub ? `<p class="ipa c">${esc(s.sub)}</p>` : "") +
-    (s.audio && !s.q ? `<div class="c">${spk(s.audio, "xl")}${slowBtn(s.audio)}</div>` : s.audio ? `<div class="c">${spk(s.audio)}</div>` : "") +
+  return `<p class="lab">${s.sk ? `<i class="ti ti-${SKI[s.sk]}"></i> ${SK[s.sk]} · ` : ""}${s.label}</p>` + (s.q ? `<h2 class="q ${s.vq ? "vi" : ""} ${s.blank ? "gq" : ""}">${s.blank ? blankHtml(s.q) : esc(s.q)}</h2>` : "") + (s.sub ? `<p class="ipa c">${esc(s.sub)}</p>` : "") +
+    (s.limit ? `<div class="c"><button class="spk xl" onclick="examPlay()" aria-label="Nghe"><i class="ti ti-volume"></i></button><span id="plays" class="sm muted">Còn ${s.limit - s.played} lần nghe</span></div>` : s.audio && !s.q ? `<div class="c">${spk(s.audio, "xl")}${slowBtn(s.audio)}</div>` : s.audio ? `<div class="c">${spk(s.audio)}</div>` : "") +
     `<div class="opts">${s.o.map((o, i) => `<button class="opt" id="o${i}" onclick="pickOpt(${i})"><span class="k">${i + 1}</span>${esc(o)}</button>`).join("")}</div>`;
 }
-function pickOpt(i) { const s = P.steps[P.i]; if (P.ans) return; $$(".opt").forEach(b => b.disabled = true); if (!s.nofb) { $("#o" + s.a).classList.add("right"); if (i !== s.a) $("#o" + i).classList.add("wrong"); } else $("#o" + i).classList.add("picked"); if (s.sayAns) say(s.o[s.a]); grade(i === s.a, esc(s.o[s.a])); }
+function pickOpt(i) { const s = P.steps[P.i]; if (P.ans) return; $$(".opt").forEach(b => b.disabled = true); if (!s.nofb && P.kind !== "mock") { $("#o" + s.a).classList.add("right"); if (i !== s.a) $("#o" + i).classList.add("wrong"); } else $("#o" + i).classList.add("picked"); if (s.sayAns) say(s.o[s.a]); grade(i === s.a, esc(s.o[s.a])); }
 function rDict(s) { return `<p class="lab"><i class="ti ti-headphones"></i> Nghe · ${s.label}</p><div class="c">${spk(s.en, "xl")}${slowBtn(s.en)}</div><textarea id="inp" rows="2" placeholder="Gõ những gì bạn nghe được" oninput="$('#er').textContent=''" autocapitalize="off" autocomplete="off" spellcheck="false"></textarea><p class="err" id="er"></p><button class="btn primary full" id="chk" onclick="checkText()">Kiểm tra</button>`; }
 function rTrans(s) { return `<p class="lab"><i class="ti ti-pencil"></i> Viết · Dịch sang tiếng Anh</p><h2 class="q vi">${esc(s.vi)}</h2><textarea id="inp" rows="2" placeholder="Viết câu tiếng Anh" oninput="$('#er').textContent=''" autocapitalize="sentences" autocomplete="off" spellcheck="false"></textarea><p class="err" id="er"></p><div id="hint"><button class="link" onclick="$('#hint').innerHTML='<p class=hint>Gợi ý: ${jsq(s.en.split(" ").slice(0, 2).join(" "))} ...</p>'"><i class="ti ti-bulb"></i> Gợi ý</button></div><button class="btn primary full" id="chk" onclick="checkText()">Kiểm tra</button>`; }
 function checkText() {
   const s = P.steps[P.i], v = $("#inp").value.trim();
   if (!v) { $("#er").textContent = "Hãy gõ câu trả lời trước."; return; }
   const r = compare(v, s.en); $("#chk").remove(); $("#inp").disabled = true;
+  if (r === 0) $("#inp").insertAdjacentHTML("afterend", `<div class="diffbox"><p class="lab">So với đáp án</p>${diffHtml(v, s.en)}<p class="sm muted"><span class="dx">gạch đỏ</span> là từ thừa hoặc sai, <span class="dm">chữ xanh</span> là từ còn thiếu.</p></div>`);
   grade(r > 0, esc(s.en) + `<br><span class="muted">${esc(s.vi)}</span>`, r === 1 ? "Gần đúng! Chú ý chính tả: " + esc(s.en) : null);
   setTimeout(() => say(s.en), 250);
 }
@@ -482,14 +493,15 @@ function chip(k) { const s = P.steps[P.i]; if (P.ans) return; s.ans.push(s.pool.
 function unchip(k) { const s = P.steps[P.i]; if (P.ans) return; s.pool.push(s.ans.splice(k, 1)[0]); drawOrder(); }
 function checkOrder() { const s = P.steps[P.i]; if (s.pool.length) { $("#er").textContent = "Hãy xếp hết các từ trước."; return; } $("#chk").remove(); grade(norm(s.ans.map(c => c.w).join(" ")) === norm(s.en), esc(s.en)); say(s.en); }
 function rSpeak(s) {
-  return `<p class="lab"><i class="ti ti-microphone"></i> Nói · Nghe mẫu rồi nói theo</p><div class="say"><h2 id="sayt">${esc(s.en)}</h2>${s.ipa ? `<p class="ipa">/${esc(s.ipa)}/</p>` : ""}<p class="vi">${esc(s.vi)}</p></div><div class="c">${spk(s.en, "xl")}${slowBtn(s.en)}</div>
+  return `<p class="lab"><i class="ti ti-microphone"></i> Nói · Nghe mẫu rồi nói theo</p><div class="say"><h2 id="sayt">${esc(s.en)}</h2>${s.ipa ? `<p class="ipa">/${esc(s.ipa)}/</p>` : ""}<p class="vi">${esc(s.vi)}</p></div>${P.kind === "mock" ? "" : `<div class="c">${spk(s.en, "xl")}${slowBtn(s.en)}</div>`}
   <div id="mic">${SR && !micBlocked ? `<button class="btn primary full lg" onclick="doMic()"><i class="ti ti-microphone"></i> Bấm rồi nói</button><button class="link c" onclick="$('#mic').innerHTML=selfRate()">Không dùng micro được?</button>` : selfRate()}</div>`;
 }
-function selfRate(msg) { return `<p class="muted c sm">${msg || "Nghe mẫu, nói to theo 2–3 lần cho trôi chảy, rồi tự đánh giá."}</p><div class="row2"><button class="btn" onclick="grade(false,'')">Chưa được</button><button class="btn primary" onclick="grade(true,'','Tốt lắm! Giữ nhịp như vậy nhé.')">Nói được rồi</button></div>`; }
+function selfRate(msg) { if (P && P.kind === "mock") return `<p class="muted c sm">${msg || "Không dùng được micro. Hãy đọc to câu trên rồi tự đánh giá trung thực."}</p><div class="row2"><button class="btn" onclick="P.steps[P.i].part=0;grade(false,'')">Chưa đọc được</button><button class="btn primary" onclick="P.steps[P.i].part=0.6;grade(false,'')">Đã đọc xong</button></div>`; return `<p class="muted c sm">${msg || "Nghe mẫu, nói to theo 2–3 lần cho trôi chảy, rồi tự đánh giá."}</p><div class="row2"><button class="btn" onclick="grade(false,'')">Chưa được</button><button class="btn primary" onclick="grade(true,'','Tốt lắm! Giữ nhịp như vậy nhé.')">Nói được rồi</button></div>`; }
 function doMic() {
   const s = P.steps[P.i]; $("#mic").innerHTML = `<div class="listening"><span class="dot"></span> Đang nghe... hãy nói câu trên</div>`;
   listenMic(alts => {
     let best = alts[0], sc = -1; alts.forEach(a => { const v = speakScore(s.en, a); if (v > sc) { sc = v; best = a; } });
+    if (P.kind === "mock") { s.part = Math.min(1, sc / 100); grade(sc >= 99, ""); return; }
     $("#sayt").innerHTML = diffWords(s.en, best);
     if (sc >= 70) { $("#mic").innerHTML = `<p class="heard">Máy nghe được: “${esc(best)}”</p>`; grade(true, "", `Phát âm tốt: ${sc}% từ đúng`); }
     else $("#mic").innerHTML = `<p class="heard">Máy nghe được: “${esc(best)}” · <b>${sc}%</b> từ đúng<br><span class="sm muted">Từ màu đỏ là từ máy chưa nghe rõ. Nghe chậm rồi thử lại.</span></p><div class="row2"><button class="btn" onclick="grade(false,'${jsq(s.en)}')">Bỏ qua</button><button class="btn primary" onclick="doMic()"><i class="ti ti-refresh"></i> Thử lại</button></div>`;
@@ -499,30 +511,36 @@ function doMic() {
   });
 }
 function rRead(s) { s.left = s.q.filter(q => !q.done).length; return `<p class="lab"><i class="ti ti-book"></i> Đọc · Đọc bài rồi trả lời</p><div class="passage">${esc(s.t).replace(/\n/g, "<br>")}</div><div class="row c2">${spk(s.t.replace(/\n/g, " "))}<span class="muted sm">Nghe cả bài</span>${slowBtn(s.t.replace(/\n/g, " "))}</div>` + s.q.map((q, k) => `<div class="rq"><p><b>${k + 1}.</b> ${esc(q.q)}</p><div class="opts">${q.o.map((o, i) => `<button class="opt" id="r${k}_${i}" onclick="pickRead(${k},${i})">${esc(o)}</button>`).join("")}</div></div>`).join(""); }
-function pickRead(k, i) { const s = P.steps[P.i], q = s.q[k]; if (q.done) return; q.done = 1; q.o.forEach((_, j) => $("#r" + k + "_" + j).disabled = true); $("#r" + k + "_" + q.a).classList.add("right"); if (i !== q.a) $("#r" + k + "_" + i).classList.add("wrong"); P.tot++; addSkill("read", i === q.a); const v = P.sk.read || (P.sk.read = [0, 0]); v[1]++; if (i === q.a) { P.ok++; v[0]++; P.xp += 10; beep("good"); } else beep("bad"); save(); if (--s.left === 0) { P.ans = true; cont("", `<p class="fbt"><i class="ti ti-book"></i> Đã trả lời xong ${s.q.length} câu hỏi</p>`); } }
+function pickRead(k, i) { const s = P.steps[P.i], q = s.q[k]; if (q.done) return; q.done = 1; q.o.forEach((_, j) => $("#r" + k + "_" + j).disabled = true); if (P.kind === "mock") { $("#r" + k + "_" + i).classList.add("picked"); secAdd("read", i === q.a ? 1 : 0); if (--s.left === 0) { P.ans = true; cont("", ""); } return; } $("#r" + k + "_" + q.a).classList.add("right"); if (i !== q.a) $("#r" + k + "_" + i).classList.add("wrong"); P.tot++; addSkill("read", i === q.a); const v = P.sk.read || (P.sk.read = [0, 0]); v[1]++; if (i === q.a) { P.ok++; v[0]++; P.xp += 10; beep("good"); } else beep("bad"); save(); if (--s.left === 0) { P.ans = true; cont("", `<p class="fbt"><i class="ti ti-book"></i> Đã trả lời xong ${s.q.length} câu hỏi</p>`); } }
 const wcount = t => (t.trim().match(/[A-Za-z0-9'’-]+/g) || []).length;
 function kwHit(text, alt) { const n = " " + norm(text) + " "; alt = alt.trim(); if (alt === "ing") return /\b\w{2,}ing\b/.test(norm(text)); return n.includes(" " + norm(alt) + " "); }
 function rWrite(s) {
   const w = s.wr;
   return `<p class="lab"><i class="ti ti-pencil"></i> Viết · Viết đoạn văn ngắn</p><div class="say left"><p><b>${esc(w.p)}</b></p><p class="sm muted">Ít nhất ${w.min} từ. Dùng ít nhất ${Math.max(1, Math.ceil(w.kw.length * 0.7))}/${w.kw.length} gợi ý: ${w.kw.map(k => `<span class="kw">${esc(k.split("/")[0])}</span>`).join(" ")}</p></div>
   <textarea id="inp" rows="6" placeholder="Viết bằng tiếng Anh..." oninput="$('#wc').textContent=wcount(this.value)+' / ${w.min} từ';$('#er').textContent=''" autocapitalize="sentences" spellcheck="true"></textarea><p class="sm muted" id="wc">0 / ${w.min} từ</p><p class="err" id="er"></p><div id="wres"></div>
-  <button class="btn primary full" id="chk" onclick="checkWrite()">Kiểm tra</button><button class="link" onclick="showModel()">Xem bài mẫu và bỏ qua</button>`;
+  <button class="btn primary full" id="chk" onclick="checkWrite()">${P.kind === "mock" ? "Nộp bài viết" : "Chấm bài"}</button>${P.kind === "mock" ? "" : `<button class="link" onclick="showModel()">Xem bài mẫu và bỏ qua</button>`}`;
 }
-function checkWrite() {
+async function checkWrite() {
   const s = P.steps[P.i], w = s.wr, v = $("#inp").value;
   if (wcount(v) < 3) { $("#er").textContent = "Hãy viết vài câu trước khi kiểm tra."; return; }
   $("#wc").textContent = wcount(v) + " / " + w.min + " từ";
-  const n = wcount(v), res = w.kw.map(k => ({ k: k.split("/")[0], ok: k.split("/").some(a => kwHit(v, a)) })), okLen = n >= w.min, need = Math.max(1, Math.ceil(res.length * 0.7)), hits = res.filter(r => r.ok).length, all = okLen && hits >= need;
-  $("#wres").innerHTML = `<div class="checklist"><p class="${okLen ? "g" : "b"}"><i class="ti ti-${okLen ? "check" : "x"}"></i> Độ dài: ${n}/${w.min} từ</p>${res.map(r => `<p class="${r.ok ? "g" : "b"}"><i class="ti ti-${r.ok ? "check" : "x"}"></i> Có dùng “${esc(r.k)}”</p>`).join("")}</div>`;
-  if (all) { $("#chk").remove(); $("#inp").disabled = true; showModelBox(); grade(true, "", "Đoạn văn đạt yêu cầu!"); }
-  else $("#er").textContent = !okLen ? "Viết thêm cho đủ số từ rồi bấm Kiểm tra lại." : `Hãy dùng thêm ${need - hits} cấu trúc gợi ý rồi bấm Kiểm tra lại.`;
+  const btn = $("#chk"); if (btn) { btn.disabled = true; btn.innerHTML = "Giáo viên đang chấm..."; }
+  const r = await Grader.grade(v, { min: w.min, kw: w.kw });
+  if (P.kind === "mock") { P.wres = { r, text: v, wr: w }; s.part = r.total / 10 * (s.pts || 10); grade(r.total >= 10, ""); return; }
+  if (btn) { btn.disabled = false; btn.innerHTML = "Chấm lại"; }
+  $("#wres").innerHTML = Grader.report(r, w);
+  const pass = r.total >= 5 && r.n >= w.min * 0.8;
+  s.tries = (s.tries || 0) + 1;
+  if (pass) { if (btn) btn.remove(); $("#inp").disabled = true; showModelBox(); grade(true, "", `Đạt ${r.total}/10 điểm!`); }
+  else { $("#er").textContent = r.n < w.min * 0.8 ? `Bài mới có ${r.n} từ. Viết thêm cho đủ ${w.min} từ rồi bấm Chấm lại.` : `Bài đạt ${r.total}/10, cần từ 5 điểm. Sửa các lỗi gạch chân rồi bấm Chấm lại.`; window.scrollTo(0, $("#wres").offsetTop - 80); }
 }
-function showModelBox() { const w = P.steps[P.i].wr; $("#wres").insertAdjacentHTML("beforeend", `<div class="model"><div class="row between"><b>Bài mẫu để so sánh</b>${spk(w.model.replace(/\n/g, " "))}</div><p>${esc(w.model).replace(/\n/g, "<br>")}</p><p class="sm muted">Máy kiểm tra độ dài và từ khóa. Hãy tự so ngữ pháp với bài mẫu.</p></div>`); }
+function showModelBox() { const w = P.steps[P.i].wr; $("#wres").insertAdjacentHTML("beforeend", `<div class="model"><div class="row between"><b>Bài mẫu để so sánh</b>${spk(w.model.replace(/\n/g, " "))}</div><p>${esc(w.model).replace(/\n/g, "<br>")}</p><p class="sm muted">So sánh cách mở bài, từ nối và cấu trúc câu của bài mẫu với bài của bạn.</p></div>`); }
 function showModel() { if (P.ans) return; const c = $("#chk"); if (c) c.remove(); $("#inp").disabled = true; showModelBox(); grade(false, ""); }
 
 /* ---------- Kết thúc ---------- */
 function finish() {
   tick();
+  if (P.kind === "gram" || P.kind === "mock") return finishStudy();
   const k = P.kind, sc = P.tot ? Math.round(P.ok / P.tot * 100) : 100; let h = "", btns = "", bonus = 0;
   if (k === "lesson") {
     const L = LES[P.id], prev = S.done[L.id], ok = sc >= 80, first = !passed(L.id) && ok;
@@ -573,7 +591,7 @@ document.addEventListener("keydown", e => {
   }
   if (t === "TEXTAREA" || t === "INPUT") return;
   if (/^[1-6]$/.test(e.key)) { const b = $("#o" + (+e.key - 1)); if (b && !b.disabled) b.click(); }
-  if (e.key === " " || e.key === "r") { const s = P.steps[P.i]; const a = s && (s.audio || s.en); if (a) { e.preventDefault(); say(a); } }
+  if (e.key === " " || e.key === "r") { const s = P.steps[P.i]; const a = s && (s.audio || s.en); if (s && s.limit) { e.preventDefault(); examPlay(); } else if (a && P.kind !== "mock") { e.preventDefault(); say(a); } }
 });
 
 /* ---------- Cài đặt app (PWA) ---------- */

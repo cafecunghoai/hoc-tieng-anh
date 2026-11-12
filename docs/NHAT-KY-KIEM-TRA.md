@@ -38,3 +38,16 @@ Mỗi vòng, app được soát dưới ba vai: **chuyên gia dạy tiếng Anh*
 |---|---|
 | Thi qua chặng thì hàng trăm từ đến hạn ôn cùng một ngày, gây quá tải | Lịch ôn của các từ này được rải đều trong 3–30 ngày |
 | Bài viết bắt buộc dùng đủ mọi gợi ý, dễ nản khi người học tự viết theo ý mình | Chỉ cần đủ số từ và dùng ít nhất 70% số gợi ý; app báo rõ còn thiếu bao nhiêu |
+
+## Vòng 5 – Ngữ pháp, chấm bài kiểu giáo viên, thi thử
+
+| Vai | Phát hiện | Cách sửa |
+|---|---|---|
+| Giáo viên | Máy chấm cũ chỉ đếm từ khóa, bài sai ngữ pháp vẫn được 8,5 điểm | Bộ chấm mới theo 4 tiêu chí, có trần điểm khi ngữ pháp yếu; bài mẫu sai nhiều nay còn 5/10 với 11 lỗi được chỉ rõ |
+| Giáo viên | Bỏ sót lỗi sai thì (yesterday I go), thiếu dấu nháy (didnt), chia động từ sau danh từ số nhiều | Thêm luật kiểm tra thì theo mốc thời gian, sửa dấu nháy, chủ vị số ít/số nhiều |
+| Kỹ sư | Bắt nhầm lỗi trong câu đúng (city centres, tên riêng, dòng ký tên, câu trích dẫn) | Thêm các điều kiện loại trừ; quét 854 câu và đoạn văn đúng: 0 lỗi bắt nhầm; 110 bài mẫu đạt trung bình 9/10 |
+| Người học | Điền "boil" vẫn được tính đúng thay cho "boils" | Phần ngữ pháp yêu cầu đúng chính xác, chỉ bỏ qua hoa/thường, dấu câu và viết tắt |
+| Người học | Thông báo huy hiệu che nút Tiếp tục | Chuyển thông báo lên đầu màn hình |
+| Người học | Tiêu đề phần mở đầu đề thi thừa dấu "·" | Chỉ hiện tên phần khi có |
+| Người học | Câu đáp án còn để lại gợi ý trong ngoặc, ví dụ "Water boils (boil)" | Bỏ phần gợi ý khi hiện câu hoàn chỉnh |
+| Kỹ sư | Kiểm thử tự động | 116 bài, 56 chủ điểm ngữ pháp, 5 đề thi thử A1–C1 chạy trọn vẹn, không lỗi |
