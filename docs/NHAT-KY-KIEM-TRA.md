@@ -51,3 +51,11 @@ Mỗi vòng, app được soát dưới ba vai: **chuyên gia dạy tiếng Anh*
 | Người học | Tiêu đề phần mở đầu đề thi thừa dấu "·" | Chỉ hiện tên phần khi có |
 | Người học | Câu đáp án còn để lại gợi ý trong ngoặc, ví dụ "Water boils (boil)" | Bỏ phần gợi ý khi hiện câu hoàn chỉnh |
 | Kỹ sư | Kiểm thử tự động | 116 bài, 56 chủ điểm ngữ pháp, 5 đề thi thử A1–C1 chạy trọn vẹn, không lỗi |
+
+## Vòng 6 – Góp ý của người dùng
+
+| Phát hiện | Cách sửa |
+|---|---|
+| Bấm chữ cái "A" máy đọc thành "ơ" (đọc như mạo từ), các chữ khác đọc lơ lớ | Máy đọc đúng tên chữ cái: A "ây", E "i", W "đắp-bồ-liu", Z "zee" (giọng Anh: "zed"); chuỗi đánh vần L – A – N đọc từng chữ |
+| Chữ xuống dòng chưa có nghĩa, dòng dài dòng ngắn | Đoạn ngắn luôn cân hai dòng; không tách từ ghép (chủ điểm, kỹ năng, ngữ pháp, tiếng Anh, gợi ý...), không để "của, là, những, đã..." đứng cuối dòng, không để dấu "·" đầu dòng; các câu giới thiệu được viết lại, mỗi ý một dòng |
+| Màu sắc còn nhạt | Nút và thẻ bài học dùng nền chuyển màu xanh ngọc; mỗi trình độ một màu (A1 xanh lá, A2 xanh trời, B1 xanh lam, B2 tím, C1 cam đỏ); mỗi kỹ năng một màu; cấp độ và chuỗi ngày màu nắng |

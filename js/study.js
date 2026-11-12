@@ -50,7 +50,7 @@ function curLevel() { const n = nextLesson(); const st = n ? LES[n].stage : "c1"
 function vGram() {
   if (!GLV) GLV = curLevel();
   const list = GRAMMAR.filter(T => T.lv === GLV), done = list.filter(T => (S.gram[T.id] || 0) >= 80).length;
-  app().innerHTML = `<header class="page"><h1>Ngữ pháp</h1><p class="muted">${GRAMMAR.length} chủ điểm từ A1 đến C1. Mỗi chủ điểm có giải thích tiếng Việt và 8 câu luyện tập kèm lời giải.</p></header>
+  app().innerHTML = `<header class="page"><h1>Ngữ pháp</h1><p class="muted">${GRAMMAR.length} chủ điểm từ A1 đến C1.<br>Mỗi chủ điểm có giải thích và 8 câu luyện.</p></header>
   <div class="seg big">${LV.map(l => `<button class="${GLV === l ? "on" : ""}" onclick="GLV='${l}';render()">${l}</button>`).join("")}</div>
   <div class="card flat row"><div class="grow"><b>Cấp ${GLV}</b><p class="sm muted">Đã vững ${done}/${list.length} chủ điểm (đạt từ 80%)</p><div class="bar sm"><span style="width:${list.length ? done / list.length * 100 : 0}%"></span></div></div><button class="btn" onclick="startGramQuiz('${GLV}')"><i class="ti ti-clipboard-check"></i> Kiểm tra 15 câu</button></div>
   <div class="topics">${list.map((T, i) => { const b = S.gram[T.id]; return `<button class="topic" onclick="openTopic('${T.id}')"><span class="tn ${b >= 80 ? "ok" : ""}">${b >= 80 ? '<i class="ti ti-check"></i>' : i + 1}</span><span class="grow"><b>${esc(T.t)}</b><small>${esc(T.sum)}</small></span><span class="sc">${b !== undefined ? b + "%" : '<i class="ti ti-chevron-right"></i>'}</span></button>`; }).join("")}</div>`;
@@ -75,9 +75,9 @@ function startGramQuiz(lv) { const its = GRAMMAR.filter(T => T.lv === lv).flatMa
 /* ---------- Trang Thi thử ---------- */
 function vExam() {
   const certs = LV.filter(l => S.certs[l]);
-  app().innerHTML = `<header class="page"><h1>Thi thử theo khung năng lực</h1><p class="muted">Đề thi mô phỏng chuẩn CEFR với đủ 5 kỹ năng. Mỗi lần thi đề được trộn khác nhau.</p></header>
+  app().innerHTML = `<header class="page"><h1>Thi thử theo khung năng lực</h1><p class="muted">Đề mô phỏng chuẩn CEFR, đủ 5 kỹ năng.<br>Mỗi lần thi đề được trộn khác nhau.</p></header>
   <div class="card flat"><p class="lab">Cách tính điểm đạt</p><ul class="goals"><li><i class="ti ti-check"></i>Điểm trung bình 5 kỹ năng từ 60% trở lên</li><li><i class="ti ti-check"></i>Không kỹ năng nào dưới 40%</li><li><i class="ti ti-check"></i>Từ 80% trở lên: đạt loại xuất sắc</li></ul><p class="sm muted">Phần Nghe chỉ được nghe tối đa 2 lần mỗi câu. Bài thi có tính giờ, hết giờ sẽ tự nộp.</p></div>
-  ${LV.map(l => { const E = EXAMS[l], h = S.exams[l] || [], last = h[h.length - 1], c = S.certs[l]; return `<section class="card examc ${c ? "got" : ""}"><div class="row"><div class="badge ${c ? "done" : ""}">${c ? '<i class="ti ti-certificate"></i>' : l}</div><div class="grow"><h3>${E.name}</h3><p class="sm muted">${E.time} phút · Nghe, Đọc, Ngữ pháp & Từ vựng, Viết, Nói</p>${last ? `<p class="sm">Lần gần nhất: <b>${last.overall}%</b> · ${last.pass ? '<span class="g">Đạt</span>' : '<span class="b">Chưa đạt</span>'} · ${h.length} lần thi</p>` : ""}</div></div>
+  ${LV.map(l => { const E = EXAMS[l], h = S.exams[l] || [], last = h[h.length - 1], c = S.certs[l]; return `<section class="card examc ${c ? "got" : ""}"><div class="row"><div class="badge lv-${l.toLowerCase()} ${c ? "done" : ""}">${c ? '<i class="ti ti-certificate"></i>' : l}</div><div class="grow"><h3>${E.name}</h3><p class="sm muted">${E.time} phút · Nghe, Đọc, Ngữ pháp & Từ vựng, Viết, Nói</p>${last ? `<p class="sm">Lần gần nhất: <b>${last.overall}%</b> · ${last.pass ? '<span class="g">Đạt</span>' : '<span class="b">Chưa đạt</span>'} · ${h.length} lần thi</p>` : ""}</div></div>
   <div class="row2">${c ? `<button class="btn" onclick="showCert('${l}')"><i class="ti ti-certificate"></i> Chứng nhận</button>` : `<span></span>`}<button class="btn primary" onclick="startMock('${l}')">${h.length ? "Thi lại" : "Vào thi"}</button></div></section>`; }).join("")}
   ${certs.length ? "" : `<p class="note">Mẹo: học xong các bài của một chặng rồi hãy thi cấp độ tương ứng.</p>`}`;
 }
@@ -107,7 +107,7 @@ function startMock(lv) {
 function secAdd(sec, v) { if (!sec) return; P.sec[sec] = (P.sec[sec] || 0) + v; }
 function rXintro(s) {
   const E = EXAMS[s.lv];
-  return `<div class="xin"><div class="badge xl">${s.lv}</div><h1>Thi thử ${E.name}</h1><p class="muted">Thời gian: <b>${E.time} phút</b>. Làm lần lượt 5 phần, không quay lại phần trước.</p>
+  return `<div class="xin"><div class="badge xl lv-${s.lv.toLowerCase()}">${s.lv}</div><h1>Thi thử ${E.name}</h1><p class="muted">Thời gian: <b>${E.time} phút</b>. Làm lần lượt 5 phần, không quay lại phần trước.</p>
   <div class="secs">${Object.keys(SECN).map((k, i) => `<div><i class="ti ti-${SECI[k]}"></i><span><b>${i + 1}. ${SECN[k]}</b><small>${{ listen: "6 câu, nghe tối đa 2 lần", read: "2 bài đọc, 8 câu hỏi", use: "18 câu trắc nghiệm", write: "1 bài viết, chấm như giáo viên", speak: "Đọc to 3 câu và trả lời 1 câu hỏi" }[k]}</small></span></div>`).join("")}</div>
   <p class="sm muted">Cần tai nghe hoặc loa, và cho phép micro ở phần Nói. Bài thi không hiện đáp án đúng/sai cho đến khi nộp bài.</p>
   <button class="btn primary full lg" onclick="beginMock()"><i class="ti ti-player-play"></i> Bắt đầu tính giờ</button></div>`;
