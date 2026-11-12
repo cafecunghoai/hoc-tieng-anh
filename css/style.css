@@ -345,8 +345,8 @@ details.card summary{cursor:pointer;list-style:none}details.card summary::-webki
 @media print{body *{visibility:hidden}#cert,#cert *{visibility:visible}#cert{position:absolute;left:0;top:0;width:100%;box-shadow:none}.noprint,#nav{display:none!important}}
 
 /* ============ Giao diện 2.0: màu sống động & ngắt dòng cân đối ============ */
+:root:not([data-theme=dark]){--bg:#F8F5EE;--pri:#0C7F67;--pri-h:#0A6C58}
 :root{
-  --bg:#F8F5EE;--pri:#0C7F67;--pri-h:#0A6C58;
   --grad:linear-gradient(135deg,#1DBF8E 0%,#0E8C70 48%,#0B6A5E 100%);
   --sun:linear-gradient(135deg,#FFC94D 0%,#FF9248 100%);
   --c-vocab:#E9A100;--c-gram:#F07A2E;--c-listen:#2F7FE0;--c-speak:#E2508A;--c-read:#17A673;--c-write:#8458E8;

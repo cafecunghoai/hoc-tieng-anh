@@ -71,3 +71,11 @@ Mỗi vòng, app được soát dưới ba vai: **chuyên gia dạy tiếng Anh*
 | Đề nghe B1, B2 hỏi "She..." trong khi không biết người nói là nam hay nữ | Viết lại lựa chọn trung tính |
 | Máy chấm gợi ý sai cho lỗi người học hay mắc như "buyed" (gợi ý "bused") | Thêm bảng động từ bất quy tắc và danh từ đặc biệt: buyed → bought, goed → went, childs → children, informations → information... kèm lời giải thích |
 | Kiểm thử lại | 116 bài, 56 chủ điểm, 5 đề thi chạy trọn; 854 câu đúng không bị bắt nhầm; 110 bài mẫu vẫn đạt trung bình 9/10 |
+
+## Vòng 8 – Từ vựng B1–C1, phiên âm, chế độ tối
+
+| Phát hiện | Cách sửa |
+|---|---|
+| Chế độ tối bị hỏng sau lần đổi màu: nền sáng, chữ trắng gần như không đọc được | Tách màu nền sáng chỉ áp dụng cho chế độ sáng; thêm bài kiểm tra tự động mở app ở cả chế độ sáng, tối, điện thoại và máy tính |
+| Phiên âm Chặng 0 theo giọng Anh (/hɒt/, /kɑː/) trong khi giọng đọc mặc định là giọng Mỹ (/hɑːt/, /kɑːr/), người học nghe một đằng thấy một nẻo | Phiên âm tự đổi theo giọng chọn trong Hồ sơ; bài nguyên âm ghi rõ khác biệt Anh – Mỹ |
+| Soát nghĩa khoảng 1.500 từ B1–C1 | Sửa "metro = tàu điện ngầm" thành "tàu điện đô thị" (ở Việt Nam chủ yếu chạy trên cao); "revise" ghi rõ nghĩa ôn bài là kiểu Anh; "fibre" đổi sang "fiber" |

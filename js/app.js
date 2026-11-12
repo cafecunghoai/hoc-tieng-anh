@@ -11,7 +11,7 @@ const SKI = { vocab: "cards", gram: "abc", listen: "headphones", speak: "microph
 const LES = {}, ORDER = [];
 STAGES.forEach(st => st.lessons.forEach((L, i) => {
   L.id = st.id + "-" + (i + 1); L.stage = st.id; L.no = i + 1;
-  L.W = L.w.split(";").map(x => { const p = x.split("="); return { en: p[0].trim(), vi: (p[1] || "").trim(), ipa: (p[2] || "").trim() }; });
+  L.W = L.w.split(";").map(x => { const p = x.split("="), en = p[0].trim(), uk = (p[2] || "").trim(); return { en, vi: (p[1] || "").trim(), ipaUK: uk, get ipa() { let us = false; try { us = /US/.test(S.settings.accent); } catch (e) {} return uk && us && IPA_US[en] ? IPA_US[en] : uk; } }; });
   L.S = (L.s || []).map(x => { const p = x.split("|"); return { en: p[0], vi: p[1] }; });
   if (typeof WRITING !== "undefined" && WRITING[L.id]) { const w = WRITING[L.id]; L.WR = { p: w[0], kw: w[1].split(";"), min: w[2], model: w[3] }; }
   LES[L.id] = L; ORDER.push(L.id);
@@ -65,6 +65,7 @@ function diffWords(target, heard) { const h = new Set(norm(heard).split(" ")); r
 let voices = [];
 function loadV() { try { voices = speechSynthesis.getVoices(); } catch (e) {} }
 if ("speechSynthesis" in window) { loadV(); try { speechSynthesis.onvoiceschanged = loadV; } catch (e) {} }
+const IPA_US = { hot: "hɑːt", dog: "dɔːɡ", car: "kɑːr", door: "dɔːr", bird: "bɝːd", go: "ɡoʊ", here: "hɪr", hair: "her", mother: "ˈmʌðɚ", chair: "tʃer", job: "dʒɑːb", dogs: "dɔːɡz", worked: "wɝːkt", wanted: "ˈwɑːntɪd", water: "ˈwɑːt̬ɚ", hotel: "hoʊˈtel", banana: "bəˈnænə", computer: "kəmˈpjuːt̬ɚ", coffee: "ˈkɑːfi", teacher: "ˈtiːtʃɚ", important: "ɪmˈpɔːrtnt", O: "oʊ", Z: "ziː" };
 const LNAME = { A: "ay", B: "bee", C: "see", D: "dee", E: "ee", F: "eff", G: "jee", H: "aitch", I: "eye", J: "jay", K: "kay", L: "el", M: "em", N: "en", O: "oh", P: "pee", Q: "cue", R: "are", S: "ess", T: "tee", U: "you", V: "vee", W: "double-you", X: "ex", Y: "why", Z: "zee" };
 function spoken(t) {
   const s = String(t).trim();
