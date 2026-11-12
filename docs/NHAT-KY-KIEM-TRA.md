@@ -79,3 +79,12 @@ Mỗi vòng, app được soát dưới ba vai: **chuyên gia dạy tiếng Anh*
 | Chế độ tối bị hỏng sau lần đổi màu: nền sáng, chữ trắng gần như không đọc được | Tách màu nền sáng chỉ áp dụng cho chế độ sáng; thêm bài kiểm tra tự động mở app ở cả chế độ sáng, tối, điện thoại và máy tính |
 | Phiên âm Chặng 0 theo giọng Anh (/hɒt/, /kɑː/) trong khi giọng đọc mặc định là giọng Mỹ (/hɑːt/, /kɑːr/), người học nghe một đằng thấy một nẻo | Phiên âm tự đổi theo giọng chọn trong Hồ sơ; bài nguyên âm ghi rõ khác biệt Anh – Mỹ |
 | Soát nghĩa khoảng 1.500 từ B1–C1 | Sửa "metro = tàu điện ngầm" thành "tàu điện đô thị" (ở Việt Nam chủ yếu chạy trên cao); "revise" ghi rõ nghĩa ôn bài là kiểu Anh; "fibre" đổi sang "fiber" |
+
+## Vòng 9 – Người mới học đi lại toàn bộ hành trình
+
+| Phát hiện | Cách sửa |
+|---|---|
+| Bài xếp câu lộ đáp án: từ cuối dính dấu chấm ("young.") và từ đầu viết hoa ("He") nên đoán được vị trí | Bỏ dấu câu cuối và viết thường từ đầu (trừ "I" và tên riêng) trên các thẻ từ |
+| Câu có trạng từ thời gian đặt đầu hoặc cuối đều đúng ("Today I am happy" / "I am happy today") nhưng chỉ chấp nhận một cách | Chấp nhận cả hai vị trí cho today, tomorrow, yesterday, now, usually, sometimes, finally... |
+| Màn hình chào mừng có chữ "lúc." rơi một mình xuống dòng; "Nghiêm túc · khuyến dùng" bị cắt đôi | Viết gọn lại câu, thêm các cụm không được tách (đúng lúc, sắp quên, đúng giờ) |
+| Tên cây trong Vườn từ vựng bị cắt cụt ("good aftern...") | Cho tên dài xuống tối đa 2 dòng |

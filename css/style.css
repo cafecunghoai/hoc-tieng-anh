@@ -397,3 +397,5 @@ details.card summary{cursor:pointer;list-style:none}details.card summary::-webki
 p,small,li,.muted,.note,.sm,.lab,span.grow,.task small,.why,.fbt,.errtip{text-wrap:balance}
 .passage,.passage p,.gram p,.gram li,.annot,.bubble p,.cmt,.gscore p,textarea{text-wrap:pretty}
 .card.big p{max-width:92%}
+
+.plot small{white-space:normal;text-overflow:clip;line-height:1.15;text-align:center;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow-wrap:anywhere}
