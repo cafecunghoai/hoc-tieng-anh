@@ -59,3 +59,15 @@ Mỗi vòng, app được soát dưới ba vai: **chuyên gia dạy tiếng Anh*
 | Bấm chữ cái "A" máy đọc thành "ơ" (đọc như mạo từ), các chữ khác đọc lơ lớ | Máy đọc đúng tên chữ cái: A "ây", E "i", W "đắp-bồ-liu", Z "zee" (giọng Anh: "zed"); chuỗi đánh vần L – A – N đọc từng chữ |
 | Chữ xuống dòng chưa có nghĩa, dòng dài dòng ngắn | Đoạn ngắn luôn cân hai dòng; không tách từ ghép (chủ điểm, kỹ năng, ngữ pháp, tiếng Anh, gợi ý...), không để "của, là, những, đã..." đứng cuối dòng, không để dấu "·" đầu dòng; các câu giới thiệu được viết lại, mỗi ý một dòng |
 | Màu sắc còn nhạt | Nút và thẻ bài học dùng nền chuyển màu xanh ngọc; mỗi trình độ một màu (A1 xanh lá, A2 xanh trời, B1 xanh lam, B2 tím, C1 cam đỏ); mỗi kỹ năng một màu; cấp độ và chuỗi ngày màu nắng |
+
+## Vòng 7 – Giáo viên soát lại từng câu
+
+| Phát hiện | Cách sửa |
+|---|---|
+| 14 câu ngữ pháp có lựa chọn "sai" mà thật ra vẫn đúng ngữ pháp (ví dụ "Have you finished your homework already?", "She should be at the gym", "She isn't too old to drive", "Must I use your phone?") | Thay các lựa chọn nhiễu để mỗi câu chỉ có đúng một đáp án; thêm gợi ý nghĩa khi cần (trừ khi), thêm ngữ cảnh cho câu cấu tạo từ |
+| Câu tìm lỗi "...so I have a uncle" có chữ "so" vô lý; câu "Can I have an ___ (apple)?" quá dễ đoán | Viết lại câu tự nhiên hơn |
+| "first floor" dịch là "tầng một" gây hiểu nhầm (Mỹ: tầng trệt; Anh: lầu 1) | Đổi thành "ground floor – tầng trệt" |
+| Chính tả Anh – Mỹ lẫn lộn (colour/color, centre, neighbour, realise, cancelled...) trong khi giọng đọc mặc định là Mỹ | Thống nhất toàn bộ nội dung theo chính tả Mỹ (khoảng 170 chỗ); người học viết kiểu Anh vẫn được chấm đúng |
+| Đề nghe B1, B2 hỏi "She..." trong khi không biết người nói là nam hay nữ | Viết lại lựa chọn trung tính |
+| Máy chấm gợi ý sai cho lỗi người học hay mắc như "buyed" (gợi ý "bused") | Thêm bảng động từ bất quy tắc và danh từ đặc biệt: buyed → bought, goed → went, childs → children, informations → information... kèm lời giải thích |
+| Kiểm thử lại | 116 bài, 56 chủ điểm, 5 đề thi chạy trọn; 854 câu đúng không bị bắt nhầm; 110 bài mẫu vẫn đạt trung bình 9/10 |

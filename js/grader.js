@@ -197,11 +197,14 @@ const Grader = (() => {
     const v = [typeof usSpell === "function" ? usSpell(l) : l, l.replace(/our/, "or"), l.replace(/tre(s?)$/, "ter$1"), l.replace(/ys(e|ed|es|ing)$/, "yz$1"), l.replace(/ll(ed|ing|er|ers)$/, "l$1"), l.replace(/is(e|ed|es|ing|ation|ations|er|ers)$/, "iz$1"), l.replace(/isation(s?)$/, "ization$1"), l.replace(/ogue(s?)$/, "og$1"), l.replace(/ence$/, "ense"), l.replace(/our/, "or").replace(/ful$/, "ful"), l.replace(/^programmes?$/, "program"), l.replace(/^instal(ment|ments)$/, "instal$1").replace(/^instal/, "install"), l.replace(/ageing/, "aging"), l.replace(/^scept/, "skept")];
     return v.some(x => SP.correct(x));
   }
+  const OVER = { buyed: "bought", goed: "went", eated: "ate", drinked: "drank", runned: "ran", swimed: "swam", swimmed: "swam", writed: "wrote", catched: "caught", teached: "taught", thinked: "thought", bringed: "brought", taked: "took", maked: "made", gived: "gave", comed: "came", seed: "saw", sayed: "said", telled: "told", knowed: "knew", growed: "grew", throwed: "threw", flied: "flew", drived: "drove", rided: "rode", speaked: "spoke", breaked: "broke", choosed: "chose", forgetted: "forgot", getted: "got", leaved: "left", feeled: "felt", keeped: "kept", sleeped: "slept", meeted: "met", sitted: "sat", standed: "stood", understanded: "understood", winned: "won", loosed: "lost", losed: "lost", payed: "paid", spended: "spent", sended: "sent", builded: "built", fighted: "fought", finded: "found", hitted: "hit", putted: "put", cutted: "cut", hurted: "hurt", costed: "cost", becomed: "became", begined: "began", singed: "sang", drawed: "drew", weared: "wore", hided: "hid", falled: "fell", feeded: "fed", holded: "held", readed: "read", heared: "heard", childs: "children", childrens: "children", mans: "men", womans: "women", foots: "feet", tooths: "teeth", mouses: "mice", sheeps: "sheep", fishs: "fish", informations: "information", advices: "advice", furnitures: "furniture", homeworks: "homework", luggages: "luggage", equipments: "equipment", knowledges: "knowledge" };
   function spelling(T) {
     if (!SP) return [];
     const out = [];
     T.forEach((t, i) => {
       if (/^\d/.test(t.w) || t.raw.length < 2 || t.skip) return;
+      const ov = OVER[t.raw.toLowerCase()];
+      if (ov) { out.push({ i, j: i + 1, cat: "grammar", fix: /^[A-Z]/.test(t.raw) ? ov[0].toUpperCase() + ov.slice(1) : ov, msg: /ed$/.test(t.raw.toLowerCase()) ? "Động từ bất quy tắc, không thêm -ed." : /(tion|vice|ture|work|gage|ment|ledge)s$/.test(t.raw.toLowerCase()) ? "Danh từ không đếm được, không thêm -s." : "Danh từ số nhiều bất quy tắc.", key: "irreg" }); return; }
       if (/^[A-Z]/.test(t.raw) && !t.start) return; // tên riêng
       const parts = t.raw.replace(/’/g, "'").split("-");
       const bad = parts.some(p => { if (!p) return false; const base = p.replace(/'s$/i, ""); return !(okWord(base) || (typeof CONTR !== "undefined" && CONTR[p.toLowerCase()])); });
