@@ -84,6 +84,7 @@ const Grader = (() => {
   const NUM_A = W("two three four five six seven eight nine ten eleven twelve twenty thirty forty fifty");
   // quá khứ / quá khứ phân từ của động từ nguyên mẫu (Anh – Mỹ: learned, không dùng learnt)
   const pastOf = v => { for (const k in PAST) if (PAST[k] === v && !/ed$/.test(k) && k !== "learnt") return k; return ed(v); };
+  const toPastG = v => pastOf(v);
   const ppOf = v => { const p = pastOf(v); return PP[p] || p; };
   const INDEF = W("everyone everybody someone somebody nobody anyone anybody");
   const PERSON_N = W("mother father brother sister friend teacher boss son daughter wife husband baby child student doctor manager neighbour neighbor man woman person girl boy grandmother grandfather grandma grandpa uncle aunt cousin mum mom dad parent").concat(JOB);
@@ -308,6 +309,21 @@ const Grader = (() => {
       if (/^(wish|wishes|wished)$/.test(a) && SUBJ_PRON.includes(b) && /^(have|has|am|is|are|can|will)$/.test(c)) add(i + 2, i + 3, "grammar", { have: "had", has: "had", am: "were", is: "were", are: "were", can: "could", will: "would" }[c], `Sau wish (ước điều không có thật) lùi thì: ${b} ${{ have: "had", has: "had", am: "were", is: "were", are: "were", can: "could", will: "would" }[c]}.`, "wish");
       // a cat white → a white cat
       if (["a", "an"].includes(a) && T[i + 2] && COLORS.includes(c) && (SING_N.includes(b) || /^(cat|dog|car|bike|shirt|dress|hat|bag|house|flower|bird|horse|pen|table|chair|motorbike|phone)$/.test(b)) && sameSent(i, i + 2) && (!T[i + 3] || T[i + 3].start || /[.,!?;]/.test(T[i + 3].gap) || /^(and|but)$/.test(w(i + 3)))) add(i + 1, i + 3, "word", `${c} ${b}`, `Tính từ đứng trước danh từ: a ${c} ${b}.`, "word-order");
+      // câu hỏi gián tiếp: tell me where is the bank → where the bank is; do you know what time is it → what time it is; where does he live → where he lives
+      if (/^(where|what|when|why|how|who|which)$/.test(a) && T[i + 1] && sameSent(i - 1, i + 1) && !/[,;:"“”]/.test(T[i].gap) && (/^(know|knows|knew|wonder|wondering|wondered|sure|remember|idea|understand|explain|explains|tell|ask)$/.test(prev) || /^(me|us|him|her|them|you)$/.test(prev) && /^(tell|told|ask|asked|show|showed|teach|taught)$/.test(w(i - 2)))) {
+        let h = i + 1; if (a === "what" && /^(time|day|kind|color|colour|size)$/.test(b) || a === "how" && /^(old|much|many|far|long|big|tall|often)$/.test(b) || a === "which" && !FIN.has(b)) h = i + 2;
+        const v = w(h), np0 = h + 1;
+        const npStart = t => t && (DET.concat(["a", "an", "these", "those", "some"]).includes(t.w) || SUBJ_PRON.includes(t.w) || /^[A-Z]/.test(t.raw) && t.w !== "i" || t.w === "i");
+        if (/^(is|are|was|were)$/.test(v) && npStart(T[np0]) && !(SUBJ_PRON.includes(w(np0)) && T[np0 + 1] && !T[np0 + 1].start && /ing$/.test(w(np0 + 1)))) {
+          let e = np0; while (T[e + 1] && sameSent(i, e + 1) && !/[,;:.!?]/.test(T[e + 1].gap) && e - np0 < 4 && !/^(and|but|because|so|or|if|when|now|today|please|for|to)$/.test(w(e + 1)) && !FIN.has(w(e + 1))) e++;
+          const endOK = !T[e + 1] || T[e + 1].start || /[,;:.!?]/.test(T[e + 1].gap) || /^(and|but|because|so|or|if|when|now|today|please)$/.test(w(e + 1));
+          const np = T.slice(np0, e + 1).map(t => t.raw).join(" ");
+          if (endOK && !(a === "who" || a === "what") || endOK && npStart(T[np0])) add(i, e + 1, "word", `${T.slice(i, h).map(t => t.raw).join(" ")} ${np} ${T[h].raw}`, `Trong câu hỏi gián tiếp (sau tell me / know / wonder…) không đảo động từ lên trước: ${T.slice(i, h).map(t => t.raw).join(" ")} ${np} ${T[h].raw}.`, "wo");
+        } else if (/^(do|does|did)$/.test(v) && T[np0] && (SUBJ_PRON.includes(w(np0)) || NAMES.has(T[np0].raw)) && BASE.includes(w(np0 + 1))) {
+          const vb = w(np0 + 1), f = v === "does" ? third(vb) : v === "did" ? toPastG(vb) : vb;
+          add(i, np0 + 2, "word", `${T.slice(i, h).map(t => t.raw).join(" ")} ${T[np0].raw} ${f}`, `Trong câu hỏi gián tiếp không dùng do/does/did: ${T.slice(i, h).map(t => t.raw).join(" ")} ${T[np0].raw} ${f}.`, "wo");
+        }
+      }
       // modal
       if (MODALS.includes(a) || a.endsWith("'ll")) {
         if (b === "to" && BASE.includes(c)) add(i + 1, i + 2, "grammar", "", `Sau ${T[i].raw} không dùng 'to'.`, "modal");
@@ -422,26 +438,8 @@ const Grader = (() => {
       const txt = T.slice(s0, e0).map(t => t.fixw || t.w).join(" ");
       const yr = (txt.match(/\bin ((?:19|20)\d\d)\b/) || [])[1], pastYear = !!yr && +yr < YEAR;
       const own = PAST_MARK.test(txt) || pastYear, pres = PRES_MARK.test(txt) || /\b(am|is|are)\b/.test(txt);
-      if (pres) pastCtx = false; else if (own) pastCtx = true;
+      const prevCtx = pastCtx; if (pres) pastCtx = false; else if (own) pastCtx = true;
       const hint = opt.tense === "past" && !pres;
-      if (!pastCtx && !hint) return;
-      const ownPast = own && !pres;
-      for (let i = s0; i < e0 - 1; i++) {
-        const a = wv(i), b = wv(i + 1), prev = wv(i - 1);
-        const nounSubj = DET.includes(prev) && (SING_N.includes(a) || /s$/.test(a)) && !STOP.has(a);
-        const subj = SUBJ_PRON.includes(a) || nounSubj || NAMES.has(T[i].raw);
-        if (!subj || AUX_BEFORE.includes(prev) || ["that", "who", "which"].includes(prev)) continue;
-        if (CAUS.includes(nounSubj ? wv(i - 2) : prev) || ["and", "or"].includes(nounSubj ? wv(i - 2) : prev) && !SUBJ_PRON.includes(a)) continue; // made my sister cry, let Lan go
-        if (T[i + 1].gap && /[,;:]/.test(T[i + 1].gap)) continue;
-        const base = BASE_X.includes(b) && !(T[i + 1] && /^[A-Z]/.test(T[i + 1].raw)) ? b : THIRD[b];
-        if (!base) continue;
-        const isThird = !BASE_X.includes(b);
-        if (isThird && !ownPast) continue; // She lives in Hue (sự thật hiện tại)
-        const dup = out.find(x => x.i === i + 1);
-        if (dup && dup.key === "sva") { dup.fix = toPast(base); dup.msg = `Đoạn này kể chuyện đã qua → dùng quá khứ đơn: ${toPast(base)}.`; dup.key = "tense"; continue; }
-        if (STATE_V.includes(base)) continue;
-        if (!["have", "do", "has", "does", "is"].includes(b) && !dup) add(i + 1, i + 2, "grammar", toPast(base), `Đoạn này kể chuyện đã qua → dùng quá khứ đơn: ${toPast(base)}.`, "tense");
-      }
       // hiện tại hoàn thành + mốc quá khứ đã kết thúc trong cùng mệnh đề: I have visited Da Lat last summer → visited
       //   mốc phải đứng sau have + V3 trong cùng mệnh đề, hoặc mở đầu câu ngay trước chủ ngữ (Yesterday I have seen...)
       const pastAt = k => { const x = wv(k), y = wv(k + 1);
@@ -460,6 +458,19 @@ const Grader = (() => {
         const pst = b === "been" && wv(i + 2) === "to" ? "went" : b === "been" ? (/^(he|she|it)$/.test(wv(i - 1)) || a === "has" ? "was" : "were") : (Object.keys(PP).find(k => PP[k] === b) || b);
         const subj = /'ve$/.test(a) ? T[i].raw.split(/['’]/)[0] + " " : "";
         add(i, i + 2, "grammar", subj + pst, `Có mốc thời gian quá khứ đã kết thúc (yesterday, last..., ago, in + năm) → dùng quá khứ đơn: ${pst}, không dùng hiện tại hoàn thành.`, "perfect-past"); break; }
+      // I go to school yesterday → went: động từ hiện tại, mốc quá khứ đứng SAU trong cùng mệnh đề (không cần opts.tense)
+      for (let i = s0; i < e0 - 2; i++) { const a = wv(i), b = wv(i + 1), prev = wv(i - 1);
+        const nounSubj = DET.includes(prev) && (SING_N.includes(a) || PERSON_N.includes(a) || isPlN(a)) && !STOP.has(a);
+        if (!(SUBJ_PRON.includes(a) || nounSubj || NAMES.has(T[i].raw)) || AUX_BEFORE.includes(prev) || /^(that|who|which|where|when|if)$/.test(nounSubj ? wv(i - 2) : prev)) continue;
+        if (CAUS.includes(nounSubj ? wv(i - 2) : prev) || ["and", "or"].includes(nounSubj ? wv(i - 2) : prev) && !SUBJ_PRON.includes(a)) continue; // made my sister cry yesterday
+        if (/[,;:]/.test(T[i + 1].gap) || /^[A-Z]/.test(T[i + 1].raw)) continue;
+        const base = BASE_X.includes(b) ? b : THIRD[b]; if (!base || STATE_V.includes(base) || /^(have|do|has|does|is)$/.test(b)) continue;
+        if (BASE_X.includes(b) && ["he", "she", "it"].includes(a) && false) continue;
+        let hit = false;
+        for (let k = i + 2; k < Math.min(e0, i + 12); k++) { if (/[,;:]/.test(T[k].gap) || /^(and|but|because|so|or|that|which|who|when|while|if|since|before|after|until|where|what|how|why|now|today|every|usually|always|tomorrow|next)$/.test(wv(k)) || FIN.has(wv(k)) || PAST[wv(k)] && k !== i + 1) break; if (pastAt(k)) { hit = true; break; } }
+        if (!hit || out.some(x => x.i === i + 1 && x.key === "tense")) continue;
+        const dupS = out.findIndex(x => x.i === i + 1); if (dupS >= 0) out.splice(dupS, 1);
+        add(i + 1, i + 2, "grammar", toPast(base), `Có mốc thời gian quá khứ trong câu → dùng quá khứ đơn: ${toPast(base)}.`, "tense"); }
       // Yesterday I don't go → didn't (mốc quá khứ trong cùng mệnh đề)
       for (let i = s0; i < e0; i++) { const a = wv(i); if (!/^(don't|doesn't|do|does)$/.test(a) || /^(do|does)$/.test(a) && wv(i + 1) !== "not") continue;
         if (/^(do|does)$/.test(a) && /^(what|where|when|why|how|who)$/.test(wv(i - 1))) continue;
@@ -469,6 +480,31 @@ const Grader = (() => {
         if (!hit) continue; const neg = /n't$/.test(a);
         add(i, i + 1, "grammar", neg ? "didn't" : "did", `Có mốc thời gian quá khứ (yesterday, last..., ago) → phủ định ở quá khứ: ${neg ? "didn't" : "did not"} + động từ nguyên mẫu.`, "tense");
         const dupS = out.findIndex(x => x.i === i + 1 && x.key === "sva"); if (dupS >= 0) out.splice(dupS, 1); }
+      if (pastCtx || hint) {
+      const ownPast = own && !pres;
+      for (let i = s0; i < e0 - 1; i++) {
+        const a = wv(i), b = wv(i + 1), prev = wv(i - 1);
+        const nounSubj = DET.includes(prev) && (SING_N.includes(a) || /s$/.test(a)) && !STOP.has(a);
+        const subj = SUBJ_PRON.includes(a) || nounSubj || NAMES.has(T[i].raw);
+        if (!subj || AUX_BEFORE.includes(prev) || ["that", "who", "which"].includes(prev)) continue;
+        if (CAUS.includes(nounSubj ? wv(i - 2) : prev) || ["and", "or"].includes(nounSubj ? wv(i - 2) : prev) && !SUBJ_PRON.includes(a)) continue; // made my sister cry, let Lan go
+        if (T[i + 1].gap && /[,;:]/.test(T[i + 1].gap)) continue;
+        const base = BASE_X.includes(b) && !(T[i + 1] && /^[A-Z]/.test(T[i + 1].raw)) ? b : THIRD[b];
+        if (!base) continue;
+        const isThird = !BASE_X.includes(b);
+        // mốc quá khứ chỉ có trong câu này (không phải đoạn kể chuyện): động từ phải cùng mệnh đề với mốc, hoặc mốc mở đầu câu
+        //   "I miss the trip we took last summer", "The shop opens at nine, and it opened late yesterday" → không gạch
+        if (own && !prevCtx && !hint && !pastAt(s0) && !(pastYear && /^in$/.test(wv(s0)))) { let ok = false;
+          for (let k = i + 2; k < e0; k++) { if (/[,;:]/.test(T[k].gap) || /^(and|but|because|so|or|that|which|who|when|while|if|since|before|after|until|where|what|how|why)$/.test(wv(k)) || FIN.has(wv(k)) || PAST[wv(k)]) break; if (pastAt(k)) { ok = true; break; } }
+          if (!ok) { for (let k = i - 1; k >= s0; k--) { if (pastAt(k)) { ok = true; break; } if (/[,;:]/.test(T[k + 1].gap) || /^(and|but|because|so|or|that|which|who|when|while|if)$/.test(wv(k))) break; } }
+          if (!ok) continue; }
+        if (isThird && !ownPast) continue; // She lives in Hue (sự thật hiện tại)
+        const dup = out.find(x => x.i === i + 1);
+        if (dup && dup.key === "sva") { dup.fix = toPast(base); dup.msg = `Đoạn này kể chuyện đã qua → dùng quá khứ đơn: ${toPast(base)}.`; dup.key = "tense"; continue; }
+        if (STATE_V.includes(base)) continue;
+        if (!["have", "do", "has", "does", "is"].includes(b) && !dup) add(i + 1, i + 2, "grammar", toPast(base), `Đoạn này kể chuyện đã qua → dùng quá khứ đơn: ${toPast(base)}.`, "tense");
+      }
+      }
       // động từ nối bằng and sau một động từ đã gạch: We swim ... and eat
       for (let i = s0 + 1; i < e0 - 1; i++) if (wv(i) === "and" && BASE.includes(wv(i + 1)) && !["have", "do"].includes(wv(i + 1)) && !out.some(x => x.i === i + 1) && out.some(x => x.key === "tense" && x.i > s0 && x.i < i && x.i >= i - 6))
         add(i + 1, i + 2, "grammar", toPast(wv(i + 1)), `Đoạn này kể chuyện đã qua → dùng quá khứ đơn: ${toPast(wv(i + 1))}.`, "tense");
@@ -727,7 +763,14 @@ const Grader = (() => {
     if (fl.includes("copy")) { total = Math.min(total, 2); crit.task = Math.min(crit.task, 1); }
     if (fl.includes("offtopic")) { total = Math.min(total, 4); crit.task = Math.min(crit.task, 1); }
     if (fl.includes("vietnamese")) { total = 0; crit.task = crit.gram = crit.vocab = crit.coh = 0; }
-    return { crit, total, n, short, flags: fl, kwHits, kwMiss: kw.filter(k => !kwHits.includes(k)), linkTypes: [...linkTypes], sents: sents.length, ttr };
+    // điểm tổng bị giới hạn (lạc đề, quá ngắn, chép, nhồi từ khóa, thiếu từ khóa…): hạ 4 tiêu chí theo tỉ lệ để tổng 4 tiêu chí ÷ 2 = điểm hiển thị
+    const raw = (crit.task + crit.gram + crit.vocab + crit.coh) / 2; let uncapped = null;
+    if (total < raw) { uncapped = Math.round(raw * 2) / 2; const K = ["task", "gram", "vocab", "coh"], f = total / raw, before = Object.assign({}, crit);
+      K.forEach(k => crit[k] = Math.floor(before[k] * f * 2) / 2);
+      // phần lẻ còn thiếu: cộng 0.5 cho tiêu chí có phần dư lớn nhất, không vượt điểm trước khi hạ
+      let d = Math.round((total * 2 - K.reduce((a, k) => a + crit[k], 0)) * 2) / 2;
+      while (d > 0) { const k = K.filter(x => crit[x] + 0.5 <= before[x]).sort((a, b) => (before[b] * f - crit[b]) - (before[a] * f - crit[a]))[0]; if (!k) break; crit[k] += 0.5; d -= 0.5; } }
+    return { crit, total, uncapped, n, short, flags: fl, kwHits, kwMiss: kw.filter(k => !kwHits.includes(k)), linkTypes: [...linkTypes], sents: sents.length, ttr };
   }
 
   /* ---------- Nhận xét của giáo viên ---------- */

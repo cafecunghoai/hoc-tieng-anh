@@ -25,7 +25,7 @@ w:"water=nước=ˈwɔːtə;hotel=khách sạn=həʊˈtel;banana=quả chuối=b
 g:`<p><b>Trọng âm</b>: trong từ nhiều âm tiết, có một âm tiết đọc <b>to, dài, cao</b> hơn. Dấu <b>ˈ</b> đứng trước âm tiết được nhấn: <b>WA</b>-ter, ho-<b>TEL</b>, com-<b>PU</b>-ter.</p><p><b>Ngữ điệu</b>:</p><ul><li>Câu hỏi Có/Không → <b>lên giọng</b> ở cuối: <i>Are you a teacher? ↗</i></li><li>Câu hỏi có từ để hỏi (what, where...) và câu kể → <b>xuống giọng</b>: <i>Where do you live? ↘</i></li></ul><p class="tip">Mẹo: tiếng Anh có nhịp lên xuống như sóng, không đều đều từng chữ như tiếng Việt.</p>`,
 s:["Are you a teacher?|Bạn là giáo viên phải không?","Where do you live?|Bạn sống ở đâu?","I like coffee.|Tôi thích cà phê.","My family is very important.|Gia đình tôi rất quan trọng."]}
 ]},
-{id:"a1", name:"A1", title:"Mới bắt đầu", hours:100, words:"600 từ", goals:["Nói về bản thân, gia đình, công việc","Hỏi đường, mua đồ, gọi món","Viết tin nhắn ngắn 3–5 câu"], lessons:[
+{id:"a1", name:"A1", title:"Sơ cấp", hours:100, words:"600 từ", goals:["Nói về bản thân, gia đình, công việc","Hỏi đường, mua đồ, gọi món","Viết tin nhắn ngắn 3–5 câu"], lessons:[
 {t:"Chào hỏi",
 w:"hello=xin chào;hi=chào (thân mật);goodbye=tạm biệt;bye=tạm biệt (thân mật);good morning=chào buổi sáng;good afternoon=chào buổi chiều;good evening=chào buổi tối;good night=chúc ngủ ngon;please=làm ơn;thank you=cảm ơn;thanks=cảm ơn (thân mật);sorry=xin lỗi;excuse me=xin lỗi (khi làm phiền);no=không;name=tên;nice=vui, dễ chịu;meet=gặp;how=như thế nào;fine=khỏe, ổn;okay=được, ổn;friend=người bạn, bạn;see you=hẹn gặp lại, tạm biệt;welcome=chào mừng;you're welcome=không có gì",
 g:`<h4>Động từ TO BE (là, thì, ở)</h4><table><tr><td>I</td><td><b>am</b></td><td>I'm</td></tr><tr><td>You / We / They</td><td><b>are</b></td><td>you're, we're, they're</td></tr><tr><td>He / She / It</td><td><b>is</b></td><td>he's, she's, it's</td></tr></table><p>Câu hỏi: đưa <b>am/is/are</b> lên đầu: <i>Are you Tom?</i></p><p>Phủ định: thêm <b>not</b> sau am/is/are: <i>I am not tired.</i></p><p class="tip">Lưu ý: tiếng Việt nói 'Tôi khỏe' nhưng tiếng Anh bắt buộc có động từ: <b>I am fine</b>.</p>`,
@@ -147,10 +147,10 @@ g:`<h4>BE GOING TO + V – dự định</h4><p><i>I <b>am going to</b> learn Eng
 s:["I am going to learn English every day.|Tôi sẽ học tiếng Anh mỗi ngày.","What are you going to do this weekend?|Cuối tuần này bạn định làm gì?","She wants to travel abroad.|Cô ấy muốn đi du lịch nước ngoài.","We are going to visit Hue next year.|Năm sau chúng tôi sẽ đi thăm Huế.","My goal is to speak English fluently.|Mục tiêu của tôi là nói tiếng Anh lưu loát.","I hope to pass the exam.|Tôi hy vọng sẽ đậu kỳ thi."],
 r:{t:"My name is Huy. I'm thirty years old, and I work in a hotel. I want to get a better job, so I am going to improve my English. Every day, I'm going to study for one hour and practice speaking with tourists. Next year, I'm going to take an English exam. It's a big goal, but I'm sure I can do it.",q:["Huy làm việc ở đâu?|Khách sạn|Bệnh viện|Trường học","Mỗi ngày Huy định học bao lâu?|1 giờ|2 giờ|30 phút","Năm sau Huy định làm gì?|Thi tiếng Anh|Đi du lịch|Chuyển nhà"]}}
 ]},
-{id:"a2", name:"A2", title:"Sơ cấp", hours:200, words:"1.300 từ", goals:["Kể lại một ngày, một chuyến đi","Nghe hiểu thông báo, video chậm","Viết email ngắn"], lessons:[]},
+{id:"a2", name:"A2", title:"Tiền trung cấp", hours:200, words:"1.300 từ", goals:["Kể lại một ngày, một chuyến đi","Nghe hiểu thông báo, video chậm","Viết email ngắn"], lessons:[]},
 {id:"b1", name:"B1", title:"Trung cấp", hours:400, words:"", goals:["Tự xoay xở khi đi du lịch","Nêu ý kiến và lý do","Đọc tin tức đơn giản"], lessons:[]},
-{id:"b2", name:"B2", title:"Thành thạo", hours:600, words:"", goals:["Nói chuyện tự nhiên với người bản xứ","Xem phim, nghe podcast hiểu ý chính","Viết bài luận 250 chữ có lập luận"], lessons:[]},
-{id:"c1", name:"C1", title:"Nâng cao", hours:800, words:"", goals:["Thuyết trình, họp bằng tiếng Anh","Đọc sách, báo chuyên ngành","Viết văn trang trọng"], lessons:[]}
+{id:"b2", name:"B2", title:"Trung cao cấp", hours:600, words:"", goals:["Nói chuyện tự nhiên với người bản xứ","Xem phim, nghe podcast hiểu ý chính","Viết bài luận 250 chữ có lập luận"], lessons:[]},
+{id:"c1", name:"C1", title:"Cao cấp", hours:800, words:"", goals:["Thuyết trình, họp bằng tiếng Anh","Đọc sách, báo chuyên ngành","Viết văn trang trọng"], lessons:[]}
 ];
 
 const PLACEMENT = [

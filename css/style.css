@@ -507,3 +507,9 @@ a.foot{display:inline-block;padding:14px 8px}
 #toast.slim{padding:5px 14px;line-height:1.35}
 .gscore.pct b{font-size:19px;letter-spacing:-.02em}
 .done.fail .ring{background:conic-gradient(var(--warn,#C2410C) calc(var(--p)*1%),color-mix(in srgb,var(--warn,#C2410C) 16%,var(--card)) 0)}.done.fail .ring span{color:var(--warn,#C2410C)}
+/* r4: điểm bị giới hạn (dưới 4 tiêu chí của bài viết) */
+.capn{display:flex;gap:8px;align-items:flex-start;margin:10px 0 4px;padding:8px 10px;border-radius:12px;background:var(--acc2);color:var(--acc-ink)}.capn i{flex:none;margin-top:2px}
+/* micro: chữ máy đang nghe được + kiểm tra micro trong Hồ sơ */
+.heard.live{color:var(--mut);font-size:15px;min-height:46px;margin-bottom:10px}
+#mictest:not(:empty){margin-top:4px}#mictest .good{color:var(--good)}#mictest .err{text-align:left}
+#mictest .micmsg{background:var(--bad2);border-radius:12px;padding:10px 12px;text-align:left;margin:8px 0}

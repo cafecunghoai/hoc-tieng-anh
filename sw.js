@@ -1,6 +1,6 @@
 /* Service worker: chạy offline, tự cập nhật khi có bản mới. build.js gắn ?v=<phiên bản> vào các tệp js/css trong CORE, khớp với index.html */
-const V = "hta-mwdp0nye", FONT = "hta-font";
-const CORE = ["./", "index.html", "css/style.css?v=mwdp0nye", "js/icons.js?v=mwdp0nye", "js/data-core.js?v=mwdp0nye", "js/data-a2.js?v=mwdp0nye", "js/data-b1.js?v=mwdp0nye", "js/data-b2.js?v=mwdp0nye", "js/data-c1.js?v=mwdp0nye", "js/writing.js?v=mwdp0nye", "js/grammar-a.js?v=mwdp0nye", "js/grammar-b.js?v=mwdp0nye", "js/exams.js?v=mwdp0nye", "js/grader.js?v=mwdp0nye", "js/syn.js?v=mwdp0nye", "js/app.js?v=mwdp0nye", "js/games.js?v=mwdp0nye", "js/study.js?v=mwdp0nye", "js/vendor/spell.js", "manifest.webmanifest", "icons/icon-192.png", "icons/icon-512.png"];
+const V = "hta-mwdqot5t", FONT = "hta-font";
+const CORE = ["./", "index.html", "css/style.css?v=mwdqot5t", "js/icons.js?v=mwdqot5t", "js/data-core.js?v=mwdqot5t", "js/data-a2.js?v=mwdqot5t", "js/data-b1.js?v=mwdqot5t", "js/data-b2.js?v=mwdqot5t", "js/data-c1.js?v=mwdqot5t", "js/writing.js?v=mwdqot5t", "js/grammar-a.js?v=mwdqot5t", "js/grammar-b.js?v=mwdqot5t", "js/exams.js?v=mwdqot5t", "js/grader.js?v=mwdqot5t", "js/syn.js?v=mwdqot5t", "js/app.js?v=mwdqot5t", "js/games.js?v=mwdqot5t", "js/study.js?v=mwdqot5t", "js/vendor/spell.js", "manifest.webmanifest", "icons/icon-192.png", "icons/icon-512.png"];
 self.addEventListener("install", e => { e.waitUntil(caches.open(V).then(c => c.addAll(CORE)).then(() => self.skipWaiting())); });
 // Giữ lại bộ nhớ phông chữ (tên cố định) qua các phiên bản, chỉ xóa bản app cũ
 self.addEventListener("activate", e => { e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== V && k !== FONT).map(k => caches.delete(k)))).then(() => self.clients.claim())); });

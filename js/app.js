@@ -138,7 +138,7 @@ function placeToast(t) {
   const nav = $("#nav"), nr = nav && getComputedStyle(nav).display !== "none" ? nav.getBoundingClientRect() : null, fb = $("#fb.on");
   let bottom = vh - 12; if (nr && nr.top > vh / 2) bottom = nr.top - 10; if (fb) bottom = Math.min(bottom, innerHeight - fb.offsetHeight - 10); // vị trí khi thanh đã trượt lên hết (đang trượt thì rect còn ở dưới màn hình)
   const h = t.offsetHeight, w = t.offsetWidth, L = cx - w / 2 - 6, R = cx + w / 2 + 6, pt = $(".ptop"), top0 = (pt ? pt.getBoundingClientRect().bottom : 0) + 8;
-  const hits = $$("button,.btn,input,textarea,select,a[href],[onclick],h1,h2,h3,h4,.lab,.sec").filter(e => !e.closest("#toast,#nav,#fb,.modal")).map(e => e.getBoundingClientRect()).filter(r => r.height && r.height < 140 && r.right > L && r.left < R && r.bottom > top0 && r.top < bottom);
+  const hits = $$("button,.btn,input,textarea,select,a[href],[onclick],h1,h2,h3,h4,.lab,.sec,.card.big p,.card.big .row").filter(e => !e.closest("#toast,#nav,#fb,.modal")).map(e => e.getBoundingClientRect()).filter(r => r.height && r.height < 140 && r.right > L && r.left < R && r.bottom > top0 && r.top < bottom);
   let y = bottom;
   for (let k = 0; k < 16; k++) { const hit = hits.filter(r => r.bottom > y - h - 6 && r.top < y); if (!hit.length) break; y = Math.min(...hit.map(r => r.top)) - 8; }
   // không còn chỗ trống: đè lên giữa thanh tiêu đề (thanh tiến độ, không phải nút) nếu đủ hẹp, nếu không thì ngay dưới thanh
@@ -150,7 +150,7 @@ const NEVER = [["hello", "hi"], ["thank you", "thanks"], ["sorry", "excuse me"],
   ["recently", "lately"], ["whether", "if"], ["must be", "no doubt"], ["lead to", "result in"], ["make a decision", "make up your mind", "decide"], ["looking back", "in hindsight", "in retrospect", "hindsight"], ["breathtaking", "spectacular", "stunning"], ["it seems that", "it appears that", "seem"], ["implement", "roll out"], ["unquestionably", "there is little doubt that"], ["likewise", "similarly"], ["moving on", "turning now to"],
   ["get up", "wake up"], ["right now", "at the moment"], ["street", "road"], ["do", "work"], ["rarely", "hardly ever"], ["a week", "weekly"], ["abroad", "foreign"], ["mustn't", "forbidden"], ["regards", "sincerely", "best wishes"], ["unless", "otherwise"], ["goodbye", "bye", "see you"], ["price", "cost"], ["habit", "routine"], ["later", "in the future", "one day"], ["predict", "forecast"], ["luggage", "suitcase"], ["required", "necessary"], ["deliver", "delivery"], ["trash", "waste"], ["confused", "embarrassed"], ["made in", "produced"], ["tool", "device", "machine"], ["tradition", "custom"],
   ["allegedly", "supposedly", "reportedly"],
-  ["even though", "although", "though", "much as"], ["actually", "genuinely", "in fact"], ["carry on", "go on doing", "keep on"], ["acknowledge", "admittedly", "concede"], ["happy", "fun"], ["speak", "talk"], ["picture", "photo"], ["oppose", "against", "be against"], ["adapt", "get used to", "adjust"], ["soon", "later", "in a while"], ["saw", "watched"], ["nervous", "stressed", "worried", "anxious"], ["now", "at the moment", "right now"], ["cup", "glass"], ["suddenly", "all of a sudden"], ["strength", "advantage"], ["absolutely", "i agree with you", "exactly"], ["gasp", "breathless"], ["granted", "admittedly"], ["somewhat", "slightly", "relatively", "rather", "fairly"], ["tone down", "soften"], ["logical", "valid", "reasonable"], ["remind", "reminded"], ["complain", "make a complaint"], ["depend on", "rely on", "count on"], ["furthermore", "in addition", "moreover", "besides", "what is more"], ["consequently", "thus", "hence", "therefore", "as a result"], ["contraction", "abbreviation"], ["holiday", "vacation"], ["cheap", "inexpensive"], ["said", "told"], ["interesting", "exciting"], ["the main idea", "gist", "key point", "main point", "point"]];
+  ["even though", "although", "though", "much as"], ["actually", "genuinely", "in fact"], ["carry on", "go on doing", "keep on"], ["acknowledge", "admittedly", "concede"], ["happy", "fun"], ["speak", "talk"], ["picture", "photo"], ["oppose", "against", "be against"], ["adapt", "get used to", "adjust"], ["soon", "later", "in a while"], ["saw", "watched"], ["nervous", "stressed", "worried", "anxious"], ["now", "at the moment", "right now"], ["cup", "glass"], ["suddenly", "all of a sudden"], ["strength", "advantage"], ["absolutely", "i agree with you", "exactly"], ["gasp", "breathless"], ["granted", "admittedly"], ["somewhat", "slightly", "relatively", "rather", "fairly"], ["tone down", "soften"], ["logical", "valid", "reasonable"], ["remind", "reminded"], ["complain", "make a complaint"], ["depend on", "rely on", "count on"], ["furthermore", "in addition", "moreover", "besides", "what is more"], ["consequently", "thus", "hence", "therefore", "as a result"], ["contraction", "abbreviation"], ["holiday", "vacation"], ["cheap", "inexpensive"], ["said", "told"], ["interesting", "exciting"], ["the main idea", "gist", "key point", "main point", "point", "the crucial point is"], ["must be", "no doubt", "certain", "definitely"], ["make an effort", "do your best", "try to do"], ["unquestionably", "there is little doubt that", "undoubtedly"], ["devil's advocate", "to play devil's advocate"], ["fair enough", "that's a valid point"], ["would it be possible", "i was wondering whether"], ["to be honest", "with all due respect"], ["give up", "give up on"], ["discover", "find out", "uncover"], ["advantage", "benefit"], ["attend", "take part in"], ["confidence", "self-belief"], ["in my view", "i'd say"], ["bear in mind", "let's not lose sight of"], ["hedging", "hedge"], ["stingy", "cheap"], ["daily", "every day"], ["angry", "furious"], ["weakness", "disadvantage", "drawback"], ["evidently", "apparently"], ["in short", "briefly"], ["informal", "colloquial"], ["confident", "certain"], ["trip", "journey"], ["quit", "step down"], ["rephrase", "to put it another way"], ["angry", "furious"]];
 const never = (a, b) => { a = a.toLowerCase(); b = b.toLowerCase(); return a === b || (window.SYN && ((SYN[a] || []).includes(b) || (SYN[b] || []).includes(a))) || NEVER.some(g => g.includes(a) && g.includes(b)); };
 /* Hai nghĩa gần như trùng nhau: các âm tiết của phần nghĩa này nằm liền nhau trong phần nghĩa kia
    (vui ⊂ vui vẻ, hủy ⊂ bị hủy, có vẻ ⊂ có vẻ như, ăn ⊂ đã ăn, dẫn đến ⊂ dẫn đến kết quả) */
@@ -174,6 +174,7 @@ const UKUS = { colour: "color", colours: "colors", favourite: "favorite", neighb
 function usSpell(w) { if (UKUS[w]) return UKUS[w]; const m = w.match(/^(.*[a-z]{3})is(e|es|ed|ing|ation|ations)$/); if (m && /(real|organ|apolog|recogn|critic|summar|priorit|modern|special|minim|maxim|memor|final|util|custom|standard|categor|emphas|symbol|visual|global|urban|moral|author|harmon|optim|central|civil|fertil|stabil|sympath|scrutin|character|legal|normal|subsid|monopol|capital|general|human|ideal|jeopard|mobil|neutral|polar)$/.test(m[1])) return m[1] + "iz" + m[2]; return w; }
 function norm(s) {
   s = String(s).toLowerCase().replace(/[’‘`]/g, "'"); s = s.replace(/[a-z']+/g, w => CONTR[w] || (/'s$/.test(w) && UKUS[w.slice(0, -2)] ? UKUS[w.slice(0, -2)] + "'s" : w));
+  s = s.replace(/\b\d{1,3}(?:\.\d{3})+\b(?!\.\d)/g, m => m.replace(/\./g, "")); // 2.000.000 (cách viết số của người Việt) = 2,000,000
   s = s.replace(/(\d),(?=\d{3}\b)/g, "$1").replace(/'/g, "").replace(/[^a-z0-9\s-]/g, " ").replace(/\be-mail/g, "email").replace(/\bcheckout\b/g, "check out");
   s = s.replace(/\b(twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety)[\s-](one|two|three|four|five|six|seven|eight|nine)\b/g, (m, a, b) => String(NUMS[a] + NUMS[b]));
   s = s.replace(/-/g, " ").replace(/\b[a-z]+\b/g, w => NUMS[w] !== undefined ? String(NUMS[w]) : usSpell(w));
@@ -202,8 +203,7 @@ function cReadings(c, w, after, lenient) {
     if (/^(better|been|had|got|gotten)$/.test(w)) return lenient ? ["had", "would"] : ["had"];
     if (PP_AMB.has(w)) return ["would", "had"];
     if (isPP(w)) return lenient ? ["had", "would"] : ["had"];
-    // người học viết tắt had là động từ chính (I'd more time, I'd my hair cut): không phải lỗi
-    if (lenient && /^(more|a|an|the|my|your|his|her|our|their|no|some|enough|lots|plenty|any|two|three|many|much|little|few)$/.test(w)) return ["had", "would"];
+    // "I'd a dog / I'd more time" (had là động từ chính viết tắt) không chuẩn trong tiếng Anh Mỹ: không đọc là had
     return ["would"];
   }
   if (!w) return ["is"];
@@ -312,25 +312,73 @@ function confetti() {
 }
 const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
 let micBlocked = false;
-/* o.long (trả lời câu hỏi phần Nói): nghe liên tục tới ~45 giây, hiện chữ tạm thời qua o.onpart.
-   Hết giờ hoặc bấm Dừng dùng stop() để giữ lại phần đã nghe được (abort() làm mất kết quả) */
+/* Nhận giọng nói (mọi chỗ dùng micro: đọc theo trong bài, đọc to trong thi thử, trả lời câu hỏi, kiểm tra micro).
+   iPhone Safari thường chỉ gửi kết quả tạm (interim) và không tự dừng, không gọi onend cho tới khi stop():
+   - luôn bật interimResults, mỗi lần có kết quả thì lưu lại toàn bộ chữ nghe được (chính thức + tạm)
+   - im lặng ~1,3 giây (trả lời dài: 2,5 giây) sau kết quả cuối thì tự kết thúc và trả chữ đã nghe, không chờ onend
+   - giới hạn cứng 12 giây (dài: 45 giây): trả chữ đã có, chưa có gì thì báo "no-speech"
+   - bấm "Xong" (stopMic) trả ngay chữ đã nghe; mỗi lần nghe chỉ trả kết quả một lần, lần nghe cũ bị bỏ khi bắt đầu lần mới
+   o.long: nghe liên tục; o.onpart(t): chữ đang nghe được (hiện cho người học thấy máy đang nghe) */
+const MIC_SIL = 1300, MIC_SIL_LONG = 2500;
 function listenMic(onres, onerr, o) {
   o = o || {};
+  const old = listenMic.cur; if (old) old.kill();
   if (!SR || micBlocked) { onerr("none"); return; }
   let r; try { r = new SR(); } catch (e) { onerr("none"); return; }
-  r.lang = S.settings.accent; r.interimResults = !!o.long; r.maxAlternatives = 3; if (o.long) r.continuous = true;
-  let got = false, fin = "", tmp = ""; const tm = setTimeout(() => { try { r.stop(); } catch (e) {} }, o.maxMs || 12000);
-  listenMic.cur = r;
-  const done = () => { if (got) return; got = true; clearTimeout(tm); const t = (fin + " " + tmp).trim(); if (t) onres([t]); else onerr("no-speech"); };
-  r.onresult = e => { if (got) return;
-    if (o.long) { fin = ""; tmp = ""; for (let k = 0; k < e.results.length; k++) { const x = e.results[k]; if (x.isFinal) fin += " " + x[0].transcript; else tmp += " " + x[0].transcript; } if (o.onpart) o.onpart((fin + " " + tmp).trim()); return; }
-    got = true; clearTimeout(tm); onres([...e.results[0]].map(a => a.transcript)); };
-  r.onerror = e => { if (got) return; if (e.error === "not-allowed" || e.error === "service-not-allowed") micBlocked = true; if (o.long && (fin + tmp).trim() && (e.error === "aborted" || e.error === "no-speech" || e.error === "network")) return done(); got = true; clearTimeout(tm); onerr(e.error === "aborted" ? "no-speech" : e.error); };
-  r.onend = () => { clearTimeout(tm); listenMic.cur = null; if (!got) { if (o.long) done(); else { got = true; onerr("no-speech"); } } };
-  try { r.start(); } catch (e) { clearTimeout(tm); onerr("none"); }
+  r.lang = S.settings.accent; r.interimResults = true; r.maxAlternatives = 3; r.continuous = !!o.long;
+  let dead = false, fin = "", tmp = "", alts = [], sil = 0, cap = 0;
+  const text = () => (fin + " " + tmp).replace(/\s+/g, " ").trim();
+  const ses = { r };
+  ses.kill = () => { dead = true; clearTimeout(sil); clearTimeout(cap); if (listenMic.cur === ses) listenMic.cur = null; try { r.stop(); } catch (e) {} setTimeout(() => { try { r.abort(); } catch (e) {} }, 1500); };
+  ses.finish = () => { if (dead) return; const t = text(); ses.kill(); if (t) onres([t, ...alts.filter(a => a && a.toLowerCase() !== t.toLowerCase())]); else onerr("no-speech"); };
+  ses.fail = err => { if (dead) return; ses.kill(); listenMic.lastErr = err; onerr(err); };
+  cap = setTimeout(ses.finish, o.maxMs || (o.long ? 45000 : 12000));
+  listenMic.cur = ses; listenMic.lastErr = "";
+  r.onresult = e => {
+    if (dead) return; fin = ""; tmp = "";
+    for (let k = 0; k < e.results.length; k++) { const x = e.results[k]; if (x.isFinal) fin += " " + x[0].transcript; else tmp += " " + x[0].transcript; }
+    // một câu ngắn: giữ thêm các cách nghe khác (máy chấm lấy cách giống câu mẫu nhất)
+    alts = !o.long && e.results.length === 1 ? [...e.results[0]].slice(1).map(a => String(a.transcript || "").trim()) : [];
+    if (o.onpart) try { o.onpart(text()); } catch (er) {}
+    clearTimeout(sil); sil = setTimeout(ses.finish, o.long ? MIC_SIL_LONG : MIC_SIL);
+    // máy tính / Android: câu ngắn đã có kết quả chính thức thì xong luôn
+    if (!o.long && e.results.length && [...e.results].every(x => x.isFinal)) ses.finish();
+  };
+  r.onerror = e => {
+    if (dead) return; const er = (e && e.error) || "none"; listenMic.lastErr = er;
+    if (er === "not-allowed" || er === "service-not-allowed") micBlocked = true;
+    if (text() && /^(aborted|no-speech|network)$/.test(er)) return ses.finish();
+    ses.fail(er === "aborted" ? "no-speech" : er);
+  };
+  r.onend = () => { if (dead) return; if (text()) ses.finish(); else ses.fail("no-speech"); };
+  try { r.start(); } catch (e) { ses.fail("none"); }
 }
-
-function stopMic() { const r = listenMic.cur; if (!r) return; try { r.stop(); } catch (e) {} setTimeout(() => { if (listenMic.cur === r) try { r.abort(); } catch (e) {} }, 1500); }
+/* Rời câu / màn hình: tắt micro đang nghe, không trả kết quả */
+function micOff() { const s = listenMic.cur; if (s) s.kill(); }
+/* Nút "Xong": kết thúc ngay và chấm phần đã nghe được */
+function stopMic() { const s = listenMic.cur; if (s) s.finish(); }
+const isIOSDev = () => /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+/* Lời nhắc khi micro / nhận giọng nói bị chặn */
+function micErrMsg(err) {
+  if (err === "audio-capture") return "Không tìm thấy micro trên máy.<br>Hãy kiểm tra micro hoặc tai nghe rồi thử lại.";
+  if (err === "not-allowed" || err === "service-not-allowed" || err === "none") return isIOSDev()
+    ? "Chưa dùng được micro. Trên iPhone, hãy:<br>1. Cho phép Safari dùng micro (bấm “aA” trên thanh địa chỉ › Cài đặt trang web › Micrô › Cho phép).<br>2. Bật Đọc chính tả: Cài đặt › Cài đặt chung › Bàn phím › Bật Đọc chính tả.<br>3. Cho phép nhận dạng giọng nói: Cài đặt › Quyền riêng tư &amp; Bảo mật › Nhận dạng giọng nói › bật Safari.<br>Sau đó tải lại trang."
+    : err === "none" ? "Trình duyệt này chưa hỗ trợ nhận giọng nói.<br>Hãy mở app bằng Chrome hoặc Safari." : "Chưa dùng được micro.<br>Hãy cho phép trình duyệt dùng micro (biểu tượng ổ khóa cạnh địa chỉ trang) rồi thử lại.";
+  return "";
+}
+/* Khung "đang nghe": chữ máy nghe được hiện ngay bên dưới, nút Xong để chấm luôn */
+const micUI = msg => `<div class="listening"><span class="dot"></span> ${msg}</div><p class="heard live" id="micLive" aria-live="polite">Máy đang chờ bạn nói…</p><button class="btn full" onclick="stopMic()"><i class="ti ti-check"></i> Xong</button>`;
+const micLive = t => { const el = $("#micLive"); if (el) el.innerHTML = t ? `Máy nghe được: “${esc(t)}”` : "Máy đang chờ bạn nói…"; };
+/* Hồ sơ › Kiểm tra micro: thử nhận giọng nói, hiện chữ nghe được và mã lỗi gốc */
+function micTest() {
+  const box = $("#mictest"); if (!box) return;
+  if (!SR) { box.innerHTML = `<p class="err">Trình duyệt không có nhận giọng nói (SpeechRecognition).</p><p class="sm muted">${micErrMsg("none")}</p>`; return; }
+  micBlocked = false;
+  box.innerHTML = micUI("Đang nghe... hãy nói “Hello, how are you?”");
+  listenMic(a => { const b = $("#mictest"); if (b) b.innerHTML = `<p class="heard">Máy nghe được: “${esc(a[0])}”</p><p class="sm good c"><i class="ti ti-circle-check"></i> Micro hoạt động tốt.</p><button class="btn full" onclick="micTest()"><i class="ti ti-microphone"></i> Thử lại</button>`; },
+    err => { const b = $("#mictest"); if (b) b.innerHTML = `<p class="sm micmsg">${err === "no-speech" ? "Chưa nghe thấy gì. Hãy nói to và rõ hơn." : micErrMsg(err) || "Không nhận được giọng nói."}</p><p class="sm muted">Mã lỗi: ${esc(err)}${listenMic.lastErr && listenMic.lastErr !== err ? " (" + esc(listenMic.lastErr) + ")" : ""}</p><button class="btn full" onclick="micTest()"><i class="ti ti-microphone"></i> Thử lại</button>`; },
+    { onpart: micLive });
+}
 document.addEventListener("visibilitychange", () => { if (!document.hidden) micBlocked = false; });
 function checkVoice() {
   if (S.voiceWarned) return;
@@ -402,8 +450,27 @@ function goNext() { const n = nextLesson(); if (n) openIntro(n); else nav("road"
 
 /* ---------- Điều hướng ---------- */
 let TAB = "home", P = null, VIEW = null, OB = 0;
-function nav(t) { if (window.__upd) { location.reload(); return; } toastOff(); TAB = t; P = null; VIEW = null; render(); window.scrollTo(0, 0); }
-function render() {
+function nav(t) { if (window.__upd) { location.reload(); return; } toastOff(); micOff(); TAB = t; P = null; VIEW = null; render(); window.scrollTo(0, 0); }
+function render() { renderIn(); pushSub(); }
+/* Nút Back của điện thoại / trình duyệt: khi đang ở ngoài trang chủ, giữ một mục lịch sử để Back đi theo nút quay lại / thoát của app
+   (giữa bài học: lưu chỗ rồi về trang giới thiệu bài; giữa bài thi: hỏi "Bỏ dở bài thi?"), không thoát app.
+   Ở trang chủ không giữ mục nào: Back lần nữa thì thoát như bình thường. */
+let HIST = (() => { try { return history.state && history.state.hta ? 1 : 0; } catch (e) { return 0; } })();
+const inGame = () => typeof G !== "undefined" && !!G;
+const inSub = () => S.onb ? !!(P || VIEW || inGame() || TAB !== "home" || $(".modal") || $("#app .done")) : !!(P || OB > 0 || $(".modal"));
+function pushSub() { if (!HIST && inSub()) { try { history.pushState({ hta: 1 }, ""); HIST = 1; } catch (e) {} } }
+function onBack() {
+  const ms = $$(".modal");
+  if (ms.length) { const m = ms[ms.length - 1], no = m.querySelector("#mno"); no ? no.click() : m.remove(); } // hộp thoại: Back = nút bên trái (Thi tiếp / Làm tiếp / Không)
+  else if (P) quit();
+  else if (!S.onb) { if (OB > 0) { OB--; render(); } }
+  else if (inGame()) exitGame();
+  else if ($("#app .done")) nav(TAB);
+  else if (VIEW) { const b = $("#app .ptop .ib"); if (b) b.click(); else { VIEW = null; render(); } }
+  else if (TAB !== "home") nav("home");
+}
+addEventListener("popstate", () => { HIST = 0; try { onBack(); } catch (e) { console.error(e); } setTimeout(pushSub, 0); });
+function renderIn() {
   applyTheme();
   const inPlayer = !!P || !!VIEW || !S.onb;
   document.body.classList.toggle("playing", inPlayer);
@@ -544,6 +611,7 @@ function vMe() {
   <label>Giọng đọc</label><div class="seg">${[["en-US", "Anh – Mỹ"], ["en-GB", "Anh – Anh"]].map(x => `<button class="${S.settings.accent === x[0] ? "on" : ""}" onclick="S.settings.accent='${x[0]}';save();render()">${x[1]}</button>`).join("")}</div>
   <label for="rate">Tốc độ đọc <b id="rv">${S.settings.rate}×</b></label><input type="range" id="rate" min="0.6" max="1.2" step="0.1" value="${S.settings.rate}" aria-label="Tốc độ đọc" oninput="S.settings.rate=+this.value;$('#rv').textContent=this.value+'×';save()">
   <button class="btn full" onclick="say('Hello! Nice to meet you. How are you today?')"><i class="ti ti-volume"></i> Nghe thử giọng</button>
+  <button class="btn full" onclick="micTest()"><i class="ti ti-microphone"></i> Kiểm tra micro</button><div id="mictest" aria-live="polite"></div>
   <label>Tên của bạn (in trên chứng nhận)</label><input class="inp" value="${esc(S.name || "")}" placeholder="Nhập họ tên" onchange="S.name=this.value.trim();save()">
   <label class="tg">Âm thanh đúng / sai <input type="checkbox" ${S.settings.sound ? "checked" : ""} onchange="S.settings.sound=this.checked;save()"></label></section>
   ${installEvt ? `<button class="btn primary full" onclick="doInstall()"><i class="ti ti-device-mobile"></i> Cài app lên màn hình chính</button>` : isIOS() ? `<section class="card sm"><b>Cài lên iPhone:</b> trong Safari bấm nút Chia sẻ <i class="ti ti-share"></i> rồi chọn “Thêm vào MH chính”.</section>` : ""}
@@ -564,7 +632,7 @@ function restore(x) { if (!x || typeof x !== "object" || !x.done) throw 0; S = m
 function importFile(inp) { const f = inp.files[0]; if (!f) return; const r = new FileReader(); r.onload = () => { try { restore(JSON.parse(r.result)); } catch (e) { $("#bkerr").textContent = "Tệp không đúng định dạng sao lưu."; } }; r.readAsText(f); }
 function importCode() { const v = $("#bk").value.trim(), e = $("#bkerr"); if (!v) { e.textContent = "Dán mã sao lưu vào ô trước."; return; } try { restore(JSON.parse(decodeURIComponent(escape(atob(v))))); } catch (er) { e.textContent = "Mã không đúng. Hãy kiểm tra lại."; } }
 function askReset() { modal("Xóa toàn bộ tiến độ?", "Mọi bài đã học, thẻ ôn, XP và huy hiệu sẽ mất.<br>Không thể hoàn tác.", "Xóa hết", () => { S = def(); S._rev = REV; S._wipe = Date.now(); save(true); OB = 0; nav("home"); }, true, "Giữ lại"); }
-function modal(t, m, ok, fn, danger, cancel, fnCancel) { const d = document.createElement("div"); d.className = "modal"; d.innerHTML = `<div class="box"><h3>${t}</h3><p>${m}</p><div class="row2"><button class="btn" id="mno">${cancel || "Không"}</button><button class="btn ${danger ? "dangerf" : "primary"}" id="mok">${ok}</button></div></div>`; document.body.appendChild(d); d.querySelector("#mno").onclick = () => { d.remove(); if (fnCancel) fnCancel(); }; d.querySelector("#mok").onclick = () => { if (fn() !== false) d.remove(); }; }
+function modal(t, m, ok, fn, danger, cancel, fnCancel) { const d = document.createElement("div"); d.className = "modal"; d.innerHTML = `<div class="box"><h3>${t}</h3><p>${m}</p><div class="row2"><button class="btn" id="mno">${cancel || "Không"}</button><button class="btn ${danger ? "dangerf" : "primary"}" id="mok">${ok}</button></div></div>`; document.body.appendChild(d); d.querySelector("#mno").onclick = () => { d.remove(); if (fnCancel) fnCancel(); }; d.querySelector("#mok").onclick = () => { if (fn() !== false) d.remove(); }; pushSub(); }
 
 /* ---------- Giới thiệu bài ---------- */
 function openIntro(id) {
@@ -643,6 +711,9 @@ function startExam(sid) {
   newP("exam", shuffle(steps), { sid });
 }
 const IDK = "Tôi chưa biết";
+const M_A2 = "Bạn đã vững A1! Bắt đầu từ <b>A2 – Bài 1</b>. Nếu thấy dễ, hãy làm bài kiểm tra vượt chặng A2 trong Lộ trình.",
+  M_B1 = "Bạn đã nắm chắc A2. Bắt đầu từ <b>B1 – Bài 1</b>. Nếu thấy dễ, hãy làm bài kiểm tra vượt chặng B1 trong Lộ trình. Nếu thấy khó, hãy quay lại ôn các bài A2.",
+  M_B2 = "Trình độ của bạn tốt. Bắt đầu từ <b>B2 – Bài 1</b>. Nếu thấy dễ, hãy làm bài kiểm tra vượt chặng B2 trong Lộ trình.";
 function startPlacement() {
   const steps = PLACEMENT.map(x => { const o = shuffle(x.o); o.push(IDK); return { type: "mcq", sk: "", lv: x.lv, label: x.audio ? x.q : "Chọn đáp án đúng", q: x.audio ? "" : x.q, audio: x.audio, autoplay: !!x.audio, o, a: o.indexOf(x.o[0]), nofb: 1 }; });
   newP("place", steps);
@@ -651,14 +722,14 @@ function startPlacement() {
 /* ---------- Trình học ---------- */
 function quit() {
   if (P.kind === "lesson" && P.i > 0) { const snap = JSON.parse(JSON.stringify(P)); if (P.ans) snap.i++; S.resume = { id: P.id, P: snap }; save(); const id = P.id; P = null; openIntro(id); toast("Đã lưu chỗ bạn đang học. Lần sau học tiếp nhé!"); }
-  else if (P.kind === "mock" && P.i > 0) modal("Bỏ dở bài thi?", "Lần thi này sẽ được ghi là chưa đạt (0%).", "Bỏ thi", () => { if (!P || P.kind !== "mock") return; clearInterval(P.tm); (S.exams[P.lv] = S.exams[P.lv] || []).push({ at: Date.now(), overall: 0, skills: {}, pass: false, aborted: 1 }); S.mockOpen = null; save(); P = null; nav("exam"); }, true, "Thi tiếp");
+  else if (P.kind === "mock" && P.i > 0) modal("Bỏ dở bài thi?", "Lần thi này sẽ được ghi là<br>chưa đạt (0%).", "Bỏ thi", () => { if (!P || P.kind !== "mock") return; clearInterval(P.tm); (S.exams[P.lv] = S.exams[P.lv] || []).push({ at: Date.now(), overall: 0, skills: {}, pass: false, aborted: 1 }); S.mockOpen = null; save(); P = null; nav("exam"); }, true, "Thi tiếp");
   else if (P.kind === "gram") { const g = P.gid; P = null; g ? openTopic(g) : nav("gram"); }
   else if (P.kind === "exam" && P.i > 0) modal("Dừng bài kiểm tra vượt chặng?", "Kết quả lần này sẽ không được lưu.", "Dừng", () => { if (!P || P.kind !== "exam") return; P = null; nav("road"); }, true, "Làm tiếp");
   else if (P.kind === "place" && P.i > 0) modal("Dừng bài kiểm tra?", "Bạn sẽ bắt đầu học từ Chặng 0.", "Dừng", () => { S.placement = "zero"; save(); P = null; nav("home"); });
   else { P = null; render(); }
 }
 function showStep() {
-  if (P.i >= P.steps.length) return finish();
+  micOff(); if (P.i >= P.steps.length) return finish();
   const s = P.steps[P.i]; P.ans = false; P.lockUntil = P.kind === "mock" ? Date.now() + 400 : 0;
   const title = P.kind === "lesson" ? esc(LES[P.id].t) : P.kind === "gram" ? esc(P.title) : P.kind === "mock" ? "Thi thử " + P.lv + (SECN[s.sec] ? " · " + SECN[s.sec] : "") : { review: "Ôn từ vựng", exam: "Kiểm tra vượt chặng" + (P.sid ? " · " + stageOf(P.sid).name : ""), place: "Kiểm tra đầu vào", mist: "Luyện lại lỗi sai" }[P.kind];
   let h = `<div class="ptop"><button class="ib" onclick="quit()" aria-label="Thoát"><i class="ti ti-x"></i></button><div class="bar grow"><span style="width:${P.i / P.steps.length * 100}%"></span></div>${P.kind === "mock" ? `<span class="timer" id="timer">${fmtTime(mockLeft())}</span>` : progTxt()}</div><p class="ptitle">${title}${s.r ? ' · <span class="retry">làm lại câu sai</span>' : ""}</p><div class="pbody">`;
@@ -772,7 +843,7 @@ function rSpeak(s) {
 }
 function selfRate(msg) { if (P && P.kind === "mock") return `<p class="muted c sm">${msg ? msg + "<br>" : ""}Không có micro nên câu này không được chấm.<br>Lần thi này sẽ không được ghi nhận đạt.</p><button class="btn primary full" onclick="const s=P.steps[P.i];s.part=0;s.unrated=1;grade(false,'')">Tiếp tục</button>`; return `<p class="muted c sm">${msg || "Nghe mẫu, nói to theo 2–3 lần cho trôi chảy, rồi tự đánh giá."}</p><div class="row2"><button class="btn" onclick="grade(false,'')">Chưa được</button><button class="btn primary" onclick="grade(true,'','Tốt lắm! Giữ nhịp như vậy nhé.')">Nói được rồi</button></div>`; }
 function doMic() {
-  const s = P.steps[P.i]; $("#mic").innerHTML = `<div class="listening"><span class="dot"></span> Đang nghe... hãy nói câu trên</div><button class="link c" onclick="stopMic()">Dừng</button>`;
+  const s = P.steps[P.i]; $("#mic").innerHTML = micUI("Đang nghe... hãy nói câu trên");
   listenMic(alts => {
     if (!P || P.steps[P.i] !== s) return;
     let best = alts[0], sc = -1; alts.forEach(a => { const v = speakScore(s.en, a); if (v > sc) { sc = v; best = a; } });
@@ -786,12 +857,12 @@ function doMic() {
     else $("#mic").innerHTML = `<p class="heard">Máy nghe được: “${esc(best)}” · <b>${sc}%</b> từ đúng<br><span class="sm muted">Từ màu đỏ là từ máy chưa nghe rõ. Nghe chậm rồi thử lại.</span></p><div class="row2"><button class="btn" onclick="grade(false,'${jsq(s.en)}')">Bỏ qua</button><button class="btn primary" onclick="doMic()"><i class="ti ti-refresh"></i> Thử lại</button></div>`;
   }, err => {
     if (!P || P.steps[P.i] !== s) return;
-    const mk = P.kind === "mock", m = err === "no-speech" ? "Chưa nghe thấy gì.<br>Hãy nói to và rõ hơn." : err === "network" ? (mk ? "Mạng yếu nên máy chưa nghe được.<br>Hãy bấm Thử lại." : "Mạng yếu nên máy chưa nghe được.<br>Thử lại hoặc tự đánh giá nhé.") : (mk ? (micBlocked ? "Chưa dùng được micro." : "Chưa dùng được micro.<br>Hãy cho phép micro rồi bấm Thử lại.") : "Chưa dùng được micro.<br>Hãy cho phép micro, hoặc tự đánh giá nhé.");
+    const mk = P.kind === "mock", m = micErrMsg(err) && err !== "none" ? micErrMsg(err) : err === "no-speech" ? "Chưa nghe thấy gì.<br>Hãy nói to và rõ hơn." : err === "network" ? (mk ? "Mạng yếu nên máy chưa nghe được.<br>Hãy bấm Thử lại." : "Mạng yếu nên máy chưa nghe được.<br>Thử lại hoặc tự đánh giá nhé.") : (mk ? (micBlocked ? "Chưa dùng được micro." : "Chưa dùng được micro.<br>Hãy cho phép micro rồi bấm Thử lại.") : "Chưa dùng được micro.<br>Hãy cho phép micro, hoặc tự đánh giá nhé.");
     const again = micBlocked ? "" : `<button class="btn ${P.kind === "mock" ? "primary " : ""}full" onclick="doMic()"><i class="ti ti-microphone"></i> Thử lại</button>`;
     // Thi thử: micro vẫn dùng được (bấm Dừng, im lặng, mạng chập chờn) thì chỉ cho thử lại, không đánh dấu "không chấm được"
     if (P.kind === "mock" && !micBlocked && (err === "no-speech" || err === "network")) { $("#mic").innerHTML = `<p class="muted c sm">${m}</p>` + again + `<button class="link c" onclick="grade(false,'')">Bỏ qua câu này</button>`; return; }
     $("#mic").innerHTML = P.kind === "mock" ? again + selfRate(m) : selfRate(m) + again;
-  });
+  }, { onpart: t => { if (P && P.steps[P.i] === s) micLive(t); } });
 }
 function rRead(s) { s.left = s.q.filter(q => !q.done).length; const mock = P.kind === "mock"; return `<p class="lab"><i class="ti ti-book"></i> Đọc · Đọc bài rồi trả lời</p><div class="passage">${esc(s.t).replace(/\n/g, "<br>")}</div>${mock ? "" : `<div class="row c2">${spk(s.t.replace(/\n/g, " "))}<span class="muted sm">Nghe cả bài</span>${slowBtn(s.t.replace(/\n/g, " "))}</div>`}` + s.q.map((q, k) => `<div class="rq"><p><b>${k + 1}.</b> ${esc(q.q)}</p><div class="opts">${q.o.map((o, i) => `<button class="opt" id="r${k}_${i}" onclick="pickRead(${k},${i})">${esc(o)}</button>`).join("")}</div></div>`).join("") + (mock ? `<p class="err" id="er"></p><button class="btn primary full" id="xok" onclick="mockReadSubmit()">Nộp bài đọc này</button>` : ""); }
 function mockReadSubmit() { const s = P.steps[P.i]; if (P.ans) return; const miss = s.q.filter(q => q.sel === undefined).length; if (miss) { $("#er").textContent = `Còn ${miss} câu chưa chọn đáp án.`; return; } s.q.forEach(q => { q.done = 1; secAdd("read", q.sel === q.a ? 1 : 0); }); $$(".rq .opt").forEach(b => b.disabled = true); $("#xok").remove(); P.ans = true; nextStep(); }
@@ -845,12 +916,14 @@ function mockBefore(e) { if (!P || P.kind !== "mock") return; const t = e.inputT
 /* Hoàn tác / làm lại (Ctrl+Z, phím hoàn tác, lắc máy) chỉ khôi phục chữ chính người học gõ (dán không vào được ngăn hoàn tác).
    Chèn nhiều mảng nhỏ liên tiếp (dán từng đoạn 25 ký tự) mà gần như không gõ phím: cũng chặn */
 function mockInput(el, ev) { if (!P || P.kind !== "mock") return true; const t = (ev && ev.inputType) || "", prev = el._prev || "", add = el.value.length - prev.length, now = performance.now();
-  if (/^history(Undo|Redo)$/.test(t)) { el._prev = el.value; el._burst = []; return true; }
+  const ok = el._ok || (el._ok = new Set([""]));
+  // hoàn tác / làm lại chỉ được về một nội dung đã từng được nhận (chữ tự gõ), không mang lại mảng chữ đã bị chặn
+  if (/^history(Undo|Redo)$/.test(t)) { if (!ok.has(el.value)) { el.value = prev; toast(NOPASTE); return false; } el._prev = el.value; el._burst = []; return true; }
   if (add > 25) { el.value = prev; toast(NOPASTE); return false; }
   if (add > 0) { const b = (el._burst = (el._burst || []).filter(x => now - x[0] < 2000)); b.push([now, add, prev]);
     el._keys = (el._keys || []).filter(x => now - x < 2000); const chars = b.reduce((a, x) => a + x[1], 0);
     if (chars > 60 && el._keys.length < chars / 3) { el.value = b[0][2]; el._burst = []; el._prev = el.value; toast(NOPASTE); return false; } }
-  el._prev = el.value; return true; }
+  ok.add(el.value); el._prev = el.value; return true; }
 const MOCK_GUARD = `onpaste="event.preventDefault();toast(NOPASTE)" ondrop="event.preventDefault();toast(NOPASTE)" onbeforeinput="mockBefore(event)" onkeydown="(this._keys=this._keys||[]).push(performance.now())"`;
 function rWrite(s) {
   const w = s.wr;
@@ -906,21 +979,22 @@ function finish() {
     const n = P.ok; let start, msg; const c = { a1: 0, a2: 0, b1: 0, b2: 0, c1: 0 }, lvd = P.steps.some(s => s.lv); P.steps.forEach(s => { if (s.lv && s.got && !s.r) c[s.lv] = (c[s.lv] || 0) + 1; });
     if (lvd) {
       // 9/11 câu A1 là đã vững A1; một hai câu sơ suất ở A1 không kéo người học giỏi xuống thấp
-      if (c.a1 <= 3) { start = "s0-1"; msg = "Bạn nên bắt đầu từ <b>Chặng&nbsp;0&nbsp;– Làm&nbsp;quen&nbsp;âm</b> để có nền phát âm chắc."; }
+      if (c.a1 <= 3) { start = "s0-1"; msg = "Bạn nên bắt đầu từ <b class='nw'>Chặng 0 – Làm quen âm</b> để có nền phát âm chắc."; }
       else if (c.a1 <= 6) { start = "a1-1"; msg = "Bạn đã có chút nền. Bắt đầu từ <b>A1 – Bài 1</b>. Chặng 0 vẫn mở để bạn luyện phát âm."; }
       else if (c.a1 <= 8 && c.a2 <= 2) { start = "a1-13"; msg = "Bạn nắm khá tốt phần đầu A1. Đã mở đến <b>A1 – Bài 13</b>."; }
-      else if (c.a2 <= 2) { start = "a2-1"; msg = "Bạn đã vững A1! Bắt đầu từ <b>A2 – Bài 1</b>. Bạn có thể quay lại ôn A1 bất cứ lúc nào."; }
-      else if (c.b1 <= 1) { start = "b1-1"; msg = "Bạn đã nắm chắc A2. Bắt đầu từ <b>B1 – Bài 1</b>. Nếu thấy khó, hãy quay lại ôn các bài A2."; }
-      else if (c.b2 <= 2 || c.b2 + c.c1 <= 5) { start = "b2-1"; msg = "Trình độ của bạn tốt. Bắt đầu từ <b>B2 – Bài 1</b>. Các chặng trước vẫn mở để bạn ôn."; }
-      else { start = "c1-1"; msg = "Rất ấn tượng! Bạn có thể học thẳng <b>C1 – Nâng cao</b>. Nếu muốn chắc chắn, hãy làm bài kiểm tra vượt chặng B2 trong Lộ trình."; }
+      // muốn bỏ qua một chặng phải làm đúng phần lớn câu của chặng đó (A2 4/5, B1 3/4, B2 3/4 và B2 + C1 6/8): đoán mò may mắn không nhảy cóc cả chặng
+      else if (c.a2 <= 3) { start = "a2-1"; msg = M_A2; }
+      else if (c.b1 <= 2) { start = "b1-1"; msg = M_B1; }
+      else if (c.b2 <= 2 || c.b2 + c.c1 <= 5) { start = "b2-1"; msg = M_B2; }
+      else { start = "c1-1"; msg = "Rất ấn tượng! Bạn có thể học thẳng <b>C1 – Cao cấp</b>. Nếu muốn chắc chắn, hãy làm bài kiểm tra vượt chặng B2 trong Lộ trình."; }
     }
-    else if (n <= 3) { start = "s0-1"; msg = "Bạn nên bắt đầu từ <b>Chặng&nbsp;0&nbsp;– Làm&nbsp;quen&nbsp;âm</b> để có nền phát âm chắc."; }
+    else if (n <= 3) { start = "s0-1"; msg = "Bạn nên bắt đầu từ <b class='nw'>Chặng 0 – Làm quen âm</b> để có nền phát âm chắc."; }
     else if (n <= 7) { start = "a1-1"; msg = "Bạn đã có chút nền. Bắt đầu từ <b>A1 – Bài 1</b>. Chặng 0 vẫn mở để bạn luyện phát âm."; }
     else if (n <= 10) { start = "a1-13"; msg = "Bạn nắm khá tốt phần đầu A1. Đã mở đến <b>A1 – Bài 13</b>."; }
-    else if (n <= 13) { start = "a2-1"; msg = "Bạn đã vững A1! Bắt đầu từ <b>A2 – Bài 1</b>. Bạn có thể quay lại ôn A1 bất cứ lúc nào."; }
-    else if (n <= 16) { start = "b1-1"; msg = "Bạn đã nắm chắc A2. Bắt đầu từ <b>B1 – Bài 1</b>. Nếu thấy khó, hãy quay lại ôn các bài A2."; }
-    else if (n <= 19) { start = "b2-1"; msg = "Trình độ của bạn tốt. Bắt đầu từ <b>B2 – Bài 1</b>. Các chặng trước vẫn mở để bạn ôn."; }
-    else { start = "c1-1"; msg = "Rất ấn tượng! Bạn có thể học thẳng <b>C1 – Nâng cao</b>. Nếu muốn chắc chắn, hãy làm bài kiểm tra vượt chặng B2 trong Lộ trình."; }
+    else if (n <= 14) { start = "a2-1"; msg = M_A2; }
+    else if (n <= 17) { start = "b1-1"; msg = M_B1; }
+    else if (n <= 21) { start = "b2-1"; msg = M_B2; }
+    else { start = "c1-1"; msg = "Rất ấn tượng! Bạn có thể học thẳng <b>C1 – Cao cấp</b>. Nếu muốn chắc chắn, hãy làm bài kiểm tra vượt chặng B2 trong Lộ trình."; }
     S.placement = n; ORDER.slice(0, ORDER.indexOf(start) + 1).forEach(id => S.unlocked[id] = true);
     h = `<h1>Kết quả: ${n}/${P.tot} câu đúng</h1><p>${msg}</p>`; btns = `<button class="btn primary full lg" onclick="openIntro('${start}')">Bắt đầu học</button><button class="btn full" onclick="nav('road')">Xem lộ trình</button>`;
   }

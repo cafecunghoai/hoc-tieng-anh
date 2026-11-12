@@ -123,3 +123,18 @@ Vòng này dùng 6 trợ lý soát độc lập, không tham gia làm app: giáo
 | Bài đọc trong bài học: đáp án đúng thường dài nhất (50–56% ở B1–C1) | Viết lại 44 câu, còn khoảng 30% |
 | Mở app 2 cửa sổ làm mất tiến độ; mạng chậm có thể trộn bản cũ và mới | Gộp dữ liệu giữa các cửa sổ; tệp có đánh số phiên bản |
 | Câu sửa lỗi mất dấu phẩy; thông báo che nút khi thanh đáp án trượt lên; nhận xét phần Nói dùng nhầm lời bài Viết | Đã sửa |
+
+## Vòng 14 – Soát độc lập lần 4 và lỗi micro trên iPhone
+
+Vòng 4 không còn lỗi nghiêm trọng. Đã sửa:
+
+| Phát hiện | Cách sửa |
+|---|---|
+| Người dùng báo: iPhone Safari bấm micro, nói xong vẫn "Đang nghe..." mãi | Safari không tự kết thúc nhận giọng nói: app tự chốt sau khi ngừng nói khoảng 1 giây, hiện chữ máy nghe được, thêm nút "Xong"; hướng dẫn bật Đọc chính tả và Nhận dạng giọng nói; thêm nút "Kiểm tra micro" trong Hồ sơ |
+| Nút Quay lại của điện thoại thoát hẳn app, kể cả khi đang thi | Quay lại màn hình trước trong app; khi thi sẽ hỏi trước khi bỏ |
+| Kiểm tra đầu vào: đoán trúng vài câu có thể bị xếp quá cao | Ngưỡng chặt hơn (A2 cần 4/5, B1 cần 3/4) |
+| Tên cấp độ khác nhau giữa Lộ trình và Thi thử | Thống nhất |
+| Còn khoảng 30 cặp từ gần nghĩa có thể cùng là đáp án | Đã chặn |
+| Máy chấm bỏ sót "I go to school yesterday", "tell me where is the bank" | Đã bắt được |
+| Bỏ dấu phẩy ở mệnh đề quan hệ không xác định vẫn tính đúng | Phải đúng dấu phẩy |
+| Undo hoàn tác lại đoạn đã dán bị chặn; số kiểu Việt "2.000.000"; điểm từng tiêu chí không khớp điểm tổng khi bị giới hạn | Đã sửa |

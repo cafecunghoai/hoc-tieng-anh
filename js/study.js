@@ -45,7 +45,7 @@ function pickGe(k) {
   grade(ok, `<s>${esc(s.bad.split("||")[0])}</s> → ${esc(s.corr)}`);
 }
 function rGr(s) { const k = s.q.indexOf(":"); const ins = k > 0 ? s.q.slice(0, k) : "Viết lại câu", src = k > 0 ? s.q.slice(k + 1).trim() : s.q; return `<p class="lab"><i class="ti ti-abc"></i> Ngữ pháp · ${esc(ins)}</p><h2 class="q gq">${esc(src)}</h2><textarea id="inp" rows="2" placeholder="Viết câu của bạn" autocapitalize="sentences" autocomplete="off" spellcheck="false" oninput="$('#er').textContent=''"></textarea><p class="err" id="er"></p><button class="btn primary full" id="chk" onclick="checkGr()">Kiểm tra</button>`; }
-function checkGr() { const s = P.steps[P.i], v = $("#inp").value.trim(); if (!v) { $("#er").textContent = "Hãy viết câu trả lời trước."; return; } $("#er").textContent = ""; $("#chk").remove(); $("#inp").disabled = true; const ok = accept(v, s); if (!ok) $("#inp").insertAdjacentHTML("afterend", `<div class="diffbox"><p class="lab">So với đáp án</p>${diffHtml(v, s.en)}</div>`); grade(ok, esc(s.en)); }
+function checkGr() { const s = P.steps[P.i], v = $("#inp").value.trim(); if (!v) { $("#er").textContent = "Hãy viết câu trả lời trước."; return; } $("#er").textContent = ""; $("#chk").remove(); $("#inp").disabled = true; const cc = x => (x.match(/,/g) || []).length, ok = accept(v, s) && (!/^(non-defining|relative)$/.test(s.gt || "") || [s.en].concat(s.alts || []).some(x => cc(x) === cc(v))); if (!ok) $("#inp").insertAdjacentHTML("afterend", `<div class="diffbox"><p class="lab">So với đáp án</p>${diffHtml(v, s.en)}</div>`); grade(ok, esc(s.en)); }
 
 /* ---------- Trang Ngữ pháp ---------- */
 let GLV = null;
@@ -114,7 +114,8 @@ function startMock(lv) {
   checkVoice(); P = { kind: "mock", lv, steps: st, i: 0, ok: 0, tot: 0, xp: 0, sk: {}, wrong: 0, sec: {}, secTot: tot, started: false, dur: E.time * 60000, t0: 0 };
   last = Date.now(); VIEW = null; render();
 }
-const mockLeft = () => !P ? 0 : P.t0 ? P.dur - (performance.now() - P.t0) : P.dur;
+// thời gian đã thi = số lớn hơn giữa performance.now() (chỉnh giờ máy lùi lại không được lợi) và giờ máy (máy ngủ / khóa màn hình vẫn tính giờ)
+const mockLeft = () => !P ? 0 : P.t0 ? P.dur - Math.max(performance.now() - P.t0, Date.now() - (P.w0 || 0)) : P.dur;
 function secAdd(sec, v) { if (!sec) return; P.sec[sec] = (P.sec[sec] || 0) + v; }
 function rXintro(s) {
   const E = EXAMS[s.lv];
@@ -128,7 +129,10 @@ function beginMock() { const E = EXAMS[P.lv]; if (!("speechSynthesis" in window)
   // đã biết danh sách giọng mà không có giọng tiếng Anh: chặn ngay; danh sách chưa tải xong thì kiểm tra lại khi tải xong
   loadV(); const noEn = () => voices.length && !voices.some(v => v.lang.toLowerCase().startsWith("en"));
   if (noEn()) { modal("Chưa thể thi phần Nghe", NOVOICE, "Đã hiểu", () => nav("exam"), false, "Đóng"); return; }
-  if (!voices.length) { const me = P; setTimeout(() => { loadV(); if (P === me && noEn() && !P.sec.listen) { clearInterval(P.tm); S.mockOpen = null; save(); P = null; modal("Chưa thể thi phần Nghe", NOVOICE, "Đã hiểu", () => nav("exam"), false, "Đóng"); } }, 1500); } P.dur = E.time * 60000; P.t0 = performance.now(); P.started = true; S.mockOpen = { lv: P.lv, at: Date.now(), hb: Date.now(), w: WIN }; save(); clearInterval(P.tm);
+  if (!voices.length) { const me = P; setTimeout(() => { loadV(); if (P === me && noEn() && !P.sec.listen) { clearInterval(P.tm); S.mockOpen = null; save(); P = null; modal("Chưa thể thi phần Nghe", NOVOICE, "Đã hiểu", () => nav("exam"), false, "Đóng"); } }, 1500); } P.dur = E.time * 60000; P.t0 = performance.now(); P.w0 = Date.now(); P.started = true;
+  // bài thi bỏ dở ở cửa sổ khác (app bị đóng rồi mở lại) chưa kịp ghi: ghi trước khi bài mới thay chỗ
+  const old = S.mockOpen; if (old && old.at && old.w !== WIN && !(S.exams[old.lv] || []).some(a => a.at === old.at)) { (S.exams[old.lv] = S.exams[old.lv] || []).push({ at: old.at, overall: 0, skills: {}, pass: false, aborted: 1 }); setTimeout(() => toast(`Bài thi thử ${old.lv} lần trước bị bỏ dở nên được ghi là chưa đạt.`, 5000), 700); }
+  S.mockOpen = { lv: P.lv, at: Date.now(), hb: Date.now(), w: WIN }; save(); clearInterval(P.tm);
   // đồng hồ thi dùng performance.now(): chỉnh giờ máy lùi lại không kéo dài được bài thi; mỗi 5 giây ghi "đang thi" để cửa sổ khác không ghi nhầm là bỏ dở
   P.tm = setInterval(() => { const t = $("#timer"); if (!P || P.kind !== "mock") return; const left = mockLeft(); if (t) { t.textContent = fmtTime(left); t.classList.toggle("warn", left < 120000); }
     if (left < 120000 && !P.w2) { P.w2 = 1; toast("Còn 2 phút!"); } if (left < 30000 && !P.w3) { P.w3 = 1; toast("Còn 30 giây!"); }
@@ -188,7 +192,12 @@ function rXs(s) {
   <div id="mic">${SR && !micBlocked ? `<button class="btn primary full lg" onclick="xsMic()"><i class="ti ti-microphone"></i> Bấm rồi nói</button>` : ""}<button class="link c" onclick="xsType()">${SR && !micBlocked ? "Không dùng micro được? Gõ câu trả lời" : "Gõ câu trả lời của bạn"}</button></div>`;
 }
 function xsType() { $("#mic").innerHTML = `<p class="sm muted c">Trả lời bằng cách gõ phím chỉ được tối đa 50% điểm, và lần thi này sẽ không được ghi nhận đạt.</p><textarea id="inp" rows="4" placeholder="Gõ câu trả lời bằng tiếng Anh" autocorrect="off" spellcheck="false" ${MOCK_GUARD} oninput="mockInput(this,event);$('#er').textContent=''"></textarea><p class="err" id="er"></p><button class="btn primary full" id="chk" onclick="xsSubmit($('#inp').value,true)">Nộp câu trả lời</button>`; }
-function xsMic() { $("#mic").innerHTML = `<div class="listening"><span class="dot"></span> Đang nghe... hãy nói câu trả lời</div><button class="link c" onclick="stopMic()">Dừng</button>`; const s = P.steps[P.i]; s.txt = s.txt || ""; listenMic(alts => { if (!P || P.steps[P.i] !== s) return; s.txt += " " + alts[0]; $("#mic").innerHTML = `<p class="heard">Máy nghe được: “${esc(s.txt.trim())}” (${wcount(s.txt)} từ)</p><div class="row2"><button class="btn" onclick="xsMic()"><i class="ti ti-microphone"></i> Nói tiếp</button><button class="btn primary" onclick="xsSubmit(P.steps[P.i].txt,false)">Nộp</button></div>`; }, () => { if (!P || P.steps[P.i] !== s) return; if (s.txt.trim()) { $("#mic").innerHTML = `<p class="heard">Máy nghe được: “${esc(s.txt.trim())}” (${wcount(s.txt)} từ)</p><div class="row2"><button class="btn" onclick="xsMic()"><i class="ti ti-microphone"></i> Nói tiếp</button><button class="btn primary" onclick="xsSubmit(P.steps[P.i].txt,false)">Nộp</button></div>`; return; } $("#mic").innerHTML = `<p class="muted c sm">Chưa nghe được gì.</p><button class="btn primary full" onclick="xsMic()"><i class="ti ti-microphone"></i> Thử lại</button><button class="link c" onclick="xsType()">Không dùng micro được? Gõ câu trả lời</button>`; }, { long: true, maxMs: 45000, onpart: t => { if (!P || P.steps[P.i] !== s) return; const l = $("#mic .listening"); if (l) l.innerHTML = `<span class="dot"></span> Đang nghe: “${esc(((s.txt || "") + " " + t).trim())}”`; } }); }
+function xsMic() { $("#mic").innerHTML = micUI("Đang nghe... hãy nói câu trả lời"); const s = P.steps[P.i]; s.txt = s.txt || "";
+  const heardUI = () => `<p class="heard">Máy nghe được: “${esc(s.txt.trim())}” (${wcount(s.txt)} từ)</p><div class="row2"><button class="btn" onclick="xsMic()"><i class="ti ti-microphone"></i> Nói tiếp</button><button class="btn primary" onclick="xsSubmit(P.steps[P.i].txt,false)">Nộp</button></div>`;
+  listenMic(alts => { if (!P || P.steps[P.i] !== s) return; s.txt += " " + alts[0]; $("#mic").innerHTML = heardUI(); },
+    err => { if (!P || P.steps[P.i] !== s) return; if (s.txt.trim()) { $("#mic").innerHTML = heardUI(); return; }
+      const m = err !== "none" && micErrMsg(err); $("#mic").innerHTML = `<p class="muted c sm">${m || "Chưa nghe được gì.<br>Hãy nói to và rõ hơn."}</p>${micBlocked ? "" : `<button class="btn primary full" onclick="xsMic()"><i class="ti ti-microphone"></i> Thử lại</button>`}<button class="link c" onclick="xsType()">Không dùng micro được? Gõ câu trả lời</button>`; },
+    { long: true, maxMs: 45000, onpart: t => { if (!P || P.steps[P.i] !== s) return; micLive(((s.txt || "") + " " + t).trim()); } }); }
 /* Phần Nói – trả lời câu hỏi: từ chủ đề (gốc từ, khớp phần đầu) để biết câu trả lời có bám câu hỏi không */
 const XS_TOPIC = {
   "what do you do in your free time": "read book music movie film tv sport soccer football game cook swim walk friend park free time weekend",
@@ -263,6 +272,11 @@ function myReport(r, opt, o) {
     .replace(/<p class="lab">Bài của bạn · bấm vào chỗ gạch chân để xem cách sửa<\/p>/, `<p class="lab">${o.xs ? "Câu trả lời của bạn" : "Bài của bạn"}${marks ? " · bấm vào chỗ gạch chân để xem cách sửa" : ""}</p>`);
   if (o.xs) h = h.replace(/<div class="gscore [a-z]+"><b>[^<]*<\/b><small>\/10<\/small><\/div>/, `<div class="gscore pct ${o.q >= 70 ? "hi" : o.q >= 50 ? "mid" : "lo"}"><b>${o.q}%</b></div>`)
     .replace(/<div class="crit">[\s\S]*?<\/b><\/div>/g, "").replace(/<p class="sm muted">Máy chấm dựa trên[\s\S]*?<\/p>/, "");
+  // điểm bị giới hạn: ghi rõ dưới 4 tiêu chí để người học hiểu vì sao điểm tổng thấp hơn
+  else if (r.uncapped != null && r.uncapped > r.total) {
+    const fl = r.flags || [], why = fl.includes("vietnamese") ? "bài viết bằng tiếng Việt" : fl.includes("copy") ? "bài chép lại văn bản có sẵn" : fl.includes("offtopic") ? "bài lạc đề" : fl.includes("stuffing") ? "bài lặp từ hoặc chỉ liệt kê từ khóa" : r.short ? "bài còn ngắn" : "bài chưa bám sát yêu cầu đề";
+    h = h.replace(/(<div class="crit">[\s\S]*<\/b><\/div>)/, `$1<p class="sm capn"><i class="ti ti-info-circle"></i><span>Điểm bị giới hạn vì ${why}: <b>${r.total}/10</b> (nếu không: ${r.uncapped}/10).<br>4 tiêu chí đã được hạ theo tỉ lệ.</span></p>`);
+  }
   return h;
 }
 
