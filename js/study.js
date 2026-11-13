@@ -68,7 +68,7 @@ function openTopic(id) {
     <div class="card flat"><p class="lab">Bài luyện gồm</p><div class="skills"><span><i class="ti ti-list-check"></i>Chọn đáp án</span><span><i class="ti ti-forms"></i>Điền từ</span><span><i class="ti ti-zoom-exclamation"></i>Tìm lỗi sai</span><span><i class="ti ti-refresh"></i>Viết lại câu</span></div></div>
     <button class="btn primary full lg" onclick="startTopic('${id}')"><i class="ti ti-player-play"></i> Luyện tập 8 câu</button>
     ${L && isOpen(L.id) ? `<button class="btn full" onclick="openIntro('${L.id}')"><i class="ti ti-book"></i> Bài học liên quan: ${esc(L.t)}</button>` : ""}
-    ${next ? `<button class="link" onclick="openTopic('${next.id}')">Chủ điểm tiếp theo: ${esc(next.t)} <i class="ti ti-arrow-right"></i></button>` : ""}</div>`;
+    ${next ? `<button class="link" onclick="openTopic('${next.id}')"><span>Chủ điểm tiếp theo: ${esc(next.t)} <i class="ti ti-arrow-right"></i></span></button>` : ""}</div>`;
   };
   P = null; render(); window.scrollTo(0, 0);
 }
@@ -303,7 +303,7 @@ function finishStudy() {
   const wr = P.wres, xs = P.xsres;
   const weak = Object.keys(skills).sort((a, b) => skills[a] - skills[b])[0];
   const advice = { listen: "Mỗi ngày nghe 10–15 phút.<br>Làm lại các bài nghe chép trong bài học, dùng nút Nghe\u00a0chậm.", read: "Đọc thêm các bài đọc trong lộ trình, gạch chân từ khóa trong câu hỏi trước khi đọc.", use: "Vào tab Ngữ pháp, luyện các chủ điểm cấp " + lv + " cho đến khi đạt 80%.", write: "Viết lại các đề trong bài học, sửa hết lỗi gạch chân và so với bài mẫu.", speak: "Luyện nói theo câu mẫu mỗi ngày, ghi âm và nghe lại giọng của mình." }[weak];
-  app().innerHTML = `<div class="done${pass ? "" : " fail"}"><div class="ring xl" style="--p:${overall}"><span>${overall}%</span></div><h1>${merit ? "Đạt loại xuất sắc bài thi thử " + lv + "!" : pass ? "Chúc mừng! Bạn đạt bài thi thử " + lv : scorePass ? "Đủ điểm nhưng chưa được ghi nhận" : "Chưa đạt " + lv}</h1>
+  app().innerHTML = `<div class="done${pass ? "" : " fail"}"><div class="ring xl" style="--p:${overall}"><span>${overall}%</span></div><h1>${merit ? "Đạt loại xuất sắc bài thi thử " + lv + "!" : pass ? "Chúc mừng! <br>Bạn đạt bài thi thử " + lv : scorePass ? "Đủ điểm nhưng chưa được ghi nhận" : "Chưa đạt " + lv}</h1>
   <p class="muted">${pass ? "Đây là kết quả luyện tập, giúp bạn ước lượng trình độ " + lv + "." : scorePass ? "Phần Nói chưa được chấm bằng micro nên chưa thể ghi nhận đạt. Hãy thi lại trên Chrome có micro." : failWhy(ovRaw, raw)}</p>
   <div class="card skbox">${Object.keys(SECN).map(x => `<div class="skrow"><i class="ti ti-${SECI[x]}"></i><span class="skn">${SECN[x]}</span><div class="bar grow ${skills[x] < 40 ? "lowbar" : ""}"><span style="width:${skills[x]}%"></span></div><b>${skills[x]}%${unrated && x === "speak" ? "*" : ""}</b></div>`).join("")}${unrated ? `<p class="sm muted">* Có câu Nói không chấm được bằng micro,<br>nên lần thi này không được ghi nhận đạt.</p>` : ""}</div>
   <div class="card left"><p class="lab">Lời khuyên</p><p>${skills[weak] >= 80 ? (LV[LV.indexOf(lv) + 1] ? `Bạn làm tốt cả 5 kỹ năng.<br>Hãy thử sức với bài thi thử cấp ${LV[LV.indexOf(lv) + 1]}.` : "Bạn làm tốt cả 5 kỹ năng.<br>Hãy giữ nhịp ôn tập mỗi ngày để duy trì trình độ.") : `Kỹ năng cần ưu tiên: <b>${SECN[weak]}</b>.<br>${advice}`}</p></div>

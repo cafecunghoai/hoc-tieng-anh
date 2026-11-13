@@ -138,3 +138,12 @@ Vòng 4 không còn lỗi nghiêm trọng. Đã sửa:
 | Máy chấm bỏ sót "I go to school yesterday", "tell me where is the bank" | Đã bắt được |
 | Bỏ dấu phẩy ở mệnh đề quan hệ không xác định vẫn tính đúng | Phải đúng dấu phẩy |
 | Undo hoàn tác lại đoạn đã dán bị chặn; số kiểu Việt "2.000.000"; điểm từng tiêu chí không khớp điểm tổng khi bị giới hạn | Đã sửa |
+
+## Vòng 15 – Hoạt động mới, giáo viên chủ nhiệm ảo, căn đều và màu sắc
+
+- 10 kiểu hoạt động mới (đóng vai hội thoại, nói đuổi, nghe hội thoại, chép chính tả đoạn, ghép hỏi–đáp, sắp xếp đoạn văn, điền từ vào đoạn, đúng/sai/không có, tả tranh, nhật ký 3 câu); mỗi bài trong 116 bài có thêm 2 hoạt động.
+- Giáo viên chủ nhiệm ảo: kế hoạch tuần, bài về nhà có hạn, yêu cầu ôn nợ/sửa lỗi trước khi học bài mới, kiểm tra tuần và tháng, nhắc học (thông báo, lịch .ics cho iPhone), phiếu liên lạc tuần có lời phê. Đã mô phỏng 4 người học trong 35 ngày.
+- Đoạn văn căn đều hai bên như văn bản hành chính (hoạt động cả trên Safari đời cũ), câu ngắn ở giữa cân dòng, không tách từ ghép, kiểm soát khoảng trống giữa chữ.
+- 8 bảng màu giao diện, đạt chuẩn tương phản ở cả chế độ sáng và tối.
+- Ô chuỗi ngày gọn một hàng, cao bằng nút hồ sơ.
+- Kiểm tra trên 12 cỡ màn hình (iPhone SE đến iPad, máy tính), sáng/tối, phóng chữ 130–160%, giả lập Safari.
