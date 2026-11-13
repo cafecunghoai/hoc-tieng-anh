@@ -829,3 +829,7 @@ html.touch .kbd{display:none}
 .dcap{display:none}
 @media(max-width:400px){.boxes .dunit{display:none}.dcap{display:inline}}
 @media(max-width:340px){#nav button i,#nav button.on i{padding-left:10px;padding-right:10px}}
+/* Safari (iOS 17.4+) cân dòng nhầm tiêu đề có biểu tượng đứng đầu hoặc nằm trong hàng flex: "Kiểm tra / tuần", "Kiến thức / trọng tâm".
+   Tiêu đề ngắn này không cần cân dòng: xuống dòng bình thường (chỉ khi thật sự không đủ chỗ). */
+:is(h1,h2,h3,h4,.lab,.btn,.pill,.tag,.fbt,b,p,span):has(>i.ti:first-child),.row>h1,.row>h2,.row>h3,.row>h4,.row>b,.row>.grow>b,.row>.grow>h3,.lab{text-wrap-style:auto}
+.row.between>h3{flex:1 1 auto}
