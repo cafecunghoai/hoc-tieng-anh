@@ -1331,7 +1331,7 @@ function layoutText(root) {
   });
 }
 const EN_SEL = ".passage,.passage p,.rq>p,.model,.say h2,.bubble p,h2.q:not(.vi),.opt,.ax-para,.ax-cz,.ax-b p,.postcard p";
-const JUS_SKIP = ".fbt,.btn,.opt,.chip,.lab,.tag,.pill,h1,h2,h3,h4,#nav,input,textarea,select,.stats,.chart,.cgrid,.gstats,.stall,.plot,.stop,.mcard,.timer,.seg,.etoks,.chips,.kws,.diff,.ptop,.xpg,.bdg,.badge,.ring,.lvn,.streak,.quick,.loop,.ptitle,.skrow,.crit,.memleg,.geleg,.road,label,.cert,.heard.live,.errtip .g,.les .grow,.topic small,.glv p,.gcard small,.goals li,.gram table.t3 td,.iostip,.ax-cz";
+const JUS_SKIP = ".fbt,.btn,.opt,.chip,.lab,.tag,.pill,h1,h2,h3,h4,#nav,input,textarea,select,.stats,.chart,.cgrid,.gstats,.stall,.plot,.stop,.mcard,.timer,.seg,.etoks,.chips,.kws,.diff,.ptop,.xpg,.bdg,.badge,.ring,.lvn,.streak,.quick,.loop,.ptitle,.skrow,.crit,.memleg,.geleg,.road,label,.cert,.heard.live,.errtip .g,.les .grow,.goals li,.gram table.t3 td,.iostip,.ax-cz";
 /* căn đều mà khoảng trắng giữa chữ quá 2,3 lần bình thường (khung hẹp, chữ Anh dài) thì trả về căn trái */
 let JCV;
 function jusGap(e) {

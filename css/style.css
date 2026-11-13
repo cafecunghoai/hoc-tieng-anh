@@ -292,7 +292,7 @@ body.playing #nav{display:none}
 
 /* Typography: ngắt dòng có nghĩa, cân dòng */
 h1,h2,h3,h4,.q,.btn,.lab,.tag,.pill,.fbt,.gcard b,.choice b,.task b,.say h2,.postcard h2,.donescr h1,.stepn,.bdg span,.les .grow,.stall small{text-wrap:balance}
-p,li,small,.vi,.passage,.gram,.note,.choice small,.gcard small,.bubble p,.heard{text-wrap:pretty}
+p,li,small,.vi,.passage,.gram,.note,.choice small,.gcard small,.bubble p,.heard{text-wrap:wrap;text-wrap:pretty}
 .opt,.chip,.word b{text-wrap:balance}
 
 .nw{white-space:nowrap}.choice small,.task small{display:block}
@@ -395,8 +395,8 @@ details.card summary{cursor:pointer;list-style:none}details.card summary::-webki
 .chips2 button.on{background:var(--grad);border-color:transparent}
 
 /* Ngắt dòng: đoạn ngắn (đến 4 dòng) luôn cân đối; đoạn dài tránh chữ mồ côi */
-p,small,li,.muted,.note,.sm,.lab,span.grow,.task small,.why,.fbt,.errtip{text-wrap:balance}
-.passage,.passage p,.gram p,.gram li,.annot,.bubble p,.cmt,.gscore p,textarea{text-wrap:pretty}
+p,small,li,.muted,.note,.sm,span.grow,.task small,.why,.errtip{text-wrap:wrap;text-wrap:pretty}.lab,.fbt{text-wrap:balance}
+.passage,.passage p,.gram p,.gram li,.annot,.bubble p,.cmt,.gscore p,textarea{text-wrap:wrap;text-wrap:pretty}
 .card.big p{max-width:92%}
 
 .plot small{white-space:normal;text-overflow:clip;line-height:1.15;text-align:center;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow-wrap:anywhere}
@@ -426,7 +426,7 @@ p,small,li,.muted,.note,.sm,.lab,span.grow,.task small,.why,.fbt,.errtip{text-wr
 .gtop{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;align-items:center}.gtop .grow{display:contents}.gtop .grow>p:not(.lab){grid-column:1/-1;margin:2px 0}
 .gtop .lab{margin:0}.gscore{width:60px;height:60px;border-radius:18px}.gscore b{font-size:24px}
 /* Thông báo: gọn, ở khoảng trống phía dưới (app.js tính vị trí để không che nút, không che tiêu đề) */
-#toast{top:0;transform:translate(-50%,8px);width:max-content;max-width:min(92vw,420px);padding:10px 16px;font-size:14px;line-height:1.45;text-wrap:pretty}
+#toast{top:0;transform:translate(-50%,8px);width:max-content;max-width:min(92vw,420px);padding:10px 16px;font-size:14px;line-height:1.45;text-wrap:wrap;text-wrap:pretty}
 #toast.on{transform:translate(-50%,0)}
 /* Huy hiệu mới hiện ngay trên màn hình kết quả */
 .newbdg{display:flex;gap:12px;align-items:center;text-align:left;background:var(--acc2);color:var(--acc-ink);border-radius:var(--r2);padding:10px 14px;margin:14px auto 4px;max-width:440px;animation:pop .4s}
@@ -460,7 +460,7 @@ input[type=range]{height:44px}
 a.foot{display:inline-block;padding:14px 8px}
 /* Ngắt dòng: "·" rơi vào cuối dòng thì ẩn đi; đoạn dài trong ghi chú ngữ pháp dùng pretty */
 .sep.eol{color:transparent}
-.gram p,.gram li,.gram div,.gram td{text-wrap:pretty}.gram h4{text-wrap:balance}
+.gram p,.gram li,.gram div,.gram td{text-wrap:wrap;text-wrap:pretty}.gram h4{text-wrap:balance}
 /* Sửa sau lần đo thứ nhất */
 .kbd{opacity:1;border-color:rgba(255,255,255,.6)}
 :root:not([data-theme=dark]) .choice .eta{color:var(--pri-ink)}
@@ -468,7 +468,7 @@ a.foot{display:inline-block;padding:14px 8px}
 :root:not([data-theme=dark]) .sk-read{--ki:#0B6E48}
 :root:not([data-theme=dark]) .mcard.en .face{color:var(--pri-ink)}
 .xpg{white-space:nowrap}
-.gram td{text-wrap:balance}.gram .bal,.errlist p.bal{text-wrap:balance}
+.gram td{text-wrap:balance}.gram .bal,.errlist p.bal{text-wrap:wrap;text-wrap:pretty}
 .errlist p span.sm{display:block;text-wrap:balance}
 .vi,.say p,.q.vi{text-wrap:balance}
 .plot small{overflow-wrap:break-word}.plot small.lw{font-size:10.5px;letter-spacing:-.01em}
@@ -481,7 +481,7 @@ a.foot{display:inline-block;padding:14px 8px}
 @media(max-width:380px){.badges{grid-template-columns:repeat(3,1fr)}}
 #toast{text-wrap:balance}
 .newbdg b{display:block}.newbdg .nb{display:block;text-wrap:balance}
-.errlist summary,.gcard small,.topic small{text-wrap:balance}
+.errlist summary{text-wrap:balance}.gcard small,.topic small{text-wrap:wrap;text-wrap:pretty}
 @media(min-width:960px){:root:not([data-theme=dark]) #nav button.on{color:var(--pri-ink)}}
 [data-theme=dark] .gscore.hi,[data-theme=dark] .gscore.lo{color:#0F1614}
 .lab{display:block}.lab>i.ti{vertical-align:-.15em;margin-right:6px}
@@ -529,7 +529,7 @@ a.foot{display:inline-block;padding:14px 8px}
 }
 .link>span{text-wrap:balance}
 /* r5: đoạn văn căn đều hai bên, dòng cuối căn trái (app.js gắn .jus cho khối chữ căn trái) */
-.jus{text-align:justify!important;text-align-last:left;text-justify:inter-word;text-wrap:pretty!important}
+.jus{text-align:justify!important;text-align-last:left;text-justify:inter-word;text-wrap:wrap!important;text-wrap:pretty!important}
 .ph.pi{display:inline}
 .jus.jusno{text-align:left!important}
 /* r5: bảng màu chủ đạo (Hồ sơ › Giao diện). Mỗi màu có bản sáng và tối, đạt AA: chữ trắng trên nút chính ≥ 4.5:1,
@@ -570,7 +570,7 @@ html.thx,html.thx *{transition:background-color .35s ease,color .35s ease,border
 @media(max-width:360px){.row2 .btn{padding-left:10px;padding-right:10px;gap:6px}}
 
 /* ============ Cô chủ nhiệm (teacher.js) ============ */
-.tsay{text-align:justify;text-align-last:left;text-wrap:pretty;hyphens:none}
+.tsay{text-align:justify;text-align-last:left;text-wrap:wrap;text-wrap:pretty;hyphens:none}
 .tav{width:42px;height:42px;border-radius:50%;background:var(--pri2);color:var(--pri);display:grid;place-items:center;flex:none;font-size:22px}
 .tav.sm{width:34px;height:34px;font-size:18px}
 .tcard .row b{display:block;font-size:16px}.tcard .row small{display:block;font-size:13px}
@@ -833,3 +833,5 @@ html.touch .kbd{display:none}
    Tiêu đề ngắn này không cần cân dòng: xuống dòng bình thường (chỉ khi thật sự không đủ chỗ). */
 :is(h1,h2,h3,h4,.lab,.btn,.pill,.tag,.fbt,b,p,span):has(>i.ti:first-child),.row>h1,.row>h2,.row>h3,.row>h4,.row>b,.row>.grow>b,.row>.grow>h3,.lab{text-wrap-style:auto}
 .row.between>h3{flex:1 1 auto}
+
+.c p,.c small,.donescr p,.say p,.q,.vi,h1,h2,h3,h4{text-wrap:balance}
