@@ -165,8 +165,8 @@
     s.reveal = 1; const h = $("#axt"); if (h) { h.classList.remove("ax-blur"); h.innerHTML = diffWords(x.en, heard); } const rb = $("#axrv"); if (rb) rb.remove();
     s.tries++;
     const nextB = `<button class="btn primary full" onclick="XA.shNext()">${last ? "Xem kết quả" : "Câu tiếp theo"} <i class="ti ti-arrow-right"></i></button>`;
-    if (sc >= 70) { s.okN++; $("#mic").innerHTML = `<p class="heard">Máy nghe được: “${esc(heard)}” · <b>${sc}%</b> từ đúng</p><p class="sm good c"><i class="ti ti-circle-check"></i> Bắt nhịp tốt!</p>` + nextB; return; }
-    $("#mic").innerHTML = `<p class="heard">Máy nghe được: “${esc(heard)}” · <b>${sc}%</b> từ đúng<br><span class="sm muted">Từ màu đỏ là từ máy chưa nghe rõ.</span></p>` + (s.tries < 3 ? `<div class="row2"><button class="btn" onclick="XA.shNext()">Bỏ qua</button><button class="btn primary" onclick="XA.shGo()"><i class="ti ti-refresh"></i> Thử lại</button></div>` : nextB);
+    if (sc >= 70) { s.okN++; $("#mic").innerHTML = `<p class="heard">Máy nghe được: ${heardQ(heard)}<br><b>${sc}%</b> từ đúng</p><p class="sm good c"><i class="ti ti-circle-check"></i> Bắt nhịp tốt!</p>` + nextB; return; }
+    $("#mic").innerHTML = `<p class="heard">Máy nghe được: ${heardQ(heard)}<br><b>${sc}%</b> từ đúng<br><span class="sm muted">Từ màu đỏ là từ máy chưa nghe rõ.</span></p>` + (s.tries < 3 ? `<div class="row2"><button class="btn" onclick="XA.shNext()">Bỏ qua</button><button class="btn primary" onclick="XA.shGo()"><i class="ti ti-refresh"></i> Thử lại</button></div>` : nextB);
   };
   XA.shNext = () => {
     const s = st(); if (!s || P.ans) return; const n = s.it.s.length;
@@ -216,7 +216,7 @@
     s.k = 0; s.ans = []; s.audio = s.it.p[0];
     if (!hasTTS()) return lab(s) + `<p class="muted c">Máy chưa có giọng đọc tiếng Anh nên chưa làm được bài nghe chép này.</p><button class="btn primary full" onclick="XA.pdSkip()">Bỏ qua</button>`;
     setTimeout(() => { if (cur(s) && s.k === 0) say(s.it.p[0]); }, 400);
-    return lab(s) + vi("Máy đọc từng câu của một đoạn văn. Gõ lại câu bạn nghe được rồi bấm <b>Câu tiếp</b> (hoặc Enter). Bấm loa để nghe lại.") +
+    return lab(s) + vi("Máy đọc từng câu của một đoạn văn. Gõ lại câu bạn nghe được rồi bấm <b>Câu tiếp</b>" + (TOUCH_DEV ? "" : " (hoặc Enter)") + ". Bấm loa để nghe lại.") +
       `<div class="c">${`<button class="spk xl" onclick="XA.pdSay()" aria-label="Nghe"><i class="ti ti-volume"></i></button>`}<button class="link" onclick="XA.pdSay(1)"><i class="ti ti-snail"></i> Nghe chậm</button></div><div id="axpv">${pdView(s)}</div>` +
       `<textarea id="inp" rows="2" placeholder="Gõ câu bạn nghe được" oninput="$('#er').textContent=''" autocapitalize="sentences" autocomplete="off" spellcheck="false"></textarea><p class="err" id="er"></p><button class="btn primary full" id="chk" onclick="XA.pdNext()">${s.it.p.length > 1 ? "Câu tiếp" : "Kiểm tra"}</button>`;
   }
@@ -322,7 +322,7 @@
     s.ST = s.it.st.map(x => { const p = x.split("|"); return { q: p[0], a: TF.findIndex(t => t[0] === p[1]), why: p[2] || "", sel: -1 }; });
     const tx = s.it.x.replace(/\n/g, " ");
     return lab(s) + vi("<b>Đúng</b>: bài đọc nói đúng như vậy. <b>Sai</b>: bài đọc nói ngược lại. <b>Không có thông tin</b>: bài đọc không nhắc đến điều này.") +
-      `<div class="passage">${esc(s.it.x).replace(/\n/g, "<br>")}</div>${hasTTS() && !mock() ? `<div class="row c2">${spk(tx)}<span class="muted sm">Nghe cả bài</span>${slowBtn(tx)}</div>` : ""}` +
+      `<div class="passage">${paraHtml(s.it.x)}</div>${hasTTS() && !mock() ? `<div class="row c2">${spk(tx)}<span class="muted sm">Nghe cả bài</span>${slowBtn(tx)}</div>` : ""}` +
       s.ST.map((q, k) => `<div class="ax-tf" id="xtq${k}"><p><b>${k + 1}.</b> ${esc(q.q)}</p><div class="ax-seg">${TF.map((t, i) => `<button class="opt" id="xt${k}_${i}" onclick="XA.tPick(${k},${i})">${t[1]}</button>`).join("")}</div></div>`).join("") +
       `<p class="err" id="er"></p><button class="btn primary full" id="xok" onclick="XA.tCheck()">Kiểm tra</button>`;
   }
@@ -406,12 +406,12 @@
     if (!cur(s) || P.ans) return;
     b.disabled = false; b.textContent = "Chấm lại";
     const c = String(r.comment || "").split(/(?<=[.!?])\s+/).slice(0, 2).join(" ");
-    $("#wres").innerHTML = `<div class="gradecard ax-jg"><div class="gtop"><div class="gscore ${r.total >= 7 ? "hi" : r.total >= 5 ? "mid" : "lo"}"><b>${r.total}</b><small>/10</small></div><div class="grow"><p class="lab">Giáo viên nhận xét</p><p>${esc(c)}</p></div></div>${/<mark/.test(r.html || "") ? `<p class="lab">Bấm vào chỗ gạch chân để xem cách sửa</p><div class="annot">${r.html}</div><div id="errtip" class="errtip"></div>` : ""}</div>`;
+    $("#wres").innerHTML = `<div class="gradecard ax-jg"><div class="gtop"><div class="gscore ${r.total >= 7 ? "hi" : r.total >= 5 ? "mid" : "lo"}"><b>${vdec(r.total)}</b><small>/10</small></div><div class="grow"><p class="lab">Giáo viên nhận xét</p><p>${esc(c)}</p></div></div>${/<mark/.test(r.html || "") ? `<p class="lab">Bấm vào chỗ gạch chân để xem cách sửa</p><div class="annot">${r.html}</div><div id="errtip" class="errtip"></div>` : ""}</div>`;
     if (r.total >= 5) {
       S.journal = (Array.isArray(S.journal) ? S.journal : []).concat({ d: today(), at: Date.now(), q: it.q, t: v.slice(0, 2000), sc: r.total }).slice(-60);
       save(); b.remove(); const k = $("#skipm"); if (k) k.remove(); $("#inp").disabled = true; $("#wres").insertAdjacentHTML("beforeend", modelBox(it.m, "Nhật ký mẫu để so sánh"));
-      grade(true, "", `Đạt ${r.total}/10 điểm! Đã lưu vào nhật ký.`);
-    } else { $("#er").textContent = `Nhật ký đạt ${r.total}/10, cần từ 5 điểm. Sửa các chỗ gạch chân rồi bấm Chấm lại.`; }
+      grade(true, "", `Đạt ${vdec(r.total)}/10 điểm! Đã lưu vào nhật ký.`);
+    } else { $("#er").textContent = `Nhật ký đạt ${vdec(r.total)}/10, cần từ 5 điểm. Sửa các chỗ gạch chân rồi bấm Chấm lại.`; }
   };
 
   /* ================== Kết nối với app ================== */

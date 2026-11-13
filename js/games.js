@@ -12,7 +12,7 @@ function exitGame() { G = null; nav("play"); } // nav() tự tải lại nếu �
 const gTop = (title, right) => `<div class="ptop"><button class="ib" onclick="exitGame()" aria-label="Thoát"><i class="ti ti-x"></i></button><b class="grow gtitle">${title}</b>${right || ""}</div>`;
 function gameEnd(icon, title, msg, xp, again, win = true) {
   tick(); if (xp) addXP(xp); gs().plays++; save();
-  app().innerHTML = `<div class="done${win ? "" : " fail"}"><div class="gend">${icon}</div><h1>${title}</h1><p class="muted">${msg}</p>${xp ? `<p class="xpbig">+${xp} XP</p>` : ""}<div class="stack"><button class="btn primary full lg" onclick="${again}">Chơi lại</button><button class="btn full" onclick="exitGame()">Về trang trò chơi</button></div></div>`;
+  app().innerHTML = `<div class="donescr${win ? "" : " fail"}"><div class="gend">${icon}</div><h1>${title}</h1><p class="muted">${msg}</p>${xp ? `<p class="xpbig">+${xp} XP</p>` : ""}<div class="stack"><button class="btn primary full lg" onclick="${again}">Chơi lại</button><button class="btn full" onclick="exitGame()">Về trang trò chơi</button></div></div>`;
   if (win) { beep("done"); confetti(); } checkBadges(); checkDay();
 }
 
@@ -89,7 +89,7 @@ const ROUTES = {
 function openJourney() {
   VIEW = () => {
     const g = gs();
-    app().innerHTML = gTop("Chuyến xe về quê") + `<p class="muted">Trả lời đúng 3 câu thì xe chạy tới điểm dừng tiếp theo.<br>Bạn có 3 trái tim. Mỗi điểm dừng tặng một tấm bưu thiếp tiếng Anh.</p>
+    app().innerHTML = gTop("Chuyến xe về quê") + `<p class="muted">Trả lời đúng 3&nbsp;câu thì xe chạy tới điểm dừng tiếp theo. Bạn có 3 trái tim; mỗi điểm dừng tặng một tấm bưu&nbsp;thiếp tiếng&nbsp;Anh.</p>
     ${Object.keys(ROUTES).map(k => { const r = ROUTES[k], got = r.stops.filter(s => g.post[k + ":" + s[0]]).length; return `<button class="gcard ${k === "tay" ? "g3" : "g2"}" onclick="startJourney('${k}')"><span class="gemo">${r.e}</span><span class="grow"><b>${r.n}</b><small>${r.d} · ${r.stops.length} điểm dừng</small><em>${got}/${r.stops.length} bưu thiếp${g.best["j_" + k] ? " · đã về đích" : ""}</em></span><i class="ti ti-chevron-right"></i></button>`; }).join("")}
     ${Object.keys(g.post).length ? `<h4 class="sec">Bộ sưu tập bưu thiếp</h4><div class="posts">${Object.keys(ROUTES).flatMap(k => ROUTES[k].stops.filter(s => g.post[k + ":" + s[0]]).map(s => `<button class="post" onclick="say('${jsq(s[1])}')"><b>${s[0]}</b><span>${esc(s[1])}</span></button>`)).join("")}</div>` : ""}`;
   };

@@ -23,7 +23,7 @@ var GRAMMAR = window.GRAMMAR = (window.GRAMMAR || []).concat([
 "f|___ name is Tuan. (tên của tôi)|My||Của tôi → my.",
 "e|Him is my teacher.|Him|He|Làm chủ ngữ phải dùng he; him chỉ đứng sau động từ hoặc giới từ.",
 "r|Viết lại dùng tính từ sở hữu: The car belongs to us. → This is ...|This is our car.||Của chúng tôi → our + danh từ."]},
-{id:"article", lv:"A1", t:"A / An và danh từ số nhiều", lesson:"a1-5", sum:"a + âm phụ âm, an + âm nguyên âm; thêm -s/-es", items:[
+{id:"article", lv:"A1", t:"A / An và danh từ số nhiều", lesson:"a1-5", sum:"a + phụ âm, an + nguyên âm; thêm\u00a0-s/-es", items:[
 "c|She is ___ engineer.|an|a;two;many|Engineer bắt đầu bằng âm nguyên âm /e/ → an.",
 "c|I have ___ umbrella.|an|a;two;many|Umbrella bắt đầu bằng âm nguyên âm → an.",
 "c|There are three ___ on the table.|boxes|box;boxs;boxies|Danh từ tận cùng bằng x thêm -es: boxes.",
@@ -32,7 +32,7 @@ var GRAMMAR = window.GRAMMAR = (window.GRAMMAR || []).concat([
 "f|It takes ___ hour to get there. (a/an)|an||Hour có h câm, đọc bắt đầu bằng âm nguyên âm → an hour.",
 "e|I have a uncle in Hanoi and an aunt in Hue.|a uncle|an uncle|Uncle bắt đầu bằng âm nguyên âm /ʌ/ → an uncle.",
 "r|Viết sang số nhiều: This is a book. → These ...|These are books.||This → these, is → are, a book → books."]},
-{id:"adj", lv:"A1", t:"Vị trí tính từ", lesson:"a1-6", sum:"Tính từ đứng trước danh từ, không thêm -s", items:[
+{id:"adj", lv:"A1", t:"Vị trí tính từ", lesson:"a1-6", sum:"Đứng trước danh từ, không thêm\u00a0-s", items:[
 "c|She has a ___.|red car|car red;reds car;car reds|Tính từ đứng trước danh từ: a red car.",
 "c|They are ___ students.|good|goods;well;a good|Tính từ không thêm -s dù danh từ số nhiều.",
 "c|My house is ___.|small|a small;smalls;smallly|Sau to be dùng tính từ một mình.",
@@ -59,7 +59,7 @@ var GRAMMAR = window.GRAMMAR = (window.GRAMMAR || []).concat([
 "f|She usually ___ (watch) TV after dinner.|watches||Tận cùng -ch thêm -es: watches.",
 "e|My brother play soccer every Sunday.|play|plays|My brother = he → plays.",
 "r|Viết thành câu phủ định: They live in Hanoi.|They don't live in Hanoi.|They do not live in Hanoi.|Phủ định: don't + động từ nguyên mẫu."]},
-{id:"prep-time", lv:"A1", t:"Giới từ thời gian: in / on / at", lesson:"a1-10", sum:"at + giờ, on + thứ/ngày, in + tháng/năm/mùa", items:[
+{id:"prep-time", lv:"A1", t:"Giới từ thời gian: in / on / at", lesson:"a1-10", sum:"at\u00a0+\u00a0giờ, on\u00a0+\u00a0thứ/ngày, in\u00a0+\u00a0tháng/năm/mùa", items:[
 "c|The meeting starts ___ 9 o'clock.|at|in;on;by|At + giờ cụ thể.",
 "c|My birthday is ___ May.|in|on;at;by|In + tháng.",
 "c|I don't work ___ Sundays.|on|in;at;by|On + thứ trong tuần (on Sundays = vào các ngày Chủ nhật).",
@@ -95,7 +95,7 @@ var GRAMMAR = window.GRAMMAR = (window.GRAMMAR || []).concat([
 "f|The cat is sleeping ___ the table. (bên dưới)|under|underneath;beneath|Bên dưới: under.",
 "e|Please to sit down.|to sit|sit|Câu mệnh lệnh dùng động từ nguyên mẫu không có to.",
 "r|Viết lại thành câu mệnh lệnh: You should close the door. → ...|Close the door.|Please close the door.;Close the door, please.|Mệnh lệnh: bỏ chủ ngữ, dùng động từ nguyên mẫu."]},
-{id:"can", lv:"A1", t:"Can / Can't và like + V-ing", lesson:"a1-19", sum:"can + V nguyên mẫu; like/love/enjoy + V-ing", items:[
+{id:"can", lv:"A1", t:"Can / Can't và like + V-ing", lesson:"a1-19", sum:"can + V nguyên mẫu; like/love/enjoy\u00a0+\u00a0V-ing", items:[
 "c|She can ___ very well.|swim|swims;swimming;to swim|Sau can dùng động từ nguyên mẫu không to.",
 "c|I enjoy ___ to music.|listening|listen;to listen;listens|Enjoy + V-ing.",
 "c|___ you play the guitar?|Can|Do can;Are;Cans|Câu hỏi: Can + chủ ngữ + V?",

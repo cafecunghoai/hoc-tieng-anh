@@ -303,7 +303,7 @@ var TEACHER = window.TEACHER = (() => {
   }
   /* màn hình kết quả: một dòng của cô về bài tập còn lại hôm nay */
   function doneNote() {
-    const st = $("#app .done .stack"); if (!st || $("#app .tnote")) return;
+    const st = $("#app .donescr .stack"); if (!st || $("#app .tnote")) return;
     const h = hwFor(today(), true); if (!h) return;
     const left = h.tasks.filter(x => !x.done), nx = left[0];
     st.insertAdjacentHTML("beforebegin", `<div class="card tnote"><span class="tav sm"><i class="ti ti-school"></i></span><div class="grow"><p class="tsay">${left.length ? `Bài tập về nhà hôm nay: xong <b>${h.tasks.length - left.length}/${h.tasks.length}</b> việc. Việc tiếp theo: <b>${esc(label(nx).t)}</b>.` : `Bạn đã làm xong <b>cả ${h.tasks.length} việc</b> cô giao hôm nay. Rất tốt!`}</p>${left.length ? `<button class="btn full" onclick="${go(nx)}">${esc(label(nx).b)} <i class="ti ti-arrow-right"></i></button>` : ""}</div></div>`);
@@ -428,7 +428,7 @@ var TEACHER = window.TEACHER = (() => {
     const skr = Object.keys(p.sk).length ? `<div class="card skbox">${Object.keys(p.sk).map(x => { const v = p.sk[x], q = Math.round(v[0] / v[1] * 100); return `<div class="skrow"><i class="ti ti-${SKI[x]}"></i><span class="skn">${SK[x]}</span><div class="bar grow"><span style="width:${q}%"></span></div><b>${v[0]}/${v[1]}</b></div>`; }).join("")}</div>` : "";
     const say = wt ? (good ? `Bài kiểm tra tuần đạt <b>${sc}%</b>. Kiến thức của tuần đã vào đầu, cô ghi vào phiếu liên lạc rồi nhé.` : `Bài kiểm tra tuần được <b>${sc}%</b>, chưa tới mức 80% cô mong đợi. Các câu sai đã vào Sổ tay, tuần này mình sửa cho hết.`) : (good ? "Xong phần luyện tập, làm tốt lắm!" : "Xong phần luyện tập. Câu sai đã vào Sổ tay để sửa lại sau.");
     P = null; save();
-    app().innerHTML = `<div class="done${good ? "" : " fail"}"><div class="ring xl" style="--p:${sc}"><span>${sc}%</span></div><h1>${wt ? (good ? "Đạt bài kiểm tra tuần!" : "Chưa đạt bài kiểm tra tuần") : "Hoàn thành bài tập!"}</h1><div class="card tnote"><span class="tav sm"><i class="ti ti-school"></i></span><p class="tsay grow">${say}</p></div><p class="xpbig">+${gained} XP</p>${skr}<div class="stack"><button class="btn primary full lg" onclick="TEACHER.open()"><i class="ti ti-school"></i> Về trang Cô chủ nhiệm</button><button class="btn full" onclick="nav('home')">Về trang chủ</button></div></div>`;
+    app().innerHTML = `<div class="donescr${good ? "" : " fail"}"><div class="ring xl" style="--p:${sc}"><span>${sc}%</span></div><h1>${wt ? (good ? "Đạt bài kiểm tra tuần!" : "Chưa đạt bài kiểm tra tuần") : "Hoàn thành bài tập!"}</h1><div class="card tnote"><span class="tav sm"><i class="ti ti-school"></i></span><p class="tsay grow">${say}</p></div><p class="xpbig">+${gained} XP</p>${skr}<div class="stack"><button class="btn primary full lg" onclick="TEACHER.open()"><i class="ti ti-school"></i> Về trang Cô chủ nhiệm</button><button class="btn full" onclick="nav('home')">Về trang chủ</button></div></div>`;
     document.body.classList.add("playing"); window.scrollTo(0, 0);
     if (good) { beep("done"); confetti(); } checkBadges(); checkDay();
   };
@@ -493,8 +493,8 @@ var TEACHER = window.TEACHER = (() => {
     else if (r.min === 0) { out.push(P1([`Tuần này cô chưa thấy ${b} vào học buổi nào.`, `Cả tuần qua ${b} chưa học buổi nào.`]) + " " + P1(["Cô hiểu ai cũng có tuần bận, nhưng nghỉ trọn một tuần thì từ vựng bắt đầu rơi rụng, nhất là các thẻ đang đến hạn ôn.", "Cô không trách, nhưng nói thật: nghỉ một tuần thì phải mất gần một tuần nữa mới lấy lại nhịp."])); tone = 0; }
     else if (ratio >= 1 && r.days >= r.plan) { out.push(P1([`Tuần này ${b} học rất đều: đủ ${r.days}/${r.plan} buổi theo lịch, tổng cộng ${r.min} phút, đạt ${pct}% mục tiêu.`, `Cô rất hài lòng với sự chuyên cần của ${b}: ${r.days}/${r.plan} buổi, ${r.min} phút, không bỏ buổi nào.`, `Chuyên cần tuần này rất tốt: ${b} học ${r.min} phút qua ${r.days} buổi, vượt mục tiêu ${r.goalMin} phút.`])); tone = 2; }
     else if (ratio >= 1) { out.push(`${cap(b)} học đủ ${r.min} phút, đạt mục tiêu tuần, nhưng chỉ có ${r.days}/${r.plan} buổi. Học dồn vào ít buổi thì nhớ không lâu bằng học rải đều mỗi ngày.`); tone = 2; }
-    else if (ratio >= 0.6) { out.push(P1([`Tuần này ${b} học ${r.min}/${r.goalMin} phút (${pct}% mục tiêu) qua ${r.days}/${r.plan} buổi. ${r.hw !== undefined && r.hw < 50 ? "Thời gian học tạm được, nhưng phần bài tập thì chưa." : `Kết quả tạm ổn, nhưng còn hụt khoảng ${r.goalMin - r.min} phút.`}`, `${cap(b)} đã học ${r.days}/${r.plan} buổi, được ${r.min} phút, tức ${pct}% mục tiêu. ${r.hw !== undefined && r.hw < 50 ? "Thời gian học tạm được, nhưng phần bài tập thì chưa." : ratio >= 0.9 ? "Chỉ còn thiếu một chút nữa là đạt mục tiêu." : `Chưa đủ, nhưng cô thấy ${b} có cố gắng.`}`])); tone = 1; }
-    else if (r.hw !== undefined && r.hw >= 90) { out.push(`${cap(b)} làm đủ bài tập nhưng mới học ${r.min}/${r.goalMin} phút (${pct}% mục tiêu). Bài tập chỉ là phần tối thiểu; thời gian còn lại của mỗi buổi, hãy nghe lại bài, nói theo câu mẫu hoặc chơi trò chơi gợi nhớ.`); tone = 1; }
+    else if (ratio >= 0.6) { out.push(P1([`Tuần này ${b} học ${r.days}/${r.plan} buổi, được ${r.min} phút trên mục tiêu ${r.goalMin} phút (${pct}%). ${r.hw !== undefined && r.hw < 50 ? "Thời gian học tạm được, nhưng phần bài tập thì chưa." : `Kết quả tạm ổn, nhưng còn hụt khoảng ${r.goalMin - r.min} phút.`}`, `${cap(b)} đã học ${r.days}/${r.plan} buổi, được ${r.min} phút, tức ${pct}% mục tiêu. ${r.hw !== undefined && r.hw < 50 ? "Thời gian học tạm được, nhưng phần bài tập thì chưa." : ratio >= 0.9 ? "Chỉ còn thiếu một chút nữa là đạt mục tiêu." : `Chưa đủ, nhưng cô thấy ${b} có cố gắng.`}`])); tone = 1; }
+    else if (r.hw !== undefined && r.hw >= 90) { out.push(`${cap(b)} làm đủ bài tập nhưng mới học ${r.min} phút trên mục tiêu ${r.goalMin} phút (${pct}%). Bài tập chỉ là phần tối thiểu; thời gian còn lại của mỗi buổi, hãy nghe lại bài, nói theo câu mẫu hoặc chơi trò chơi gợi nhớ.`); tone = 1; }
     else { out.push(`Tuần này ${b} chỉ học ${r.min}/${r.goalMin} phút, mới đạt ${pct}% mục tiêu${miss ? ` và bỏ trống ${miss}/${r.plan} buổi` : ", buổi nào cũng quá ngắn"}. ` + P1(["Cô nói thẳng: với nhịp này thì rất khó giữ được những gì đã học.", "Học như vậy thì kiến thức mới chưa kịp vững đã bị quên."])); tone = 0; }
     // bài tập về nhà
     if (r.hwN) {
@@ -641,13 +641,13 @@ var TEACHER = window.TEACHER = (() => {
     } catch (e) { return h; }
   }
   /* Hồ sơ: lối vào trang cô chủ nhiệm (chèn sau khi vMe vẽ xong) */
-  if (typeof vMe === "function") { const m0 = vMe; vMe = function () { m0.apply(this, arguments); try { const st = $("#app .stats"); if (st) st.insertAdjacentHTML("afterend", `<button class="card tcard tlink" onclick="TEACHER.open()"><span class="tav"><i class="ti ti-school"></i></span><span class="grow"><b>Cô chủ nhiệm</b><small class="muted">${on() ? "Bài tập về nhà, lịch học, kiểm tra, phiếu liên lạc" : "Nhận lộ trình học riêng theo tuần"}</small></span><i class="ti ti-chevron-right muted"></i></button>`); } catch (e) {} }; }
+  if (typeof vMe === "function") { const m0 = vMe; vMe = function () { m0.apply(this, arguments); try { const st = $("#app .stats"); if (st) st.insertAdjacentHTML("afterend", `<button class="card tcard tlink" onclick="TEACHER.open()"><span class="tav"><i class="ti ti-school"></i></span><span class="grow"><b>Cô chủ nhiệm</b><small class="muted">${on() ? "Bài tập, lịch học, kiểm tra, phiếu tuần" : "Nhận lộ trình học riêng theo tuần"}</small></span><i class="ti ti-chevron-right muted"></i></button>`); } catch (e) {} }; }
 
   /* ---------- Trang cô chủ nhiệm ---------- */
   let draft = null;
   function setupHtml(first) {
     const t = T(), dr = draft || (draft = { days: t.days.slice(), time: t.time, goal: S.settings.goal });
-    return `${first ? `<div class="card tcard"><div class="row"><span class="tav"><i class="ti ti-school"></i></span><b class="grow">Chào bạn, cô là cô chủ nhiệm của bạn</b></div><p class="tsay">Cô sẽ lập lộ trình từng tuần theo thời gian của bạn, giao bài tập về nhà mỗi ngày, cho kiểm tra mỗi tuần và mỗi tháng, nhắc bạn học đúng giờ và gửi phiếu liên lạc vào cuối tuần. Trước hết, cho cô biết bạn học được vào những ngày nào và lúc mấy giờ.</p></div>` : ""}
+    return `${first ? `<div class="card tcard"><div class="row"><span class="tav"><i class="ti ti-school"></i></span><b class="grow">Chào bạn, cô là <span class="nw">cô chủ nhiệm</span> của bạn</b></div><p class="tsay">Cô sẽ lập lộ trình từng tuần theo thời gian của bạn, giao bài tập về nhà mỗi ngày, cho kiểm tra mỗi tuần và mỗi tháng, nhắc bạn học đúng giờ và gửi phiếu liên lạc vào cuối tuần. Trước hết, cho cô biết bạn học được vào những ngày nào và lúc mấy giờ.</p></div>` : ""}
     <section class="card set"><label>Mỗi buổi học bao lâu?</label><div class="seg">${[15, 30, 60, 90].map(x => `<button class="${dr.goal === x ? "on" : ""}" aria-pressed="${dr.goal === x}" onclick="TEACHER._dr('goal',${x})">${x}'</button>`).join("")}</div>
     <label>Những ngày bạn học được</label><div class="tdays">${WEEK.map(d => `<button class="${dr.days.includes(d) ? "on" : ""}" aria-pressed="${dr.days.includes(d)}" onclick="TEACHER._dr('day',${d})">${WDS[d]}</button>`).join("")}</div>
     <label for="ttime">Giờ học thường ngày</label><input type="time" id="ttime" class="inp" value="${dr.time}" onchange="TEACHER._dr('time',this.value)">
@@ -669,7 +669,7 @@ var TEACHER = window.TEACHER = (() => {
     const nst = { granted: `<p class="pill good"><i class="ti ti-bell-ringing"></i> Đã bật thông báo</p><p class="sm muted tsay">Cô nhắc lúc <b>${t.time}</b> vào các ngày ${dayList()}, và nhắc thêm khi còn 1 tiếng tới hạn nộp bài mà chưa làm xong. Thông báo của trình duyệt chỉ chạy khi app đang mở hoặc vừa được mở lại; muốn được nhắc cả khi đã tắt app, hãy thêm lịch nhắc vào điện thoại ở dưới.</p>`,
       denied: `<p class="pill bad">Thông báo đang bị chặn</p><p class="sm muted tsay">Bạn đã chặn thông báo của trang này. Muốn bật lại, vào phần cài đặt trang web của trình duyệt (biểu tượng ổ khóa cạnh địa chỉ trang), cho phép Thông báo. Hoặc dùng lịch nhắc trên điện thoại ở dưới.</p>`,
       default: `<p class="sm muted tsay">Cho phép thông báo để cô nhắc đúng giờ học. Trình duyệt sẽ hỏi bạn một lần, hãy bấm <b>Cho phép</b>.</p><button class="btn full" onclick="TEACHER._notif()"><i class="ti ti-bell"></i> Bật thông báo nhắc học</button>`,
-      ios: `<p class="sm tsay"><b>Trên iPhone, iPad:</b> thông báo chỉ dùng được khi app đã được thêm ra màn hình chính. Mở trang này bằng <b>Safari</b>, bấm nút <b>Chia sẻ</b> <i class="ti ti-share"></i>, chọn <b>“Thêm vào MH chính”</b>, rồi mở app từ biểu tượng mới và bật thông báo ở đây (cần iOS 16.4 trở lên).</p>`,
+      ios: `<p class="sm tsay"><b>Trên iPhone, iPad:</b> thông báo chỉ dùng được khi app đã được thêm ra màn hình chính. Mở trang này bằng <b>Safari</b>, bấm nút <span class="nw"><b>Chia sẻ</b> <i class="ti ti-share-2"></i>,</span> chọn <b>“Thêm vào MH chính”</b>, rồi mở app từ biểu tượng mới và bật thông báo ở đây (cần iOS 16.4 trở lên).</p>`,
       none: `<p class="sm muted tsay">Trình duyệt này không hỗ trợ thông báo. Hãy dùng lịch nhắc trên điện thoại ở dưới.</p>` }[s] || "";
     return `<h4 class="sec">Nhắc học</h4><section class="card set" id="tremind"><label>Thông báo trong app</label>${nst}
     <label>Lịch nhắc trên điện thoại</label><p class="sm muted tsay">Tải tệp lịch có sự kiện lặp lại lúc <b>${t.time}</b> vào ${dayList()}, kèm chuông báo đúng giờ. Mở tệp là thêm được vào ứng dụng Lịch của iPhone hoặc Google Calendar, nhắc cả khi không mở app. Đổi giờ học thì tải lại tệp mới và xóa sự kiện cũ.</p>
@@ -689,7 +689,7 @@ var TEACHER = window.TEACHER = (() => {
   }
   function weekHtml() {
     const t = T(), wk = week(), ws = pk(wk.id), td = today();
-    let h = `<section class="card"><div class="row between"><h3>Tuần ${dm(ws)} – ${dm(addD(ws, 6))}</h3><span class="pill">${wk.days.filter(x => x.study).length} buổi · ${S.settings.goal}'/buổi</span></div>${wk.note ? `<p class="tsay sm">${esc(wk.note)}</p>` : ""}</section><div class="tweek">`;
+    let h = `<section class="card"><div class="row between"><h3>Tuần ${dm(ws)} – ${dm(addD(ws, 6))}</h3><span class="pill">${wk.days.filter(x => x.study).length} buổi × ${S.settings.goal}'</span></div>${wk.note ? `<p class="tsay sm">${esc(wk.note)}</p>` : ""}</section><div class="tweek">`;
     wk.days.forEach(day => { const dt = pk(day.d), past = day.d < td, hw = t.hw[day.d];
       const tasks = hw ? hw.tasks : day.tasks, done = hw ? hw.tasks.filter(x => x.done).length : 0, m = tasks.reduce((a, x) => a + (x.m || taskMin(x)), 0);
       h += `<section class="card tday ${day.d === td ? "now" : ""} ${day.study ? "" : "off"}"><div class="row between"><b>${fmtD(dt)}${day.d === td ? " · hôm nay" : ""}</b>${day.study ? (hw && (past || day.d === td) ? `<span class="pill ${done === tasks.length ? "good" : past ? "bad" : ""}">${done}/${tasks.length}</span>` : past ? `<span class="pill bad">Không học</span>` : `<span class="sm muted">~${m} phút</span>`) : `<span class="sm muted">${isStudy(dt) && past ? "Chưa có lộ trình" : "Nghỉ"}</span>`}</div>`;
@@ -729,7 +729,7 @@ var TEACHER = window.TEACHER = (() => {
     let h = `<div class="ptop"><button class="ib" onclick="nav(TAB)" aria-label="Quay lại"><i class="ti ti-arrow-left"></i></button><span class="muted sm">Cô chủ nhiệm</span></div>`;
     if (!t.on) { app().innerHTML = h + `<div class="tpage">` + setupHtml(true) + `</div>`; return; }
     week(); check();
-    const tabs = [["today", "Hôm nay"], ["week", "Lịch tuần"], ["test", "Kiểm tra"], ["rep", "Phiếu tuần"]];
+    const tabs = [["today", "Hôm nay"], ["week", "Lịch<span class=\"tlong\"> tuần</span>"], ["test", "Kiểm tra"], ["rep", "Phiếu<span class=\"tlong\"> tuần</span>"]];
     h += `<div class="tpage"><div class="seg ttabs" role="tablist">${tabs.map(x => `<button role="tab" class="${t.tab === x[0] ? "on" : ""}" aria-selected="${t.tab === x[0]}" onclick="TEACHER.open('${x[0]}',1)">${x[1]}</button>`).join("")}</div>`;
     h += ({ today: todayHtml, week: weekHtml, test: testHtml, rep: repHtml })[t.tab]() + `</div>`;
     app().innerHTML = h; schedule();

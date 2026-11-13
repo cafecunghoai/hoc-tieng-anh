@@ -829,9 +829,10 @@ const Grader = (() => {
   }
   const LABEL = { grammar: "Ngữ pháp", spell: "Chính tả", cap: "Viết hoa", punct: "Dấu câu", word: "Dùng từ" };
   function report(r, opt) {
-    const c = r.crit, row = (k, t, i) => `<div class="crit"><span><i class="ti ti-${i}"></i> ${t}</span><div class="bar grow"><span style="width:${c[k] * 20}%"></span></div><b>${c[k]}/5</b></div>`;
+    const dn = x => String(x).replace(".", ","); // số thập phân hiển thị kiểu Việt: 8,5
+    const c = r.crit, row = (k, t, i) => `<div class="crit"><span><i class="ti ti-${i}"></i> ${t}</span><div class="bar grow"><span style="width:${c[k] * 20}%"></span></div><b>${dn(c[k])}/5</b></div>`;
     const grp = {}; r.issues.forEach(x => (grp[x.cat] = grp[x.cat] || []).push(x));
-    return `<div class="gradecard"><div class="gtop"><div class="gscore ${r.total >= 7 ? "hi" : r.total >= 5 ? "mid" : "lo"}"><b>${r.total}</b><small>/10</small></div><div class="grow"><p class="lab">Giáo viên nhận xét</p><p>${esc(r.comment)}</p></div></div>
+    return `<div class="gradecard"><div class="gtop"><div class="gscore ${r.total >= 7 ? "hi" : r.total >= 5 ? "mid" : "lo"}"><b>${dn(r.total)}</b><small>/10</small></div><div class="grow"><p class="lab">Giáo viên nhận xét</p><p>${esc(r.comment)}</p></div></div>
     ${row("task", "Yêu cầu đề", "target")}${row("gram", "Ngữ pháp", "language")}${row("vocab", "Từ vựng", "vocabulary")}${row("coh", "Mạch lạc", "link")}
     <p class="lab">Bài của bạn · bấm vào chỗ gạch chân để xem cách sửa</p><div class="annot">${r.html || "<span class='muted'>(trống)</span>"}</div><div id="errtip" class="errtip"></div>
     ${r.issues.length ? `<details class="errlist"><summary>${r.issues.length} lỗi: ${Object.keys(grp).map(k => LABEL[k] + " " + grp[k].length).join(" · ")}</summary>${r.issues.map(x => `<p><span class="tagc m-${x.cat}">${LABEL[x.cat]}</span> <s>${esc(x.word)}</s>${x.fix ? " → <b>" + esc(x.fix) + "</b>" : x.fix === "" ? " → <b>(bỏ)</b>" : ""}<br><span class="sm muted">${esc(x.msg)}</span></p>`).join("")}</details>` : ""}

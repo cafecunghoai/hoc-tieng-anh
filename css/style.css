@@ -202,7 +202,7 @@ details.gd summary::-webkit-details-marker{display:none}details.gd[open] summary
 .intro .skills{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0}.intro .skills span{display:inline-flex;gap:6px;align-items:center;background:var(--card);border:1px solid var(--line);border-radius:99px;padding:5px 12px;font-size:13.5px;font-weight:600}.intro .skills i{color:var(--pri)}
 
 /* Done */
-.done{text-align:center;padding-top:24px;animation:fade .3s}.done h1{margin-top:4px}
+.donescr{text-align:center;padding-top:24px;animation:fade .3s}.donescr h1{margin-top:4px}
 .xpbig{display:inline-block;font-weight:800;color:var(--acc-ink);background:var(--acc2);padding:6px 16px;border-radius:99px;font-size:18px;animation:pop .5s .2s both}
 .skbox{text-align:left}
 .gend{font-size:64px;margin:20px 0 8px;animation:pop .5s}
@@ -291,7 +291,7 @@ body.playing #nav{display:none}
 .mcard.ok .face{background:var(--good2);border-color:var(--good)}
 
 /* Typography: ngắt dòng có nghĩa, cân dòng */
-h1,h2,h3,h4,.q,.btn,.lab,.tag,.pill,.fbt,.gcard b,.choice b,.task b,.say h2,.postcard h2,.done h1,.stepn,.bdg span,.les .grow,.stall small{text-wrap:balance}
+h1,h2,h3,h4,.q,.btn,.lab,.tag,.pill,.fbt,.gcard b,.choice b,.task b,.say h2,.postcard h2,.donescr h1,.stepn,.bdg span,.les .grow,.stall small{text-wrap:balance}
 p,li,small,.vi,.passage,.gram,.note,.choice small,.gcard small,.bubble p,.heard{text-wrap:pretty}
 .opt,.chip,.word b{text-wrap:balance}
 
@@ -508,7 +508,7 @@ a.foot{display:inline-block;padding:14px 8px}
 @media(max-height:700px){.onb .btn.primary.lg{bottom:10px;margin-bottom:10px;box-shadow:0 -14px 14px 6px var(--bg),0 10px 0 10px var(--bg)}}
 #toast.slim{padding:5px 14px;line-height:1.35}
 .gscore.pct b{font-size:19px;letter-spacing:-.02em}
-.done.fail .ring{background:conic-gradient(var(--warn,#C2410C) calc(var(--p)*1%),color-mix(in srgb,var(--warn,#C2410C) 16%,var(--card)) 0)}.done.fail .ring span{color:var(--warn,#C2410C)}
+.donescr.fail .ring{background:conic-gradient(var(--warn,#C2410C) calc(var(--p)*1%),color-mix(in srgb,var(--warn,#C2410C) 16%,var(--card)) 0)}.donescr.fail .ring span{color:var(--warn,#C2410C)}
 /* r4: điểm bị giới hạn (dưới 4 tiêu chí của bài viết) */
 .capn{display:flex;gap:8px;align-items:flex-start;margin:10px 0 4px;padding:8px 10px;border-radius:12px;background:var(--acc2);color:var(--acc-ink)}.capn i{flex:none;margin-top:2px}
 /* micro: chữ máy đang nghe được + kiểm tra micro trong Hồ sơ */
@@ -753,3 +753,79 @@ html.thx,html.thx *{transition:background-color .35s ease,color .35s ease,border
 /* Vùng bấm ≥ 44px cho nút nhỏ nằm trong dòng chữ (loa nhỏ trong hội thoại, ô trống trong đoạn văn) */
 .spk.sm{position:relative}.spk.sm::after{content:"";position:absolute;inset:-6px;border-radius:50%}
 button.ax-bl{position:relative}button.ax-bl::after{content:"";position:absolute;left:0;right:0;top:-5px;bottom:-5px}
+/* ===== r6: sửa theo đợt kiểm tra giao diện R6 ===== */
+/* F1: không khối nào được làm trang rộng hơn màn hình; lưới huy hiệu chia cột đều, chữ không đẩy cột */
+html,body{overflow-x:clip}
+.badges{grid-template-columns:repeat(4,minmax(0,1fr))}
+@media(max-width:380px){.badges{grid-template-columns:repeat(3,minmax(0,1fr))}}
+.bdg{min-width:0}.bdg span{max-width:100%;overflow-wrap:break-word;padding-left:0!important;padding-right:0!important}
+/* "text-wrap:balance" (bản rút gọn) đặt lại chế độ xuống dòng: giữ các cụm không được ngắt */
+.nw{white-space:nowrap!important}.pill,.tst{white-space:nowrap}
+/* F6: biểu tượng mọi tab cùng một khung, chỉ đổi màu nền → nhãn các tab trên cùng một đường chân chữ */
+#nav button i{padding:3px 14px;border-radius:99px;box-sizing:content-box;background:transparent;transform:none}
+#nav button.on i{background:var(--pri2);transform:none}
+@media(min-width:900px){#nav button i,#nav button.on i{background:none;padding:0}}
+/* F10: bài đọc tiếng Anh căn đều có gạch nối âm tiết, chia đoạn */
+[lang=en].jus,[lang=en] .jus,.passage[lang=en],.passage [lang=en]{-webkit-hyphens:auto;hyphens:auto;-webkit-hyphenate-limit-before:3;-webkit-hyphenate-limit-after:3;hyphenate-limit-chars:6 3 3}
+.passage p{margin:0 0 .8em}.passage p:last-child{margin-bottom:0}
+/* F11: ô trống nằm trên đường chân chữ như phiếu bài tập in */
+.blank{height:.72em;line-height:1;overflow:hidden;vertical-align:-.1em;min-width:2.6em;box-sizing:content-box}
+.q.gq{text-wrap:wrap}
+/* F13: dấu ✓ của việc đã xong: trắng trên nền xanh, vừa trong vòng tròn */
+.task .chk i.ti{color:#fff;font-size:15px;margin:0}
+/* F15c: điện thoại không có phím Enter */
+html.touch .kbd{display:none}
+/* F15k: ngân hàng từ xếp từ trái, không để một thẻ lẻ loi giữa hàng */
+.ax-bank{justify-content:flex-start}
+/* F15l: lựa chọn (chưa chấm) cùng một kiểu ở mọi nơi: viền màu chủ đạo */
+.opt.picked{background:color-mix(in srgb,var(--pri) 7%,var(--card));border-color:var(--pri);box-shadow:inset 0 0 0 1.5px var(--pri)}
+.opt.picked .k{background:var(--pri);color:var(--on-pri);border-color:var(--pri)}
+[data-theme=dark] .opt.picked{border-color:var(--pri);box-shadow:inset 0 0 0 1.5px var(--pri)}
+[data-theme=dark] .opt.picked .k{background:var(--pri);color:var(--on-pri);border-color:var(--pri)}
+/* F15n: Sổ tay › Lỗi sai: câu dùng hết bề ngang, nhãn "sai n lần" nằm dưới nghĩa */
+.mrow{align-items:flex-start}.mrow .grow .pill{margin-top:6px}
+/* F16: màn hình hẹp: thời gian ước tính xuống dưới tên lựa chọn */
+@media(max-width:360px){.choice{flex-wrap:wrap;gap:4px 12px}.choice .grow{min-width:calc(100% - 50px)}.choice .eta{width:100%;padding-left:40px;white-space:normal}}
+/* F18: Đỏ son: lỗi sai đổi sang cam đất để không lẫn với màu chủ đạo; vạch trí nhớ trống rõ hơn ở nền tối */
+[data-accent=son]{--bad:#9A4310;--bad2:#FCEBDD}
+[data-theme=dark][data-accent=son]{--bad:#F59E5B;--bad2:#3A2414}
+[data-theme=dark] .memd i:not(.on){background:color-mix(in srgb,var(--ink) 42%,var(--card))}
+/* F19: bảng ngữ pháp 3 cột trên điện thoại: mỗi hàng thành một thẻ */
+@media(max-width:480px){
+  .gram table.t3,.gram table.t3 tbody,.gram table.t3 tr,.gram table.t3 td{display:block;width:auto}
+  .gram table.t3{border-collapse:separate}
+  .gram table.t3 tr{border:1px solid var(--line);border-radius:12px;padding:8px 12px;margin:8px 0}
+  .gram table.t3 tr.thd{display:none}
+  .gram table.t3 td{border:0;padding:2px 0;white-space:normal!important;text-align:left}
+  .gram table.t3 td:empty{display:none}
+  .gram table.t3.tlab td:first-child{font-weight:700;color:var(--pri-ink)}
+  .gram table.t3 td[data-h]::before{content:attr(data-h) ": ";color:var(--mut);font-weight:600}
+  .gram table.t3.tinl td{display:inline}.gram table.t3.tinl td:not(:empty)~td:not(:empty)::before{content:" · ";color:var(--mut);font-weight:400}
+}
+/* F20: trang Cô chủ nhiệm ở màn hình hẹp */
+.row>.pill,.row>.tst{flex:none}.row.between>h3{flex:1;min-width:0}
+.tpage .ttabs{overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}.tpage .ttabs::-webkit-scrollbar{display:none}
+.tpage .ttabs button{flex:1 0 auto;padding:8px 8px}
+@media(max-width:360px){.tpage .ttabs .tlong{display:none}}
+.skrow{grid-template-columns:24px minmax(0,8.5em) minmax(60px,1fr) 3em}.skrow .bar{min-width:60px}
+@media(max-width:360px){
+  .skrow{grid-template-columns:22px minmax(0,1fr) auto;row-gap:4px;column-gap:8px}
+  .skrow>i{grid-row:1/3;align-self:start;margin-top:2px}.skrow .skn{grid-column:2;grid-row:1}.skrow>b{grid-column:3;grid-row:1}.skrow .bar{grid-column:2/4;grid-row:2;min-width:0}
+  .stats.tst4{grid-template-columns:repeat(2,1fr)}
+  .trate small{white-space:nowrap;font-size:11.5px}
+  .tlp .tsay{font-style:normal}
+}
+@media(max-width:420px){
+  .ttask{display:grid;grid-template-columns:26px auto minmax(0,1fr);column-gap:12px;row-gap:4px;align-items:start}
+  .ttask .grow{grid-column:3}.ttask .tst{grid-column:3;justify-self:start;margin-top:0}
+}
+/* F21: Đúng / Sai / Không có thông tin cùng chiều cao, nhãn dài không xuống dòng */
+.ax-seg{grid-template-columns:minmax(0,1fr) minmax(0,1fr) auto;align-items:stretch}
+.ax-seg .opt:last-child{white-space:nowrap;padding-left:12px;padding-right:12px}
+@media(max-width:300px){.ax-seg .opt{font-size:13px}.ax-seg .opt:last-child{padding-left:8px;padding-right:8px}}
+.ax-cz{text-align:left;text-align-last:left}
+/* biểu đồ trí nhớ (Ôn tập): cột chia đều, không đẩy cột cuối ra ngoài màn hình hẹp; nhãn "30 ngày" xếp hai dòng */
+.boxes{grid-template-columns:repeat(8,minmax(0,1fr))}.week{grid-template-columns:repeat(7,minmax(0,1fr))}
+.dcap{display:none}
+@media(max-width:400px){.boxes .dunit{display:none}.dcap{display:inline}}
+@media(max-width:340px){#nav button i,#nav button.on i{padding-left:10px;padding-right:10px}}
