@@ -9,10 +9,17 @@ function gamePool(min) {
   return [...new Map(p.filter(w => !/^-|-$/.test(w.en)).map(w => [w.en, w])).values()];
 }
 function exitGame() { G = null; nav("play"); } // nav() tự tải lại nếu đang chờ bản cập nhật
-const gTop = (title, right) => `<div class="ptop"><button class="ib" onclick="exitGame()" aria-label="Thoát"><i class="ti ti-x"></i></button><b class="grow gtitle">${title}</b>${right || ""}</div>`;
-function gameEnd(icon, title, msg, xp, again, win = true) {
+const gTop = (title, right) => `<div class="ptop"><button class="ib" onclick="exitGame()" aria-label="Thoát"><i class="ti ti-x"></i></button><b class="grow gtitle">${String(title).length <= 22 ? `<span class="nw">${title}</span>` : title}</b>${right || ""}</div>`;
+/* biểu tượng trong ô số (để build gom icon): ti-basket ti-map-pin ti-arrows-exchange ti-heart ti-clock ti-ear ti-microphone ti-trophy */
+/* r9 (R9-15): màn kết quả trò chơi cùng kiểu với màn kết quả bài học: hình minh họa + sao (thắng) hoặc vòng điểm (chưa thắng), rồi các ô số (kết quả, XP)
+   o = { sc: điểm %, inner: chữ trong vòng, stars: 0–3, kpi: [[biểu tượng, số, chú thích]] } */
+function gameEnd(icon, title, msg, xp, again, win = true, o = {}) {
   tick(); if (xp) addXP(xp); gs().plays++; save();
-  app().innerHTML = `<div class="donescr${win ? "" : " fail"}"><div class="gend">${icon}</div><h1>${title}</h1><p class="muted">${msg}</p>${xp ? `<p class="xpbig">+${xp} XP</p>` : ""}<div class="stack"><button class="btn primary full lg" onclick="${again}">Chơi lại</button><button class="btn full" onclick="exitGame()">Về trang trò chơi</button></div></div>`;
+  const st = o.stars != null ? o.stars : (typeof starsOf === "function" && o.sc != null ? starsOf(o.sc) : 0);
+  const hero = win ? illus("tro-choi", `<div class="gend">${icon}</div>`, "dill") + (st ? `<div class="dstars" role="img" aria-label="${st} sao">${[0, 1, 2].map(i => `<i class="ti ti-star${i < st ? " on" : ""}"></i>`).join("")}</div>` : "")
+    : o.sc != null ? `<div class="ring xl" style="--p:${o.sc}"><span>${o.inner != null ? o.inner : o.sc + "%"}</span></div>` : `<div class="gend">${icon}</div>`;
+  const kpi = (o.kpi || []).concat(xp ? [["bolt", "+" + xp, "XP", "xp"]] : []);
+  app().innerHTML = `<div class="donescr${win ? "" : " fail"}">${hero}<h1>${title}</h1><p class="muted">${msg}</p>${kpi.length && typeof doneKpi === "function" ? doneKpi(kpi) : xp ? `<p class="xpbig">+${xp} XP</p>` : ""}<div class="stack"><button class="btn primary full lg" onclick="${again}">Chơi lại</button><button class="btn full" onclick="exitGame()">Về trang trò chơi</button></div></div>`;
   if (win) { beep("done"); confetti(); } checkBadges(); checkDay();
 }
 
@@ -20,7 +27,7 @@ function gameEnd(icon, title, msg, xp, again, win = true) {
 function vPlay() {
   const g = gs(), n = Object.keys(S.cards).length, dry = dueCards().length;
   const card = (fn, emo, t, d, meta, col) => `<button class="gcard ${col}" onclick="${fn}"><span class="gemo">${emo}</span><span class="grow"><b>${t}</b><small>${d}</small>${meta ? `<em>${meta}</em>` : ""}</span><i class="ti ti-chevron-right"></i></button>`;
-  app().innerHTML = `<header class="page"><h1>Trò chơi</h1><p class="muted">Vừa chơi vừa nhớ lại từ đã học.<br>Mỗi trò rèn một kỹ năng riêng.</p></header>
+  app().innerHTML = `<header class="page ihead"><h1>Trò chơi</h1>${illus("tro-choi", "", "hill")}<p class="muted">Vừa chơi vừa nhớ lại từ đã học.<br>Mỗi trò rèn một kỹ năng riêng.</p></header>
   ${card("openGarden()", "🌱", "Vườn từ vựng", "Mỗi từ là một cây: ôn đúng thì cây lớn và&nbsp;kết&nbsp;trái.", n ? `${n} cây · ${dry ? dry + " cây cần tưới" : "vườn xanh tốt"}` : "Học bài đầu tiên để gieo hạt", "g1")}
   ${card("startMarket()", "🧺", "Phiên chợ quê", "Nghe khách gọi món bằng tiếng&nbsp;Anh, nhặt đúng món, đúng số&nbsp;lượng.", g.best.market ? `Kỷ lục: ${g.best.market}/8 đơn` : "Luyện nghe · số đếm · đồ ăn", "g2")}
   ${card("openJourney()", "🚌", "Chuyến xe về quê", "Trả lời đúng để xe chạy qua từng tỉnh, nhận bưu&nbsp;thiếp mỗi&nbsp;chặng.", Object.keys(g.post).length ? `${Object.keys(g.post).length} bưu thiếp đã nhận` : "Về miền Tây · Xuyên Việt", "g3")}
@@ -67,7 +74,7 @@ function mView() {
   const b = G.basket, bl = Object.keys(b).filter(k => b[k] > 0);
   app().innerHTML = gTop("Phiên chợ quê", `<span class="pill">Đơn ${G.round + 1}/8 · đúng ${G.ok}</span>`) + `
   <div class="market"><div class="customer"><span class="cust">${G.cust}</span><div class="bubble">${G.shown || G.res ? `<p>${esc(G.text)}</p>` : `<p class="muted">Bấm loa để nghe khách gọi hàng</p>`}<div class="row">${spk(G.text)}<button class="link" onclick="say(G.text,1)"><i class="ti ti-snail"></i> Chậm</button>${G.shown || G.res ? "" : `<button class="link" onclick="G.shown=true;render()"><i class="ti ti-eye"></i> Hiện chữ</button>`}</div></div></div>
-  <div class="row between"><p class="lab">Quầy hàng của bạn</p><label class="tg sm">Hiện tên <input type="checkbox" ${G.labels ? "checked" : ""} onchange="G.labels=this.checked;render()"></label></div>
+  <div class="row between"><p class="lab">Quầy hàng của bạn</p><label class="tg sm nwl">Hiện tên <input type="checkbox" ${G.labels ? "checked" : ""} onchange="G.labels=this.checked;render()"></label></div>
   <div class="stall">${G.stall.map((it, i) => `<button class="good" onclick="mAdd(${i})" ${G.res ? "disabled" : ""}><span>${it[2]}</span>${G.labels ? `<small>${it[0]}</small>` : ""}${b[it[0]] ? `<em>${b[it[0]]}</em>` : ""}</button>`).join("")}</div>
   <p class="lab">Giỏ hàng ${bl.length ? "· bấm món để bớt" : ""}</p><div class="basket">${bl.length ? bl.map(k => { const it = ITEMS.find(x => x[0] === k); return `<button class="chip" onclick="mDel('${k}')" ${G.res ? "disabled" : ""}>${it[2]} × ${b[k]}</button>`; }).join("") : `<span class="muted sm">Chưa có món nào</span>`}</div>
   ${G.res ? `<div class="mres ${G.res.ok ? "good" : "bad"}"><b>${G.res.ok ? "Giao đúng! Khách rất vui 😊" : "Chưa đúng rồi"}</b>${G.res.ok ? "" : `<p>Khách cần: ${G.want.map(x => x.it[2] + " " + x.it[0] + " × " + x.q).join(", ")}</p>`}<p class="sm">${esc(G.text)}</p></div><button class="btn primary full lg" onclick="mNext()">${G.round >= 7 ? "Xem kết quả" : "Khách tiếp theo"}</button>` : `<button class="btn primary full lg" onclick="mCheck()" ${bl.length ? "" : "disabled"}><i class="ti ti-basket"></i> Giao hàng</button>`}</div>`;
@@ -79,7 +86,7 @@ function mCheck() {
   const ok = Object.keys(need).every(k => b[k] === need[k]) && Object.keys(b).filter(k => b[k] > 0).every(k => need[k]);
   if (G.res) return; tick(); G.res = { ok }; G.resAt = Date.now(); if (ok) G.ok++; beep(ok ? "good" : "bad"); addSkill("listen", ok); render();
 }
-function mNext() { if (!G.res || Date.now() - (G.resAt || 0) < 500) return; G.round++; if (G.round >= 8) { const g = gs(); g.best.market = Math.max(g.best.market || 0, G.ok); if (G.ok === 8) g.best.marketPerfect = 1; const ok = G.ok; VIEW = null; return gameEnd("🧺", ok >= 6 ? "Bán hàng giỏi quá!" : "Hết phiên chợ", `Bạn giao đúng ${ok}/8 đơn hàng.${ok < 8 ? "<br>Mẹo: nghe chậm và để ý số lượng nhé." : ""}`, ok * 8, "startMarket()", ok >= 6); } newOrder(); render(); }
+function mNext() { if (!G.res || Date.now() - (G.resAt || 0) < 500) return; G.round++; if (G.round >= 8) { const g = gs(); g.best.market = Math.max(g.best.market || 0, G.ok); if (G.ok === 8) g.best.marketPerfect = 1; const ok = G.ok; VIEW = null; return gameEnd("🧺", ok >= 6 ? "Bán hàng giỏi quá!" : "Hết phiên chợ", `Bạn giao đúng ${ok}/8 đơn hàng.${ok < 8 ? "<br>Mẹo: nghe chậm và để ý số lượng nhé." : ""}`, ok * 8, "startMarket()", ok >= 6, { sc: Math.round(ok / 8 * 100), inner: ok + "/8", stars: ok >= 8 ? 3 : ok >= 7 ? 2 : ok >= 6 ? 1 : 0, kpi: [["basket", ok + "/8", "đơn đúng"]] }); } newOrder(); render(); }
 
 /* ---------- 3. Chuyến xe về quê ---------- */
 const ROUTES = {
@@ -116,13 +123,13 @@ function jView() {
 function jPick(i) { if (G.picked !== null) return; tick(); G.picked = i; const ok = i === G.cur.a; beep(ok ? "good" : "bad"); if (!ok) G.hearts--; else if (G.cur.sayAns) say(G.cur.o[G.cur.a]); render(); }
 function jNext() {
   const ok = G.picked === G.cur.a;
-  if (!ok && G.hearts <= 0) { const R = ROUTES[G.r]; VIEW = null; return gameEnd("🛠️", "Xe bị hỏng giữa đường!", `Bạn đã đi được ${G.leg}/${R.stops.length - 1} chặng.<br>Ôn lại từ vựng rồi lên đường lần nữa nhé.`, G.leg * 10, `startJourney('${G.r}')`, false); }
+  if (!ok && G.hearts <= 0) { const R = ROUTES[G.r]; VIEW = null; return gameEnd("🛠️", "Xe bị hỏng giữa đường!", `Bạn đã đi được ${G.leg}/${R.stops.length - 1} chặng.<br>Ôn lại từ vựng rồi lên đường lần nữa nhé.`, G.leg * 10, `startJourney('${G.r}')`, false, { sc: Math.round(G.leg / (R.stops.length - 1) * 100), inner: G.leg + "/" + (R.stops.length - 1), kpi: [["map-pin", G.leg + "/" + (R.stops.length - 1), "chặng"]] }); }
   if (ok) { G.q++; if (G.q >= 3) { G.leg++; G.q = 0; G.post = true; gs().post[G.r + ":" + ROUTES[G.r].stops[G.leg][0]] = 1; save(); beep("done"); return render(); } }
   jQuestion(); render();
 }
 function jGo() {
   const R = ROUTES[G.r];
-  if (G.leg >= R.stops.length - 1) { gs().best["j_" + G.r] = 1; gs().post[G.r + ":" + R.stops[0][0]] = 1; VIEW = null; return gameEnd(R.e, G.r === "tay" ? "Về tới nhà ngoại rồi!" : "Hoàn thành chuyến xuyên Việt!", `Bạn đã đi hết ${R.stops.length - 1} chặng và nhận đủ bưu thiếp.`, 80, `startJourney('${G.r}')`); }
+  if (G.leg >= R.stops.length - 1) { gs().best["j_" + G.r] = 1; gs().post[G.r + ":" + R.stops[0][0]] = 1; VIEW = null; return gameEnd(R.e, G.r === "tay" ? "Về tới nhà ngoại rồi!" : "Hoàn thành chuyến xuyên Việt!", `Bạn đã đi hết ${R.stops.length - 1} chặng và nhận đủ bưu thiếp.`, 80, `startJourney('${G.r}')`, true, { stars: Math.max(1, G.hearts), kpi: [["map-pin", (R.stops.length - 1) + "/" + (R.stops.length - 1), "chặng"], ["heart", G.hearts + "/3", "tim còn lại"]] }); }
   G.post = false; G.said = 0; jQuestion(); render();
 }
 
@@ -150,5 +157,6 @@ function memFlip(i) {
 }
 function memEnd() {
   const mv = G.moves, st = mv <= 9 ? 3 : mv <= 13 ? 2 : 1, g = gs(); g.best.memory = Math.min(g.best.memory || 99, mv); if (st === 3) g.best.memory3 = 1; VIEW = null;
-  gameEnd("⭐".repeat(st), st === 3 ? "Trí nhớ siêu đẳng!" : "Ghép xong hết rồi!", `Bạn ghép 6 cặp trong ${mv} lượt, mất ${Math.round((Date.now() - G.t0) / 1000)} giây.`, 10 + st * 10, "startMemory()");
+  const sec = Math.round((Date.now() - G.t0) / 1000);
+  gameEnd("🎴", st === 3 ? "Trí nhớ siêu đẳng!" : "Ghép xong hết rồi!", `Bạn ghép 6 cặp trong ${mv} lượt, mất ${sec} giây.`, 10 + st * 10, "startMemory()", true, { stars: st, kpi: [["arrows-exchange", mv, "lượt"], ["clock", sec, "giây"]] });
 }

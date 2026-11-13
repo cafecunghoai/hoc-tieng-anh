@@ -2,7 +2,7 @@
 /* ================== Ngữ pháp và Thi thử ================== */
 const LV = ["A1", "A2", "B1", "B2", "C1"];
 const SECN = { listen: "Nghe", read: "Đọc", use: "Ngữ pháp, từ vựng", write: "Viết", speak: "Nói" };
-const SECI = { listen: "headphones", read: "book", use: "abc", write: "pencil", speak: "microphone" };
+const SECI = { listen: "headphones", read: "book", use: "text-grammar", write: "pencil", speak: "microphone" };
 const GT = {}; if (typeof GRAMMAR !== "undefined") GRAMMAR.forEach(T => GT[T.id] = T);
 
 /* ---------- Tiện ích ---------- */
@@ -29,11 +29,11 @@ function gStep(str, T) {
 const accept = (v, s) => [s.en].concat(s.alts || []).some(x => compare(v, x) === 2);
 
 /* ---------- Các dạng bài ngữ pháp ---------- */
-function rGf(s) { return `<p class="lab"><i class="ti ti-abc"></i> Ngữ pháp · Điền vào chỗ trống</p><h2 class="q gq">${blankHtml(s.q)}</h2><input id="inp" class="inp" placeholder="Gõ từ cần điền" autocomplete="off" autocapitalize="off" spellcheck="false" oninput="$('#er').textContent=''" onkeydown="if(event.key==='Enter'){event.preventDefault();event.stopPropagation();checkGf()}"><p class="err" id="er"></p><button class="btn primary full" id="chk" onclick="checkGf()">Kiểm tra</button>`; }
+function rGf(s) { return `<p class="lab qlab"><i class="ti ti-text-grammar"></i> Ngữ pháp · Điền vào chỗ trống</p><div class="qcard"><h2 class="q gq">${blankHtml(s.q)}</h2></div><input id="inp" class="inp" placeholder="Gõ từ cần điền" autocomplete="off" autocapitalize="off" spellcheck="false" oninput="$('#er').textContent=''" onkeydown="if(event.key==='Enter'){event.preventDefault();event.stopPropagation();checkGf()}"><p class="err" id="er"></p><button class="btn primary full" id="chk" onclick="checkGf()">Kiểm tra</button>`; }
 function checkGf() { const s = P.steps[P.i], v = $("#inp").value.trim(); if (!v) { $("#er").textContent = "Hãy gõ câu trả lời trước."; return; } $("#er").textContent = ""; $("#chk").remove(); $("#inp").disabled = true; const ok = accept(v, s); grade(ok, esc(s.en) + `<br><span class="muted">${esc(s.q.replace(/_{3,}(\s*\([^)]*\))?/, s.en).replace(/\s*\([^)]*\)\s*$/, "").replace(/\s*Dùng be going to\.$/, ""))}</span>`); }
 function rGe(s) {
   s.toks = s.q.split(" ");
-  return `<p class="lab"><i class="ti ti-abc"></i> Ngữ pháp · Tìm từ sai trong câu</p><p class="muted sm">Bấm vào từ (hoặc cụm từ) bị sai.</p><div class="etoks">${s.toks.map((t, i) => `<button class="etok" id="t${i}" onclick="pickGe(${i})">${esc(t)}</button>`).join("")}</div>`;
+  return `<p class="lab qlab"><i class="ti ti-text-grammar"></i> Ngữ pháp · Tìm từ sai trong câu</p><p class="muted sm">Bấm vào từ (hoặc cụm từ) bị sai.</p><div class="etoks">${s.toks.map((t, i) => `<button class="etok" id="t${i}" onclick="pickGe(${i})">${esc(t)}</button>`).join("")}</div>`;
 }
 function geRange(s, bad) { const seg = (bad || s.bad.split("||")[0]).split(" "); for (let i = 0; i < s.toks.length; i++) if (seg.every((x, j) => (s.toks[i + j] || "").replace(/[.,!?]$/, "") === x)) return [i, i + seg.length]; return [-1, -1]; }
 function pickGe(k) {
@@ -46,7 +46,7 @@ function pickGe(k) {
   if (P.kind !== "mock") $(".etoks").insertAdjacentHTML("afterend", `<p class="geleg sm"><span class="lg bad">Từ sai ở đây</span>${ok ? "" : `<span class="lg pick">Bạn chọn</span>`}</p><p class="corr"><i class="ti ti-check"></i> ${esc(fixed)}</p>`);
   grade(ok, `<s>${esc(s.bad.split("||")[0])}</s> → ${esc(s.corr)}`);
 }
-function rGr(s) { const k = s.q.indexOf(":"); const ins = k > 0 ? s.q.slice(0, k) : "Viết lại câu", src = k > 0 ? s.q.slice(k + 1).trim() : s.q; return `<p class="lab"><i class="ti ti-abc"></i> Ngữ pháp · ${esc(ins)}</p><h2 class="q gq">${esc(src)}</h2><textarea id="inp" rows="2" placeholder="Viết câu của bạn" autocapitalize="sentences" autocomplete="off" spellcheck="false" oninput="$('#er').textContent=''"></textarea><p class="err" id="er"></p><button class="btn primary full" id="chk" onclick="checkGr()">Kiểm tra</button>`; }
+function rGr(s) { const k = s.q.indexOf(":"); const ins = k > 0 ? s.q.slice(0, k) : "Viết lại câu", src = k > 0 ? s.q.slice(k + 1).trim() : s.q; return `<p class="lab qlab"><i class="ti ti-text-grammar"></i> Ngữ pháp · Viết lại câu</p><div class="qcard">${k > 0 && !/^viết lại câu$/i.test(ins.trim()) ? `<p class="sm muted qins">${esc(ins)}</p>` : ""}<h2 class="q gq">${esc(src)}</h2></div><textarea id="inp" rows="2" placeholder="Viết câu của bạn" autocapitalize="sentences" autocomplete="off" spellcheck="false" oninput="$('#er').textContent=''"></textarea><p class="err" id="er"></p><button class="btn primary full" id="chk" onclick="checkGr()">Kiểm tra</button>`; }
 function checkGr() { const s = P.steps[P.i], v = $("#inp").value.trim(); if (!v) { $("#er").textContent = "Hãy viết câu trả lời trước."; return; } $("#er").textContent = ""; $("#chk").remove(); $("#inp").disabled = true; const cc = x => (x.match(/,/g) || []).length, ok = accept(v, s) && (!/^(non-defining|relative)$/.test(s.gt || "") || [s.en].concat(s.alts || []).some(x => cc(x) === cc(v))); if (!ok) $("#inp").insertAdjacentHTML("afterend", `<div class="diffbox"><p class="lab">So với đáp án</p>${diffHtml(v, s.en)}</div>`); grade(ok, esc(s.en)); }
 
 /* ---------- Trang Ngữ pháp ---------- */
@@ -57,7 +57,7 @@ function vGram() {
   const list = GRAMMAR.filter(T => T.lv === GLV), done = list.filter(T => (S.gram[T.id] || 0) >= 80).length;
   app().innerHTML = `<header class="page"><h1>Ngữ pháp</h1><p class="muted">${GRAMMAR.length} chủ điểm từ A1 đến C1.<br>Kèm giải thích, 8&nbsp;câu&nbsp;luyện.</p></header>
   <div class="seg big">${LV.map(l => `<button class="${GLV === l ? "on" : ""}" onclick="GLV='${l}';render()">${l}</button>`).join("")}</div>
-  <div class="card flat glv"><div class="row between"><b>Cấp ${GLV}</b><span class="sm muted">Đã vững ${done}/${list.length} chủ điểm</span></div><div class="bar sm"><span style="width:${list.length ? done / list.length * 100 : 0}%"></span></div><p class="sm muted">Đạt từ 80% là chủ điểm đã&nbsp;vững.</p><button class="btn full" onclick="startGramQuiz('${GLV}')"><i class="ti ti-clipboard-check"></i> Kiểm tra nhanh cấp&nbsp;${GLV}</button></div>
+  <div class="card flat glv"><div class="row between"><b class="nw">Cấp ${GLV}</b><span class="sm muted">Đã vững ${done}/${list.length} chủ điểm</span></div><div class="bar sm"><span style="width:${list.length ? done / list.length * 100 : 0}%"></span></div><p class="sm muted">Đạt từ 80% là chủ điểm đã&nbsp;vững.</p><button class="btn full" onclick="startGramQuiz('${GLV}')"><i class="ti ti-clipboard-check"></i> Kiểm tra nhanh cấp&nbsp;${GLV}</button></div>
   <div class="topics">${list.map((T, i) => { const b = S.gram[T.id]; return `<button class="topic" onclick="openTopic('${T.id}')"><span class="tn ${b >= 80 ? "ok" : ""}">${b >= 80 ? '<i class="ti ti-check"></i>' : i + 1}</span><span class="grow"><b>${esc(T.t)}</b><small>${esc(T.sum)}</small></span><span class="sc">${b !== undefined ? b + "%" : '<i class="ti ti-chevron-right"></i>'}</span></button>`; }).join("")}</div>`;
 }
 function openTopic(id) {
@@ -79,15 +79,15 @@ function startGramQuiz(lv) { const its = GRAMMAR.filter(T => T.lv === lv).flatMa
 
 function failWhy(o, sk) {
   const r = [], low = Object.keys(sk).filter(x => sk[x] < 40);
-  if (o < 60) r.push(`Điểm trung bình còn thiếu <b>${Math.max(1, Math.ceil(60 - o))}%</b> để đạt 60%.`); sk = Object.fromEntries(Object.entries(sk).map(([k, v]) => [k, Math.floor(v)]));
+  if (o < 60) r.push(`Điểm trung bình <span class="nw">còn thiếu <b>${Math.max(1, Math.ceil(60 - o))}%</b></span> để đạt&nbsp;60%.`); sk = Object.fromEntries(Object.entries(sk).map(([k, v]) => [k, Math.floor(v)]));
   if (low.length > 2) r.push(`<b>${low.length} kỹ năng</b> dưới mức tối thiểu 40%.`); else if (low.length) r.push(`${low.map(x => SECN[x] + "\u00a0<b>" + sk[x] + "%</b>").join(", ")} dưới mức tối thiểu 40%.`);
   return r.join("<br>");
 }
 /* ---------- Trang Thi thử ---------- */
 function vExam() {
   const certs = LV.filter(l => S.certs[l]);
-  app().innerHTML = `<header class="page"><h1>Thi thử theo cấp độ CEFR</h1><p class="muted">Đề chuẩn CEFR, đủ 5&nbsp;phần.<br>Câu hỏi lấy ngẫu&nbsp;nhiên.</p></header>
-  <div class="card flat"><p class="lab">Cách tính điểm đạt</p><ul class="goals"><li><i class="ti ti-check"></i>Điểm trung bình từ&nbsp;60%</li><li><i class="ti ti-check"></i>Mỗi kỹ năng từ&nbsp;40%</li><li><i class="ti ti-check"></i>Từ 80%: đạt loại xuất sắc</li></ul><p class="sm muted">Phần Nghe được nghe tối đa 2 lần mỗi câu. Bài thi có tính giờ, hết giờ sẽ tự nộp. Phần Nói cần micro; không có micro thì không được tính&nbsp;đạt.</p></div>
+  app().innerHTML = `<header class="page ihead"><h1>Thi thử theo <span class="nw">cấp độ CEFR</span></h1>${illus("thi-thu", "", "hill")}<p class="muted">Đề chuẩn CEFR, đủ 5&nbsp;phần.<br>Câu hỏi lấy ngẫu&nbsp;nhiên.</p></header>${typeof roadSeg === "function" ? roadSeg("exam") : ""}
+  <div class="card flat"><p class="lab">Cách tính điểm đạt</p><ul class="goals"><li><i class="ti ti-check"></i>Điểm trung bình từ&nbsp;60%</li><li><i class="ti ti-check"></i>Mỗi kỹ năng từ&nbsp;40%</li><li><i class="ti ti-check"></i><span>Từ 80%: <span class="nw">xuất sắc</span></span></li></ul><p class="lab">Lưu ý</p><ul class="goals gnote"><li><i class="ti ti-headphones"></i>Nghe tối đa 2 lần mỗi&nbsp;câu</li><li><i class="ti ti-clock"></i>Có tính giờ, hết giờ tự&nbsp;nộp</li><li><i class="ti ti-microphone"></i>Phần Nói cần micro, thiếu micro thì không tính&nbsp;đạt</li></ul></div>
   ${LV.map(l => { const E = EXAMS[l], h = S.exams[l] || [], last = h[h.length - 1], c = S.certs[l], rec = l === curLevel(); return `<section class="card examc ${c ? "got" : ""} ${rec ? "rec" : ""}" onclick="startMock('${l}')"><div class="row"><div class="badge lv-${l.toLowerCase()} ${c ? "done" : ""}">${c ? '<i class="ti ti-certificate"></i>' : l}</div><div class="grow"><h3>${E.name}</h3><p class="sm muted">${E.time}&nbsp;phút · 5&nbsp;kỹ&nbsp;năng${rec ? ` · <b class="g nw">hợp với bạn</b>` : ""}</p>${last ? `<p class="sm">Lần gần nhất: <b>${last.overall}%</b> · ${last.pass ? '<span class="g">Đạt</span>' : last.unrated ? '<span class="b">Chưa ghi nhận (thiếu micro)</span>' : '<span class="b">Chưa đạt</span>'} · ${h.length} lần thi</p>` : ""}</div></div>
   <div class="row2">${c ? `<button class="btn" onclick="event.stopPropagation();showCert('${l}')"><i class="ti ti-certificate"></i> Giấy ghi nhận</button>` : `<span></span>`}<button class="btn ${rec ? "primary" : ""}" onclick="event.stopPropagation();startMock('${l}')">${h.length ? "Thi lại " + l : "Thi " + l}</button></div></section>`; }).join("")}
   ${certs.length ? "" : `<p class="note">Mẹo: học xong các bài của một chặng rồi hãy thi cấp độ tương ứng.</p>`}`;
@@ -290,10 +290,10 @@ function finishStudy() {
     if (P.gid) { const prev = S.gram[P.gid]; S.gram[P.gid] = Math.max(sc, prev || 0); }
     const T = GT[P.gid], i = T ? GRAMMAR.indexOf(T) : -1, next = GRAMMAR[i + 1];
     const gained = P.xp + (sc >= 80 ? 20 : 5); addXP(gained); S.cnt.gram = (S.cnt.gram || 0) + 1;
-    h = `<h1>${sc >= 80 ? "Nắm vững chủ điểm!" : "Cần luyện thêm"}</h1><p class="muted">${sc >= 80 ? "Bạn đã làm đúng phần lớn các dạng bài." : "Đọc lại phần giải thích rồi luyện lại nhé.<br>Câu sai đã được lưu vào Sổ tay."}</p><p class="xpbig">+${gained} XP</p>`;
+    h = `<h1>${sc >= 80 ? "Nắm vững chủ điểm!" : "Cần luyện thêm"}</h1><p class="muted">${sc >= 80 ? "Bạn đã làm đúng phần lớn các dạng bài." : "Đọc lại phần giải thích rồi luyện lại nhé.<br>Câu sai đã được lưu vào Sổ tay."}</p>`; const kp = [["target", sc + "%", "chính xác"], ["bolt", "+" + gained, "XP", "xp"]];
     btns = (!P.gid && P.quiz ? `<button class="btn primary full lg" onclick="startGramQuiz('${P.quiz}')"><i class="ti ti-refresh"></i> Làm lại bài kiểm tra</button>` : sc < 80 && P.gid ? `<button class="btn primary full lg" onclick="startTopic('${P.gid}')"><i class="ti ti-refresh"></i> Luyện lại</button>` : next && P.gid ? `<button class="btn primary full lg" onclick="openTopic('${next.id}')">Chủ điểm tiếp theo <i class="ti ti-arrow-right"></i></button>` : "") + `<button class="btn full" onclick="${P.gid ? `openTopic('${P.gid}')` : "nav('gram')"}">Xem lại giải thích</button><button class="btn full" onclick="nav('gram')">Về trang Ngữ pháp</button>`;
     P = null; save();
-    app().innerHTML = `<div class="donescr${sc >= 80 ? "" : " fail"}"><div class="ring xl" style="--p:${sc}"><span>${sc}%</span></div>${h}<div class="stack">${btns}</div></div>`;
+    app().innerHTML = `<div class="donescr${sc >= 80 ? "" : " fail"}">${doneHero(sc, sc >= 80)}${h}${doneKpi(kp)}${sc >= 80 ? doneStreak() : ""}<div class="stack">${btns}</div></div>`;
     document.body.classList.add("playing"); if (sc >= 80) { beep("done"); confetti(); } checkBadges(); checkDay(); return;
   }
   clearInterval(P.tm); S.mockOpen = null;
@@ -305,7 +305,7 @@ function finishStudy() {
   const wr = P.wres, xs = P.xsres;
   const weak = Object.keys(skills).sort((a, b) => skills[a] - skills[b])[0];
   const advice = { listen: "Mỗi ngày nghe 10–15 phút.<br>Làm lại các bài nghe chép trong bài học, dùng nút Nghe\u00a0chậm.", read: "Đọc thêm các bài đọc trong lộ trình, gạch chân từ khóa trong câu hỏi trước khi đọc.", use: "Vào tab Ngữ pháp, luyện các chủ điểm cấp " + lv + " cho đến khi đạt 80%.", write: "Viết lại các đề trong bài học, sửa hết lỗi gạch chân và so với bài mẫu.", speak: "Luyện nói theo câu mẫu mỗi ngày, ghi âm và nghe lại giọng của mình." }[weak];
-  app().innerHTML = `<div class="donescr${pass ? "" : " fail"}"><div class="ring xl" style="--p:${overall}"><span>${overall}%</span></div><h1>${merit ? "Đạt loại xuất sắc bài thi thử " + lv + "!" : pass ? "Chúc mừng! <br>Bạn đạt bài thi thử " + lv : scorePass ? "Đủ điểm nhưng chưa được ghi nhận" : "Chưa đạt " + lv}</h1>
+  app().innerHTML = `<div class="donescr${pass ? "" : " fail"}">${doneHero(overall, pass)}<h1>${merit ? "Đạt loại xuất sắc bài thi thử " + lv + "!" : pass ? "Chúc mừng! <br>Bạn đạt bài thi thử " + lv : scorePass ? "Đủ điểm nhưng chưa được ghi nhận" : "Chưa đạt " + lv}</h1>
   <p class="muted">${pass ? "Đây là kết quả luyện tập, giúp bạn ước lượng trình độ " + lv + "." : scorePass ? "Phần Nói chưa được chấm bằng micro nên chưa thể ghi nhận đạt. Hãy thi lại trên Chrome có micro." : failWhy(ovRaw, raw)}</p>
   <div class="card skbox">${Object.keys(SECN).map(x => `<div class="skrow"><i class="ti ti-${SECI[x]}"></i><span class="skn">${SECN[x]}</span><div class="bar grow ${skills[x] < 40 ? "lowbar" : ""}"><span style="width:${skills[x]}%"></span></div><b>${skills[x]}%${unrated && x === "speak" ? "*" : ""}</b></div>`).join("")}${unrated ? `<p class="sm muted">* Có câu Nói không chấm được bằng micro,<br>nên lần thi này không được ghi nhận đạt.</p>` : ""}</div>
   <div class="card left"><p class="lab">Lời khuyên</p><p>${skills[weak] >= 80 ? (LV[LV.indexOf(lv) + 1] ? `Bạn làm tốt cả 5 kỹ năng.<br>Hãy thử sức với bài thi thử cấp ${LV[LV.indexOf(lv) + 1]}.` : "Bạn làm tốt cả 5 kỹ năng.<br>Hãy giữ nhịp ôn tập mỗi ngày để duy trì trình độ.") : `Kỹ năng cần ưu tiên: <b>${SECN[weak]}</b>.<br>${advice}`}</p></div>

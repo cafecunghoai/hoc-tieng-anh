@@ -28,7 +28,7 @@
   /* ---------- tiện ích ---------- */
   const cur = s => !!(P && P.steps && P.steps[P.i] === s);
   const st = () => (P && P.steps ? P.steps[P.i] : null);
-  const lab = (s, txt) => `<p class="lab"><i class="ti ti-${T[s.type].ic}"></i> ${SK[T[s.type].sk]} · ${txt || T[s.type].n}</p>`;
+  const lab = (s, txt) => `<p class="lab qlab"><i class="ti ti-${T[s.type].ic}"></i> ${SK[T[s.type].sk]} · ${txt || T[s.type].n}</p>`;
   const vi = (t, cls) => `<p class="ax-vi${cls ? " " + cls : ""}">${t}</p>`;
   const hasTTS = () => ("speechSynthesis" in window) && !noTTS();
   const hasSR = () => !!SR && !micBlocked;
@@ -244,7 +244,7 @@
   function match(s) {
     const n = s.it.pr.length; s.R = shuf([...Array(n).keys()], true); s.done = {}; s.cnt = 0; s.err = 0; s.sL = -1; s.sR = -1;
     setTimeout(() => { if (cur(s)) mDraw(s); }, 0);
-    const html = lab(s, s.it.lab || "Ghép câu hỏi với câu trả lời") + vi("Bấm một ô bên trái rồi bấm ô phù hợp bên phải. Cặp đúng sẽ được đánh số và khóa lại.") + `<div class="ax-mt" id="axm"></div><p class="sm muted c" id="axms">Đã ghép 0/${n} cặp</p>`;
+    const html = lab(s, s.it.lab || "Ghép câu hỏi với câu trả lời") + vi("Bấm một ô bên trái rồi bấm ô phù hợp bên phải. Cặp đúng được đánh số và khóa&nbsp;lại.") + `<div class="ax-mt" id="axm"></div><p class="sm muted c" id="axms">Đã ghép 0/${n} cặp</p>`;
     return html;
   }
   function mTry(s) {
@@ -410,7 +410,7 @@
     if (r.total >= 5) {
       S.journal = (Array.isArray(S.journal) ? S.journal : []).concat({ d: today(), at: Date.now(), q: it.q, t: v.slice(0, 2000), sc: r.total }).slice(-60);
       save(); b.remove(); const k = $("#skipm"); if (k) k.remove(); $("#inp").disabled = true; $("#wres").insertAdjacentHTML("beforeend", modelBox(it.m, "Nhật ký mẫu để so sánh"));
-      grade(true, "", `Đạt ${vdec(r.total)}/10 điểm! Đã lưu vào nhật ký.`);
+      grade(true, "", `Đạt <span class="nw">${vdec(r.total)}/10 điểm!</span> Đã lưu vào nhật ký.`);
     } else { $("#er").textContent = `Nhật ký đạt ${vdec(r.total)}/10, cần từ 5 điểm. Sửa các chỗ gạch chân rồi bấm Chấm lại.`; }
   };
 

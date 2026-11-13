@@ -306,11 +306,11 @@ var TEACHER = window.TEACHER = (() => {
     const st = $("#app .donescr .stack"); if (!st || $("#app .tnote")) return;
     const h = hwFor(today(), true); if (!h) return;
     const left = h.tasks.filter(x => !x.done), nx = left[0];
-    st.insertAdjacentHTML("beforebegin", `<div class="card tnote"><span class="tav sm"><i class="ti ti-school"></i></span><div class="grow"><p class="tsay">${left.length ? `Bài tập về nhà hôm nay: xong <b>${h.tasks.length - left.length}/${h.tasks.length}</b> việc. Việc tiếp theo: <b>${esc(label(nx).t)}</b>.` : `Bạn đã làm xong <b>cả ${h.tasks.length} việc</b> cô giao hôm nay. Rất tốt!`}</p>${left.length ? `<button class="btn full" onclick="${go(nx)}">${esc(label(nx).b)} <i class="ti ti-arrow-right"></i></button>` : ""}</div></div>`);
+    st.insertAdjacentHTML("beforebegin", `<div class="card tnote"><span class="tav sm">${TAV()}</span><div class="grow"><p class="tsay">${left.length ? `Bài tập về nhà hôm nay: xong <b>${h.tasks.length - left.length}/${h.tasks.length}</b> việc. Việc tiếp theo: <b>${esc(label(nx).t)}</b>.` : `Bạn đã làm xong <b>cả ${h.tasks.length} việc</b> cô giao hôm nay. Rất tốt!`}</p>${left.length ? `<button class="btn full" onclick="${go(nx)}">${esc(label(nx).b)} <i class="ti ti-arrow-right"></i></button>` : ""}</div></div>`);
   }
 
   /* ---------- Nhãn, nút cho từng việc ---------- */
-  const ICON = { review: "cards", mist: "alert-triangle", lesson: "book", exam: "certificate", skill: "target", gram: "abc", wtest: "clipboard-check", mtest: "file-certificate" };
+  const ICON = { review: "cards", mist: "alert-triangle", lesson: "book", exam: "certificate", skill: "target", gram: "text-grammar", wtest: "clipboard-check", mtest: "file-certificate" };
   const SKI2 = { listen: "headphones", speak: "microphone", write: "pencil" };
   function label(x) {
     const L = x.lid && LES[x.lid], st = L && stageOf(L.stage);
@@ -359,7 +359,7 @@ var TEACHER = window.TEACHER = (() => {
     if (!on() || S.done[id] || !LES[id]) return false;
     const r = reqs(); if (!r.length) return false;
     const a = r[0], d = document.createElement("div"); d.className = "modal tmodal";
-    d.innerHTML = `<div class="box"><div class="row"><span class="tav"><i class="ti ti-school"></i></span><h3 class="grow">Cô chủ nhiệm nhắc</h3></div>${r.map(x => `<p class="tsay">${x.t}</p>`).join("")}<button class="btn primary full" id="tgo">${a.b}</button><div class="row2"><button class="btn" id="mno">Để sau</button><button class="btn" id="tover">Vẫn học tiếp</button></div><p class="sm muted tsay">Nếu chọn “Vẫn học tiếp”, cô sẽ ghi lại vào phiếu liên lạc tuần.</p></div>`;
+    d.innerHTML = `<div class="box"><div class="row"><span class="tav">${TAV()}</span><h3 class="grow">Cô chủ nhiệm nhắc</h3></div>${r.map(x => `<p class="tsay">${x.t}</p>`).join("")}<button class="btn primary full" id="tgo">${a.b}</button><div class="row2"><button class="btn" id="mno">Để sau</button><button class="btn" id="tover">Vẫn học tiếp</button></div><p class="sm muted tsay">Nếu chọn “Vẫn học tiếp”, cô sẽ ghi lại vào phiếu liên lạc tuần.</p></div>`;
     document.body.appendChild(d);
     d.querySelector("#mno").onclick = () => d.remove();
     d.querySelector("#tgo").onclick = () => { d.remove(); (new Function(a.go))(); };
@@ -428,7 +428,7 @@ var TEACHER = window.TEACHER = (() => {
     const skr = Object.keys(p.sk).length ? `<div class="card skbox">${Object.keys(p.sk).map(x => { const v = p.sk[x], q = Math.round(v[0] / v[1] * 100); return `<div class="skrow"><i class="ti ti-${SKI[x]}"></i><span class="skn">${SK[x]}</span><div class="bar grow"><span style="width:${q}%"></span></div><b>${v[0]}/${v[1]}</b></div>`; }).join("")}</div>` : "";
     const say = wt ? (good ? `Bài kiểm tra tuần đạt <b>${sc}%</b>. Kiến thức của tuần đã vào đầu, cô ghi vào phiếu liên lạc rồi nhé.` : `Bài kiểm tra tuần được <b>${sc}%</b>, chưa tới mức 80% cô mong đợi. Các câu sai đã vào Sổ tay, tuần này mình sửa cho hết.`) : (good ? "Xong phần luyện tập, làm tốt lắm!" : "Xong phần luyện tập. Câu sai đã vào Sổ tay để sửa lại sau.");
     P = null; save();
-    app().innerHTML = `<div class="donescr${good ? "" : " fail"}"><div class="ring xl" style="--p:${sc}"><span>${sc}%</span></div><h1>${wt ? (good ? "Đạt bài kiểm tra tuần!" : "Chưa đạt bài kiểm tra tuần") : "Hoàn thành bài tập!"}</h1><div class="card tnote"><span class="tav sm"><i class="ti ti-school"></i></span><p class="tsay grow">${say}</p></div><p class="xpbig">+${gained} XP</p>${skr}<div class="stack"><button class="btn primary full lg" onclick="TEACHER.open()"><i class="ti ti-school"></i> Về trang Cô chủ nhiệm</button><button class="btn full" onclick="nav('home')">Về trang chủ</button></div></div>`;
+    app().innerHTML = `<div class="donescr${good ? "" : " fail"}">${typeof doneHero === "function" ? doneHero(sc, good) : `<div class="ring xl" style="--p:${sc}"><span>${sc}%</span></div>`}<h1>${wt ? (good ? "Đạt bài kiểm tra tuần!" : "Chưa đạt bài kiểm tra tuần") : "Hoàn thành bài tập!"}</h1><div class="card tnote"><span class="tav sm">${TAV()}</span><p class="tsay grow">${say}</p></div>${typeof doneKpi === "function" ? doneKpi([["target", sc + "%", "chính xác"], ["circle-check", p.ok + "/" + p.tot, "câu đúng"], ["bolt", "+" + gained, "XP", "xp"]]) : `<p class="xpbig">+${gained} XP</p>`}${skr}<div class="stack"><button class="btn primary full lg" onclick="TEACHER.open()"><i class="ti ti-school"></i> Về trang Cô chủ nhiệm</button><button class="btn full" onclick="nav('home')">Về trang chủ</button></div></div>`;
     document.body.classList.add("playing"); window.scrollTo(0, 0);
     if (good) { beep("done"); confetti(); } checkBadges(); checkDay();
   };
@@ -471,13 +471,13 @@ var TEACHER = window.TEACHER = (() => {
     if (r.extra) good.push(`Học thêm ${r.extra} buổi ngoài lịch`);
     if (r.newL >= 3) good.push(`Hoàn thành ${r.newL} bài mới`);
     sks.filter(x => x[1] >= 85).slice(0, 2).forEach(x => good.push(`${SKV[x[0]]} chính xác ${x[1]}%`));
-    sks.filter(x => x[1] < 70).slice(-2).reverse().forEach(x => bad.push(`${SKV[x[0]]} mới đúng ${x[1]}%`));
+    sks.filter(x => x[1] < 70).slice(-2).reverse().forEach(x => bad.push(`${SKV[x[0]]} mới đúng\u00a0${x[1]}%`));
     if (r.wsc !== undefined) (r.wsc >= 80 ? good : bad).push(`Kiểm tra tuần ${r.wsc}%`); else if (r.wmiss) bad.push("Bỏ lỡ bài kiểm tra tuần");
     if (r.due > 30) bad.push(`${r.due} thẻ quá hạn ôn`); if (r.mist > 15) bad.push(`${r.mist} lỗi chưa sửa`);
     if (r.over) bad.push(`${r.over} lần bỏ qua lời nhắc ôn tập`);
     if (r.streak >= 7) good.push(`Chuỗi ${r.streak} ngày học liên tiếp`);
     r.good = good.slice(0, 5); r.bad = bad.slice(0, 5);
-    r.rate = [["Chuyên cần", rate(r.plan ? Math.min(ratio, r.days / r.plan) * 100 : 0)], ["Bài tập", r.hw === undefined ? "–" : rate(r.hw)], ["Kết quả", r.acc === null ? "–" : rate(r.acc >= 90 ? 100 : (r.acc - 50) * 2.2)]];
+    r.rate = [["Chuyên\u00a0cần", rate(r.plan ? Math.min(ratio, r.days / r.plan) * 100 : 0)], ["Bài tập", r.hw === undefined ? "–" : rate(r.hw)], ["Kết quả", r.acc === null ? "–" : rate(r.acc >= 90 ? 100 : (r.acc - 50) * 2.2)]];
     r.cm = comment(r, sks, missK);
   }
   /* lời phê: viết từ số liệu, câu chữ thay đổi theo tuần (hạt giống = mã tuần) nhưng ổn định khi xem lại */
@@ -511,7 +511,7 @@ var TEACHER = window.TEACHER = (() => {
       const best = sks[0], worst = sks[sks.length - 1];
       if (best[1] >= 85) out.push(P1([`Điểm sáng của tuần là ${SKV[best[0]].toLowerCase()}: đúng ${best[1]}% số câu.`, `${SKV[best[0]]} là kỹ năng ${b} làm tốt nhất tuần này, chính xác ${best[1]}%.`]));
       if (worst[1] < 70 && worst !== best) out.push(`Cần lưu ý nhất là ${SKV[worst[0]].toLowerCase()}: mới đúng ${worst[2][0]}/${worst[2][1]} câu (${worst[1]}%). Cách khắc phục: ${ADV[worst[0]]}.`);
-      else if (worst[1] < 70) out.push(`${SKV[worst[0]]} mới đúng ${worst[1]}%, cần luyện thêm: ${ADV[worst[0]]}.`);
+      else if (worst[1] < 70) out.push(`${SKV[worst[0]]} mới đúng\u00a0${worst[1]}%, cần luyện thêm: ${ADV[worst[0]]}.`);
       else if (best[1] < 85) out.push(`Các kỹ năng khá đồng đều, khoảng ${r.acc}% câu đúng; muốn lên mức tốt thì cần trên 85%.`);
     } else if (r.min > 0) out.push("Tuần này số câu làm còn ít, cô chưa đủ dữ liệu để nhận xét từng kỹ năng.");
     // kiểm tra
@@ -621,33 +621,46 @@ var TEACHER = window.TEACHER = (() => {
     const late = now() > h.due;
     return `${left.length === h.tasks.length ? `Hôm nay cô giao <b>${h.tasks.length} việc</b>, khoảng ${m} phút.` : `Bạn đã xong <b>${h.tasks.length - left.length}/${h.tasks.length} việc</b>, còn ${left.length} việc (khoảng ${m} phút).`} ${late ? `Đã quá hạn nộp <b>${hhmm(h.due)}</b>, làm bù ngay hôm nay hoặc ngày mai vẫn được ghi nhận.` : `Hạn nộp: <b>${hhmm(h.due)}</b>.`}`;
   }
+  /* r9: dòng ngắn cho thẻ ở trang chủ: số việc đã có ở ô 0/3 nên chỉ nói thời lượng và hạn nộp */
+  function homeLine(h) {
+    if (!h || !isStudy(now())) return todayLine(h);
+    const left = h.tasks.filter(x => !x.done), m = left.reduce((a, x) => a + x.m, 0);
+    if (!left.length) return todayLine(h);
+    return `${left.length === h.tasks.length ? `<span class="nw">${h.tasks.length} việc</span>, khoảng <span class="nw">${m} phút</span>.` : `Còn <span class="nw">${left.length} việc</span>, khoảng <span class="nw">${m} phút</span>.`} ${now() > h.due ? `Đã quá hạn <b>${hhmm(h.due)}</b>, làm bù vẫn được ghi&nbsp;nhận.` : `Hạn nộp: <b>${hhmm(h.due)}</b>.`}`;
+  }
   function owed() { const y = kd(addD(now(), -1)), h = T().hw[y]; return h ? h.tasks.filter(x => stOf(x, h, y) === "over").map(x => ({ x, h, d: y })) : []; }
+  /* r8 (F): ảnh đại diện cô chủ nhiệm (hình minh họa), thiếu ảnh thì biểu tượng cũ */
+  function TAV() { return typeof illus === "function" ? illus("co-chu-nhiem", '<i class="ti ti-school"></i>', "av") : '<i class="ti ti-school"></i>'; }
   function homeCard(h) {
     try {
       let c;
-      if (!on()) c = `<section class="card tcard"><div class="row"><span class="tav"><i class="ti ti-school"></i></span><div class="grow"><b>Cô chủ nhiệm</b><small class="muted">Lộ trình riêng, bài tập, nhắc&nbsp;học</small></div></div><p class="tsay">Cô sẽ lập lộ trình từng tuần theo thời gian của bạn, giao bài tập mỗi ngày, kiểm tra định kỳ và gửi phiếu liên lạc cuối tuần.</p><button class="btn primary full" onclick="TEACHER.open()">Nhận lộ trình riêng <i class="ti ti-arrow-right"></i></button></section>`;
+      // r8 (A): chưa bật cô chủ nhiệm thì chỉ là một dòng gọn dưới các lối tắt (không tranh chỗ với bài đang học)
+      if (!on()) { c = `<button class="card tcard tlink trow" onclick="TEACHER.open()"><span class="tav">${typeof illus === "function" ? illus("co-chu-nhiem", '<i class="ti ti-school"></i>', "av") : '<i class="ti ti-school"></i>'}</span><span class="grow"><b>Cô chủ nhiệm</b><small class="muted">Nhận lộ trình học riêng</small></span><i class="ti ti-chevron-right muted"></i></button>`; const j = h.indexOf("<!--T0-->"); if (j >= 0) return h.slice(0, j) + c + h.slice(j); }
       else {
         week(); check(); const d = today(), hw = isStudy(now()) ? hwFor(d, true) : null, ow = owed(), rq = reqs();
         const left = hw ? hw.tasks.filter(x => !x.done) : [], nx = ow.length ? ow[0].x : left[0];
-        c = `<section class="card tcard"><div class="row"><span class="tav"><i class="ti ti-school"></i></span><div class="grow"><b>${hello()}${nameBit()}!</b><small class="muted">Cô chủ nhiệm · <span class="nw">${fmtD(now())}</span></small></div>${hw ? `<span class="pill ${left.length ? "" : "good"}">${hw.tasks.length - left.length}/${hw.tasks.length}</span>` : ""}</div>
-        <p class="tsay">${todayLine(hw)}</p>
+        // r9: lời chào đã có ở đầu trang nên thẻ cô không chào lại; bộ đếm việc duy nhất của trang chủ nằm ở đây (thẻ "Kế hoạch hôm nay" ẩn khi cô bật)
+        c = `<section class="card tcard thome"><div class="row"><span class="tav">${TAV()}</span><div class="grow"><b>Việc cô giao hôm&nbsp;nay</b><small class="muted">Cô chủ nhiệm · <span class="nw">${fmtD(now())}</span></small></div>${hw ? `<span class="pill ${left.length ? "" : "good"}">${hw.tasks.length - left.length}/${hw.tasks.length}</span>` : ""}</div>
+        <p class="tsay">${homeLine(hw)}</p>
         ${ow.length ? `<p class="twarn"><i class="ti ti-clock-exclamation"></i><span>Còn nợ <b>${ow.length} việc</b> của hôm qua, làm bù trước khi hết ngày hôm nay.</span></p>` : ""}
-        ${rq.slice(0, 2).map(r => `<p class="twarn"><i class="ti ti-${r.ic}"></i><span>${{ exam: "Cần qua bài kiểm tra vượt chặng trước khi sang chặng mới.", wtest: "Bài kiểm tra tuần đã quá hạn.", due: `${odN()} thẻ quá hạn ôn: ôn bớt trước khi học bài mới.`, mist: `${mistN()} lỗi chưa sửa: sửa bớt trước khi học bài mới.` }[r.k]}</span></p>`).join("")}
+        ${rq.slice(0, 2).map(r => `<p class="twarn"><i class="ti ti-${r.ic}"></i><span>${{ exam: "Cần qua bài kiểm tra vượt chặng trước khi sang chặng mới.", wtest: "Bài kiểm tra tuần đã quá hạn.", due: `${odN()} thẻ quá hạn ôn: ôn bớt trước khi học bài&nbsp;mới.`, mist: `${mistN()} lỗi chưa sửa: sửa bớt trước khi học bài&nbsp;mới.` }[r.k]}</span></p>`).join("")}
         ${nx ? (() => { const l = label(nx); return `<button class="task ttask" onclick="${go(nx)}"><span class="chk"></span><i class="ti ti-${nx.k === "skill" ? SKI2[nx.sk] : ICON[nx.k]}"></i><span class="grow"><b>${esc(l.t)}</b><small>Việc tiếp theo · ~${nx.m} phút</small></span><i class="ti ti-chevron-right muted"></i></button>`; })() : ""}
-        <button class="btn full" onclick="TEACHER.open()"><i class="ti ti-list-check"></i> Xem bài tập và lộ trình</button></section>`;
+        <button class="link c tmore" onclick="TEACHER.open()"><i class="ti ti-list-check"></i> Xem bài tập và lộ&nbsp;trình</button></section>`;
         schedule();
+        const k1 = h.indexOf("<!--T1-->"); if (k1 >= 0) return h.slice(0, k1) + c + h.slice(k1);
       }
+      const k = h.indexOf("<!--T-->"); if (k >= 0) return h.slice(0, k) + c + h.slice(k);
       const i = h.indexOf("</header>"); return i < 0 ? c + h : h.slice(0, i + 9) + c + h.slice(i + 9);
     } catch (e) { return h; }
   }
   /* Hồ sơ: lối vào trang cô chủ nhiệm (chèn sau khi vMe vẽ xong) */
-  if (typeof vMe === "function") { const m0 = vMe; vMe = function () { m0.apply(this, arguments); try { const st = $("#app .stats"); if (st) st.insertAdjacentHTML("afterend", `<button class="card tcard tlink" onclick="TEACHER.open()"><span class="tav"><i class="ti ti-school"></i></span><span class="grow"><b>Cô chủ nhiệm</b><small class="muted">${on() ? "Bài tập, lịch học, kiểm tra, phiếu tuần" : "Nhận lộ trình học riêng theo tuần"}</small></span><i class="ti ti-chevron-right muted"></i></button>`); } catch (e) {} }; }
+  if (typeof vMe === "function") { const m0 = vMe; vMe = function () { m0.apply(this, arguments); try { const st = $("#app .stats"); if (st) st.insertAdjacentHTML("afterend", `<button class="card tcard tlink" onclick="TEACHER.open()"><span class="tav">${TAV()}</span><span class="grow"><b>Cô chủ nhiệm</b><small class="muted">${on() ? "Bài tập, lịch học, kiểm tra, phiếu tuần" : "Nhận lộ trình học riêng theo tuần"}</small></span><i class="ti ti-chevron-right muted"></i></button>`); } catch (e) {} }; }
 
   /* ---------- Trang cô chủ nhiệm ---------- */
   let draft = null;
   function setupHtml(first) {
     const t = T(), dr = draft || (draft = { days: t.days.slice(), time: t.time, goal: S.settings.goal });
-    return `${first ? `<div class="card tcard"><div class="row"><span class="tav"><i class="ti ti-school"></i></span><b class="grow">Chào bạn, cô là <span class="nw">cô chủ nhiệm</span> của bạn</b></div><p class="tsay">Cô sẽ lập lộ trình từng tuần theo thời gian của bạn, giao bài tập về nhà mỗi ngày, cho kiểm tra mỗi tuần và mỗi tháng, nhắc bạn học đúng giờ và gửi phiếu liên lạc vào cuối tuần. Trước hết, cho cô biết bạn học được vào những ngày nào và lúc mấy giờ.</p></div>` : ""}
+    return `${first ? `<div class="card tcard">${typeof illus === "function" ? illus("co-chu-nhiem", "", "tbig") : ""}<div class="row"><span class="tav">${TAV()}</span><b class="grow">Chào bạn, cô là <span class="nw">cô chủ nhiệm</span> của bạn</b></div><p class="tsay">Cô sẽ lập lộ trình từng tuần theo thời gian của bạn, giao bài tập về nhà mỗi ngày, cho kiểm tra mỗi tuần và mỗi tháng, nhắc bạn học đúng giờ và gửi phiếu liên lạc vào cuối tuần. Trước hết, cho cô biết bạn học được vào những ngày nào và lúc mấy giờ.</p></div>` : ""}
     <section class="card set"><label>Mỗi buổi học bao lâu?</label><div class="seg">${[15, 30, 60, 90].map(x => `<button class="${dr.goal === x ? "on" : ""}" aria-pressed="${dr.goal === x}" onclick="TEACHER._dr('goal',${x})">${x}'</button>`).join("")}</div>
     <label>Những ngày bạn học được</label><div class="tdays">${WEEK.map(d => `<button class="${dr.days.includes(d) ? "on" : ""}" aria-pressed="${dr.days.includes(d)}" onclick="TEACHER._dr('day',${d})">${WDS[d]}</button>`).join("")}</div>
     <label for="ttime">Giờ học thường ngày</label><input type="time" id="ttime" class="inp" value="${dr.time}" onchange="TEACHER._dr('time',this.value)">
@@ -672,12 +685,12 @@ var TEACHER = window.TEACHER = (() => {
       ios: `<p class="sm tsay"><b>Trên iPhone, iPad:</b> thông báo chỉ dùng được khi app đã được thêm ra màn hình chính. Mở trang này bằng <b>Safari</b>, bấm nút <span class="nw"><b>Chia sẻ</b> <i class="ti ti-share-2"></i>,</span> chọn <b>“Thêm vào MH chính”</b>, rồi mở app từ biểu tượng mới và bật thông báo ở đây (cần iOS 16.4 trở lên).</p>`,
       none: `<p class="sm muted tsay">Trình duyệt này không hỗ trợ thông báo. Hãy dùng lịch nhắc trên điện thoại ở dưới.</p>` }[s] || "";
     return `<h4 class="sec">Nhắc học</h4><section class="card set" id="tremind"><label>Thông báo trong app</label>${nst}
-    <label>Lịch nhắc trên điện thoại</label><p class="sm muted tsay">Tải tệp lịch có sự kiện lặp lại lúc <b>${t.time}</b> vào ${dayList()}, kèm chuông báo đúng giờ. Mở tệp là thêm được vào ứng dụng Lịch của iPhone hoặc Google Calendar, nhắc cả khi không mở app. Đổi giờ học thì tải lại tệp mới và xóa sự kiện cũ.</p>
+    <label>Lịch nhắc trên điện thoại</label><p class="sm muted tsay">Tải tệp lịch có sự kiện lặp lại lúc <b>${t.time}</b> vào ${dayList()}, kèm chuông báo đúng giờ. Mở tệp là thêm được vào ứng dụng Lịch của iPhone hoặc Google Calendar, nhắc cả khi không mở app. Khi đổi giờ học, hãy tải tệp mới và xóa sự kiện&nbsp;cũ.</p>
     <button class="btn full" onclick="TEACHER._ics()"><i class="ti ti-calendar-plus"></i> Thêm lịch nhắc vào điện thoại</button></section>`;
   }
   function todayHtml() {
     const t = T(), d = today(), hw = isStudy(now()) ? hwFor(d, true) : null, ow = owed(), rq = reqs();
-    let h = `<div class="card tcard"><div class="row"><span class="tav"><i class="ti ti-school"></i></span><div class="grow"><b>${hello()}${nameBit()}!</b><small class="muted">${fmtD(now())}</small></div></div><p class="tsay">${todayLine(hw)}</p></div>`;
+    let h = `<div class="card tcard"><div class="row"><span class="tav">${TAV()}</span><div class="grow"><b>${hello()}${nameBit()}!</b><small class="muted">${fmtD(now())}</small></div></div><p class="tsay">${todayLine(hw)}</p></div>`;
     if (rq.length) h += `<h4 class="sec">Cô yêu cầu</h4>` + rq.map(r => `<section class="card treq"><p class="tsay"><i class="ti ti-${r.ic}"></i> ${r.t}</p><button class="btn primary full" onclick="${r.go}">${r.b}</button></section>`).join("");
     if (ow.length) h += `<h4 class="sec">Nợ bài hôm qua</h4><section class="card">${ow.map(o => taskRow(o.x, o.h, o.d)).join("")}<p class="sm muted tsay">Việc làm bù trong hôm nay vẫn được ghi nhận nhưng tính là nộp muộn.</p></section>`;
     if (hw) { const n = hw.tasks.filter(x => x.done).length, m = hw.tasks.reduce((a, x) => a + x.m, 0);
@@ -739,6 +752,6 @@ var TEACHER = window.TEACHER = (() => {
     VIEW = page; P = null; toastOff(); render(); if (!keep) window.scrollTo(0, 0);
   }
 
-  return { homeCard, onFinish, open, practice, weekTest, _dr: dr, _save: saveSetup, _notif: askNotif, _ics: dlICS,
+  return { homeCard, isOn: () => !!on(), onFinish, open, practice, weekTest, _dr: dr, _save: saveSetup, _notif: askNotif, _ics: dlICS,
     _: { tsan, genWeek, week, mkHW, hwFor, check, report, finalize, reqs, gate, ics, remText, schedule, notifState, queue, weakOrder, gramQueue, practiceSteps, weekTestSteps, comment, label, stOf, T, monday, kd, pk, addD } };
 })();
