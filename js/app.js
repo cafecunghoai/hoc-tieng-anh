@@ -1500,3 +1500,7 @@ new MutationObserver(ms => { ms.forEach(m => m.addedNodes.forEach(x => { if (x.n
 let rsT; window.addEventListener("resize", () => { clearTimeout(rsT); rsT = setTimeout(relayoutAll, 150); });
 window.addEventListener("resize", queueSeps); addEventListener("beforeprint", () => $$(".sep.eol").forEach(x => x.classList.remove("eol"))); addEventListener("afterprint", queueSeps); document.addEventListener("toggle", e => { if (e.target.open) { keepTogether(e.target); queueLayout(e.target); } queueSeps(); }, true); if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { relayoutAll(); });
 document.addEventListener("DOMContentLoaded", render);
+
+/* Chặn phóng to bằng hai ngón trên iPhone (chạm đúp đã chặn bằng touch-action trong CSS) (Safari bỏ qua user-scalable=no); cỡ chữ chỉnh trong Hồ sơ › Cỡ chữ */
+["gesturestart", "gesturechange", "gestureend"].forEach(ev => document.addEventListener(ev, e => e.preventDefault(), { passive: false }));
+document.addEventListener("touchmove", e => { if (e.touches && e.touches.length > 1) e.preventDefault(); }, { passive: false });

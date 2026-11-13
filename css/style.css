@@ -979,3 +979,7 @@ label.tg.auhide>span{flex:1 1 auto;min-width:0}
 .glv .btn{white-space:nowrap}
 summary>.tag{flex:none;white-space:nowrap}
 .topic small{text-align:left;text-wrap:balance}
+
+/* Dùng như app thật trên iPhone: không tự phóng to khi chạm ô nhập (chữ ô nhập luôn ≥ 16px), không phóng khi chạm đúp */
+input,textarea,select{font-size:max(16px,1em)!important}
+html,body{touch-action:manipulation}
