@@ -21,11 +21,11 @@ function vPlay() {
   const g = gs(), n = Object.keys(S.cards).length, dry = dueCards().length;
   const card = (fn, emo, t, d, meta, col) => `<button class="gcard ${col}" onclick="${fn}"><span class="gemo">${emo}</span><span class="grow"><b>${t}</b><small>${d}</small>${meta ? `<em>${meta}</em>` : ""}</span><i class="ti ti-chevron-right"></i></button>`;
   app().innerHTML = `<header class="page"><h1>Trò chơi</h1><p class="muted">Vừa chơi vừa nhớ lại từ đã học.<br>Mỗi trò rèn một kỹ năng riêng.</p></header>
-  ${card("openGarden()", "🌱", "Vườn từ vựng", "Mỗi từ là một cây. Ôn đúng thì cây lớn và kết trái.", n ? `${n} cây · ${dry ? dry + " cây cần tưới" : "vườn xanh tốt"}` : "Học bài đầu tiên để gieo hạt", "g1")}
-  ${card("startMarket()", "🧺", "Phiên chợ quê", "Nghe khách gọi hàng bằng tiếng Anh, nhặt đúng món, đúng số lượng.", g.best.market ? `Kỷ lục: ${g.best.market}/8 đơn` : "Luyện nghe · số đếm · đồ ăn", "g2")}
-  ${card("openJourney()", "🚌", "Chuyến xe về quê", "Trả lời đúng để xe lăn bánh qua từng tỉnh, nhận bưu thiếp mỗi chặng.", Object.keys(g.post).length ? `${Object.keys(g.post).length} bưu thiếp đã nhận` : "Về miền Tây · Xuyên Việt", "g3")}
-  ${card("startMemory()", "🎴", "Lật thẻ hội chợ", "Lật thẻ ghép từ tiếng Anh với nghĩa tiếng Việt.", g.best.memory ? `Kỷ lục: ${g.best.memory} lượt` : "Luyện trí nhớ · từ vựng", "g4")}
-  <p class="note">Trò chơi dùng các từ trong kho ôn tập của bạn. Học càng nhiều bài, trò chơi càng phong phú.</p>`;
+  ${card("openGarden()", "🌱", "Vườn từ vựng", "Mỗi từ là một cây: ôn đúng thì cây lớn và&nbsp;kết&nbsp;trái.", n ? `${n} cây · ${dry ? dry + " cây cần tưới" : "vườn xanh tốt"}` : "Học bài đầu tiên để gieo hạt", "g1")}
+  ${card("startMarket()", "🧺", "Phiên chợ quê", "Nghe khách gọi món bằng tiếng&nbsp;Anh, nhặt đúng món, đúng số&nbsp;lượng.", g.best.market ? `Kỷ lục: ${g.best.market}/8 đơn` : "Luyện nghe · số đếm · đồ ăn", "g2")}
+  ${card("openJourney()", "🚌", "Chuyến xe về quê", "Trả lời đúng để xe chạy qua từng tỉnh, nhận bưu&nbsp;thiếp mỗi&nbsp;chặng.", Object.keys(g.post).length ? `${Object.keys(g.post).length} bưu thiếp đã nhận` : "Về miền Tây · Xuyên Việt", "g3")}
+  ${card("startMemory()", "🎴", "Lật thẻ hội chợ", "Lật thẻ, ghép từ tiếng&nbsp;Anh với nghĩa tiếng&nbsp;Việt.", g.best.memory ? `Kỷ lục: ${g.best.memory} lượt` : "Luyện trí nhớ · từ vựng", "g4")}
+  <p class="note">Trò chơi lấy từ trong kho ôn tập của bạn.<br>Học càng nhiều, trò chơi càng phong&nbsp;phú.</p>`;
 }
 
 /* ---------- 1. Vườn từ vựng ---------- */

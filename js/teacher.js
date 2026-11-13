@@ -18,7 +18,7 @@ var TEACHER = window.TEACHER = (() => {
   const atT = (t, s) => { const [h, m] = hm(s); const d = new Date(sod(t)); d.setHours(h, m, 0, 0); return d.getTime(); };
   const hhmm = t => { const d = new Date(t); return String(d.getHours()).padStart(2, "0") + ":" + String(d.getMinutes()).padStart(2, "0"); };
   const dm = t => { const d = new Date(t); return d.getDate() + "/" + (d.getMonth() + 1); };
-  const fmtD = t => WDN[new Date(t).getDay()] + " " + dm(t);
+  const fmtD = t => WDN[new Date(t).getDay()].replace(" ", "\u00a0") + "\u00a0" + dm(t);   // "Thứ Sáu 13/11" luôn liền một cụm
   const fmtS = t => WDS[new Date(t).getDay()] + " " + dm(t);
   const dayDiff = (a, b) => Math.round((sod(a) - sod(b)) / DAY);
   const whenTxt = t => { const n = dayDiff(t, now()); return n === 0 ? "hôm nay" : n === 1 ? "ngày mai" : n === -1 ? "hôm qua" : n > 0 ? fmtD(t) + ` (còn ${n} ngày)` : fmtD(t) + ` (quá ${-n} ngày)`; };
@@ -321,7 +321,7 @@ var TEACHER = window.TEACHER = (() => {
       case "exam": { const s2 = stageOf(x.sid); return { t: `Kiểm tra vượt chặng ${s2 ? s2.name : ""}`, s: "Đạt 80% để sang chặng mới", b: "Làm bài kiểm tra" }; }
       case "skill": return { t: { listen: "Luyện nghe: nghe và chép lại", speak: "Luyện nói: đọc to theo câu mẫu", write: "Luyện viết: sắp xếp và dịch câu" }[x.sk] || "Luyện kỹ năng", s: "Dùng từ, câu của các bài đã học", b: "Luyện ngay" };
       case "gram": { if (/^quiz:/.test(x.gid)) return { t: `Kiểm tra nhanh ngữ pháp ${x.gid.slice(5)}`, s: "15 câu, thử sức", b: "Làm bài" }; const G = typeof GT !== "undefined" && GT[x.gid]; return { t: `Ngữ pháp: ${G ? G.t : x.gid}`, s: "Luyện 8 câu, cần đạt 80%", b: "Luyện ngữ pháp" }; }
-      case "wtest": return { t: "Bài kiểm tra tuần", s: "15 câu từ các bài đã học trong tuần", b: "Làm bài kiểm tra" };
+      case "wtest": return { t: "Bài kiểm tra tuần", s: "15 câu ôn bài cả\u00a0tuần", b: "Làm bài kiểm tra" };
       case "mtest": return { t: `Bài kiểm tra tháng: thi thử ${x.lv || lvNow()}`, s: `${mockMin(x.lv || lvNow())} phút · đủ 5 kỹ năng`, b: "Vào thi" };
     }
     return { t: "", s: "", b: "" };
@@ -350,7 +350,7 @@ var TEACHER = window.TEACHER = (() => {
     const nl = tNext(), g = nl && stageGate(nl);
     if (g) r.push({ k: "exam", ic: "certificate", t: `Bạn đã học xong các bài của <b>${stageOf(g).name}</b>. Trước khi sang chặng mới, cô yêu cầu làm <b>bài kiểm tra vượt chặng</b> và đạt từ 80%.`, b: "Làm bài kiểm tra vượt chặng", go: `startExam('${g}')` });
     if (t.wt.next && t.wt.next < n0) r.push({ k: "wtest", ic: "clipboard-check", t: `Bài kiểm tra tuần đã quá hạn <b>${dayDiff(n0, t.wt.next)} ngày</b>. Làm bài này trước (khoảng 15 phút) rồi học tiếp nhé.`, b: "Làm bài kiểm tra tuần", go: "TEACHER.weekTest()" });
-    if (due > 30) r.push({ k: "due", ic: "cards", t: `Bạn đang có <b>${due} thẻ quá hạn</b> (đã đến hạn hơn một ngày mà chưa ôn). Học bài mới khi từ cũ chưa vững thì chỉ ít hôm sau là quên gần hết. Cô yêu cầu ôn bớt cho còn dưới 30 thẻ quá hạn rồi mới học bài mới.`, b: `Ôn ${Math.min(20, dueN())} thẻ ngay`, go: "startReview()" });
+    if (due > 30) r.push({ k: "due", ic: "cards", t: `Bạn đang có <b>${due} thẻ quá hạn</b> (đã đến hạn hơn một ngày mà chưa ôn). Học bài mới khi từ cũ chưa vững thì chỉ ít hôm sau là quên gần hết. Cô yêu cầu ôn bớt cho còn dưới 30 thẻ quá hạn rồi mới học bài&nbsp;mới.`, b: `Ôn ${Math.min(20, dueN())} thẻ ngay`, go: "startReview()" });
     if (mk > 15) r.push({ k: "mist", ic: "alert-triangle", t: `Sổ tay đang có <b>${mk} lỗi</b> chưa sửa. Lỗi để lâu sẽ thành thói quen, cô yêu cầu sửa bớt cho còn dưới 15 lỗi (mỗi lượt 15 câu, khoảng 8 phút) rồi mới sang bài mới.`, b: "Sửa lỗi ngay", go: "startMistakes()" });
     return r;
   }
@@ -531,7 +531,7 @@ var TEACHER = window.TEACHER = (() => {
     else if (r.wmiss || r.wsc === undefined) req = "giữ nhịp này và làm bài kiểm tra tuần đúng hạn";
     else req = P1(["giữ vững nhịp này, và thử nói to mỗi câu mẫu hai lần", "giữ nhịp này và tự đặt thêm một câu với từ mới của mỗi bài"]);
     out.push(`Tuần tới cô yêu cầu: ${req}.`);
-    out.push(tone === 2 ? P1([`Cứ đà này, cô tin ${b} sẽ tiến bộ rất nhanh.`, `Cô tự hào về ${b}. Giữ vững phong độ nhé!`, "Rất đáng khen, tiếp tục như vậy nhé!"]) : tone === 1 ? P1([`Cô tin ${b} làm được tốt hơn. Cố lên!`, "Mỗi ngày một chút, nhưng đều đặn, là đủ.", `Tuần tới cô chờ ${b} bứt lên.`]) : P1([`Bắt đầu lại không khó: chỉ cần 10 phút ngay hôm nay. Cô chờ ${b} ở buổi học tới.`, `Cô không cần ${b} học nhiều, cô cần ${b} học đều. Hẹn gặp ${b} ở buổi tới.`]));
+    out.push(tone === 2 ? P1([`Cứ đà này, cô tin ${b} sẽ tiến bộ rất nhanh.`, `Cô tự hào về ${b}. Giữ vững phong độ nhé!`, "Rất đáng khen, tiếp tục như vậy nhé!"]) : tone === 1 ? P1([`Cô tin ${b} làm được tốt hơn. Cố\u00a0lên!`, "Mỗi ngày một chút, nhưng đều đặn, là đủ.", `Tuần tới cô chờ ${b} bứt lên.`]) : P1([`Bắt đầu lại không khó: chỉ cần 10 phút ngay hôm nay. Cô chờ ${b} ở buổi học tới.`, `Cô không cần ${b} học nhiều, cô cần ${b} học đều. Hẹn gặp ${b} ở buổi tới.`]));
     return out.join(" ");
   }
   const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
@@ -625,11 +625,11 @@ var TEACHER = window.TEACHER = (() => {
   function homeCard(h) {
     try {
       let c;
-      if (!on()) c = `<section class="card tcard"><div class="row"><span class="tav"><i class="ti ti-school"></i></span><div class="grow"><b>Cô chủ nhiệm</b><small class="muted">Lộ trình riêng, bài tập về nhà, nhắc học</small></div></div><p class="tsay">Cô sẽ lập lộ trình từng tuần theo thời gian của bạn, giao bài tập mỗi ngày, kiểm tra định kỳ và gửi phiếu liên lạc cuối tuần.</p><button class="btn primary full" onclick="TEACHER.open()">Nhận lộ trình riêng <i class="ti ti-arrow-right"></i></button></section>`;
+      if (!on()) c = `<section class="card tcard"><div class="row"><span class="tav"><i class="ti ti-school"></i></span><div class="grow"><b>Cô chủ nhiệm</b><small class="muted">Lộ trình riêng, bài tập, nhắc&nbsp;học</small></div></div><p class="tsay">Cô sẽ lập lộ trình từng tuần theo thời gian của bạn, giao bài tập mỗi ngày, kiểm tra định kỳ và gửi phiếu liên lạc cuối tuần.</p><button class="btn primary full" onclick="TEACHER.open()">Nhận lộ trình riêng <i class="ti ti-arrow-right"></i></button></section>`;
       else {
         week(); check(); const d = today(), hw = isStudy(now()) ? hwFor(d, true) : null, ow = owed(), rq = reqs();
         const left = hw ? hw.tasks.filter(x => !x.done) : [], nx = ow.length ? ow[0].x : left[0];
-        c = `<section class="card tcard"><div class="row"><span class="tav"><i class="ti ti-school"></i></span><div class="grow"><b>${hello()}${nameBit()}!</b><small class="muted">Cô chủ nhiệm · ${fmtD(now())}</small></div>${hw ? `<span class="pill ${left.length ? "" : "good"}">${hw.tasks.length - left.length}/${hw.tasks.length}</span>` : ""}</div>
+        c = `<section class="card tcard"><div class="row"><span class="tav"><i class="ti ti-school"></i></span><div class="grow"><b>${hello()}${nameBit()}!</b><small class="muted">Cô chủ nhiệm · <span class="nw">${fmtD(now())}</span></small></div>${hw ? `<span class="pill ${left.length ? "" : "good"}">${hw.tasks.length - left.length}/${hw.tasks.length}</span>` : ""}</div>
         <p class="tsay">${todayLine(hw)}</p>
         ${ow.length ? `<p class="twarn"><i class="ti ti-clock-exclamation"></i><span>Còn nợ <b>${ow.length} việc</b> của hôm qua, làm bù trước khi hết ngày hôm nay.</span></p>` : ""}
         ${rq.slice(0, 2).map(r => `<p class="twarn"><i class="ti ti-${r.ic}"></i><span>${{ exam: "Cần qua bài kiểm tra vượt chặng trước khi sang chặng mới.", wtest: "Bài kiểm tra tuần đã quá hạn.", due: `${odN()} thẻ quá hạn ôn: ôn bớt trước khi học bài mới.`, mist: `${mistN()} lỗi chưa sửa: sửa bớt trước khi học bài mới.` }[r.k]}</span></p>`).join("")}
@@ -681,7 +681,7 @@ var TEACHER = window.TEACHER = (() => {
     if (rq.length) h += `<h4 class="sec">Cô yêu cầu</h4>` + rq.map(r => `<section class="card treq"><p class="tsay"><i class="ti ti-${r.ic}"></i> ${r.t}</p><button class="btn primary full" onclick="${r.go}">${r.b}</button></section>`).join("");
     if (ow.length) h += `<h4 class="sec">Nợ bài hôm qua</h4><section class="card">${ow.map(o => taskRow(o.x, o.h, o.d)).join("")}<p class="sm muted tsay">Việc làm bù trong hôm nay vẫn được ghi nhận nhưng tính là nộp muộn.</p></section>`;
     if (hw) { const n = hw.tasks.filter(x => x.done).length, m = hw.tasks.reduce((a, x) => a + x.m, 0);
-      h += `<h4 class="sec">Bài tập về nhà</h4><section class="card"><div class="row between"><h3>${fmtD(now())}</h3><span class="pill ${n === hw.tasks.length ? "good" : ""}">${n}/${hw.tasks.length}</span></div><p class="sm muted">Khoảng ${m} phút · hạn nộp ${hhmm(hw.due)} · làm theo thứ tự từ trên xuống</p>${hw.tasks.map(x => taskRow(x, hw, d)).join("")}</section>`; }
+      h += `<h4 class="sec">Bài tập về nhà</h4><section class="card"><div class="row between"><h3>${fmtD(now())}</h3><span class="pill ${n === hw.tasks.length ? "good" : ""}">${n}/${hw.tasks.length}</span></div><p class="sm muted">Khoảng ${m} phút · hạn nộp ${hhmm(hw.due)} · làm lần lượt từ&nbsp;trên&nbsp;xuống</p>${hw.tasks.map(x => taskRow(x, hw, d)).join("")}</section>`; }
     else h += `<section class="card"><p class="tsay">Hôm nay không có bài tập về nhà. Muốn học thêm, bạn có thể ôn thẻ hoặc chơi trò chơi gợi nhớ.</p><div class="row2"><button class="btn" onclick="nav('review')"><i class="ti ti-cards"></i> Ôn tập</button><button class="btn" onclick="nav('play')"><i class="ti ti-device-gamepad-2"></i> Trò chơi</button></div></section>`;
     const last = t.rep[t.rep.length - 1];
     if (last && dayDiff(now(), addD(pk(last.wk), 7)) < 3) h += `<h4 class="sec">Phiếu liên lạc mới</h4><button class="card tcard tlink" onclick="TEACHER.open('rep')"><span class="tav"><i class="ti ti-report"></i></span><span class="grow"><b>Tuần ${dm(pk(last.wk))} – ${dm(addD(pk(last.wk), 6))}</b><small class="muted">${last.rate.map(x => x[0] + ": " + x[1]).join(" · ")}</small></span><i class="ti ti-chevron-right muted"></i></button>`;
@@ -703,16 +703,16 @@ var TEACHER = window.TEACHER = (() => {
     const t = T(), n0 = sod(now()), lv = lvNow(), ws = t.wt, ms = t.mt;
     const stT = (o) => !o.next ? "" : o.next < n0 ? `<span class="pill bad">Quá hạn ${dayDiff(n0, o.next)} ngày</span>` : o.next === n0 ? `<span class="pill warn">Hôm nay</span>` : `<span class="pill">${fmtS(o.next)}</span>`;
     const hist = (a, f) => a.length ? `<ul class="thist">${a.slice(-6).reverse().map(f).join("")}</ul>` : `<p class="sm muted">Chưa có lần kiểm tra nào.</p>`;
-    let h = `<section class="card"><div class="row between"><h3><i class="ti ti-clipboard-check"></i> Kiểm tra tuần</h3>${stT(ws)}</div><p class="tsay sm">Mỗi 7 ngày một bài, khoảng 15 câu trộn từ vựng, ngữ pháp, nghe và viết, lấy từ các bài bạn học trong tuần. Cô mong đạt từ 80%. Kỳ tới: <b>${whenTxt(ws.next)}</b>.</p><button class="btn ${ws.next <= n0 ? "primary" : ""} full" onclick="TEACHER.weekTest()">${ws.next <= n0 ? "Làm bài kiểm tra tuần" : "Làm sớm bài kiểm tra tuần"}</button>${hist(ws.hist, x => `<li><span>${x.miss ? "Hạn " + dm(x.due) : dm(x.at)}</span><b class="${x.miss || x.sc < 80 ? "b" : "g"}">${x.miss ? "Bỏ lỡ" : x.sc + "%"}</b>${!x.miss && sod(x.at) > x.due ? `<small>muộn ${dayDiff(x.at, x.due)} ngày</small>` : "<small></small>"}</li>`)}</section>`;
-    h += `<section class="card"><div class="row between"><h3><i class="ti ti-file-certificate"></i> Kiểm tra tháng</h3>${stT(ms)}</div><p class="tsay sm">Mỗi 30 ngày một bài thi thử đủ 5 kỹ năng ở cấp đang học (hiện là <b>${lv}</b>, ${mockMin(lv)} phút), để đo tiến bộ thật sự. Chưa đạt cũng không sao, quan trọng là điểm tăng qua từng tháng. Kỳ tới: <b>${whenTxt(ms.next)}</b>.</p><button class="btn ${ms.next <= n0 ? "primary" : ""} full" onclick="startMock('${lv}')">Thi thử ${lv}</button>${hist(ms.hist, x => `<li><span>${x.miss ? "Hạn " + dm(x.due) : dm(x.at) + " · " + (x.lv || "")}</span><b class="${x.miss ? "b" : x.pass ? "g" : ""}">${x.miss ? "Bỏ lỡ" : x.sc + "%" + (x.pass ? " · Đạt" : "")}</b><small></small></li>`)}</section>`;
+    let h = `<section class="card"><div class="row between"><h3><i class="ti ti-clipboard-check"></i> Kiểm&nbsp;tra&nbsp;tuần</h3>${stT(ws)}</div><p class="tsay sm">Mỗi 7 ngày một bài, khoảng 15 câu trộn từ vựng, ngữ pháp, nghe và viết, lấy từ các bài bạn học trong tuần. Cô mong đạt từ 80%. Kỳ tới: <b>${whenTxt(ws.next)}</b>.</p><button class="btn ${ws.next <= n0 ? "primary" : ""} full" onclick="TEACHER.weekTest()">${ws.next <= n0 ? "Làm bài kiểm tra tuần" : "Làm sớm bài kiểm tra tuần"}</button>${hist(ws.hist, x => `<li><span>${x.miss ? "Hạn " + dm(x.due) : dm(x.at)}</span><b class="${x.miss || x.sc < 80 ? "b" : "g"}">${x.miss ? "Bỏ lỡ" : x.sc + "%"}</b>${!x.miss && sod(x.at) > x.due ? `<small>muộn ${dayDiff(x.at, x.due)} ngày</small>` : "<small></small>"}</li>`)}</section>`;
+    h += `<section class="card"><div class="row between"><h3><i class="ti ti-file-certificate"></i> Kiểm&nbsp;tra&nbsp;tháng</h3>${stT(ms)}</div><p class="tsay sm">Mỗi 30 ngày một bài thi thử đủ 5 kỹ năng ở cấp đang học (hiện là <b>${lv}</b>, ${mockMin(lv)} phút), để đo tiến bộ thật sự. Chưa đạt cũng không sao, quan trọng là điểm tăng qua từng tháng. Kỳ tới: <b>${whenTxt(ms.next)}</b>.</p><button class="btn ${ms.next <= n0 ? "primary" : ""} full" onclick="startMock('${lv}')">Thi thử ${lv}</button>${hist(ms.hist, x => `<li><span>${x.miss ? "Hạn " + dm(x.due) : dm(x.at) + " · " + (x.lv || "")}</span><b class="${x.miss ? "b" : x.pass ? "g" : ""}">${x.miss ? "Bỏ lỡ" : x.sc + "%" + (x.pass ? " · Đạt" : "")}</b><small></small></li>`)}</section>`;
     const nl = tNext(), st = nl ? stageOf(LES[nl].stage) : null, g = nl && stageGate(nl);
     if (st) { const sg = g ? stageOf(g) : st, p = stageProgress(sg);
-      h += `<section class="card"><div class="row between"><h3><i class="ti ti-certificate"></i> Kiểm tra vượt chặng</h3>${S.stagePassed[sg.id] ? `<span class="pill good">Đã qua</span>` : `<span class="pill">${p}% chặng</span>`}</div><p class="tsay sm">Học xong các bài của một chặng, bạn phải qua bài kiểm tra vượt chặng (từ 80%) mới sang chặng mới. Chặng hiện tại: <b>${sg.name}${sg.name === "Chặng 0" ? "" : " · " + esc(sg.title)}</b>.</p>${g ? `<button class="btn primary full" onclick="startExam('${g}')">Làm bài kiểm tra vượt chặng</button>` : ""}</section>`; }
+      h += `<section class="card"><div class="row between"><h3><i class="ti ti-certificate"></i> Kiểm&nbsp;tra vượt&nbsp;chặng</h3>${S.stagePassed[sg.id] ? `<span class="pill good">Đã qua</span>` : `<span class="pill" title="Đã học ${p}% chặng">${p}%</span>`}</div><p class="tsay sm">Học xong các bài của một chặng, bạn phải qua bài kiểm tra vượt chặng (từ 80%) mới sang chặng mới. Chặng hiện tại: <b class="nw">${sg.name}${sg.name === "Chặng 0" ? "" : " · " + esc(sg.title)}</b>.</p>${g ? `<button class="btn primary full" onclick="startExam('${g}')">Làm bài kiểm tra vượt chặng</button>` : ""}</section>`; }
     return h;
   }
   function repCard(r, partial) {
     const ws = pk(r.wk), sks = Object.keys(SK).filter(k => r.sk[k] && r.sk[k][1]);
-    return `<section class="card trep"><div class="row between"><h3>Phiếu liên lạc · ${dm(ws)} – ${dm(addD(ws, 6))}</h3>${partial ? `<span class="pill">Tạm tính</span>` : ""}</div>
+    return `<section class="card trep"><div class="row between"><h3>Phiếu liên lạc · <span class="nw">${dm(ws)} – ${dm(addD(ws, 6))}</span></h3>${partial ? `<span class="pill">Tạm tính</span>` : ""}</div>
     <div class="trate">${r.rate.map(x => `<div><small>${x[0]}</small><b class="r-${x[1] === "Tốt" ? "g" : x[1] === "Khá" ? "k" : x[1] === "–" ? "n" : "b"}">${x[1]}</b></div>`).join("")}</div>
     <div class="stats tst4"><div><b>${r.min}'</b><span>/ ${r.goalMin}' mục tiêu</span></div><div><b>${r.days}/${r.plan}</b><span>buổi học</span></div><div><b>${r.newL}</b><span>bài mới</span></div><div><b>${r.hw === undefined ? "–" : r.hw + "%"}</b><span>bài tập</span></div></div>
     <p class="sm muted">Chuỗi ngày học: <b>${r.streak}</b> · Thẻ đã ôn: <b>${r.cards}</b>${r.wsc !== undefined ? ` · Kiểm tra tuần: <b>${r.wsc}%</b>` : r.wmiss ? " · Kiểm tra tuần: <b>bỏ lỡ</b>" : ""}${r.hwLate ? ` · Nộp muộn: <b>${r.hwLate}</b>` : ""}</p>
@@ -722,7 +722,7 @@ var TEACHER = window.TEACHER = (() => {
   }
   function repHtml() {
     const t = T(), cur = report(monday(now()), true), past = t.rep.slice().reverse();
-    return repCard(cur, true) + (past.length ? `<h4 class="sec">Các tuần trước</h4>` + past.map((r, i) => i === 0 ? repCard(r) : `<details class="card tpast"><summary><b>Tuần ${dm(pk(r.wk))} – ${dm(addD(pk(r.wk), 6))}</b><small class="muted">${r.min}' · bài tập ${r.hw === undefined ? "–" : r.hw + "%"} · ${r.rate.map(x => x[1]).join(" / ")}</small></summary>${repCard(r).replace(/^<section class="card trep">/, '<section class="trep in">')}</details>`).join("") : `<p class="note">Phiếu liên lạc của tuần sẽ được chốt vào sáng thứ Hai tuần sau.</p>`);
+    return repCard(cur, true) + (past.length ? `<h4 class="sec">Các tuần trước</h4>` + past.map((r, i) => i === 0 ? repCard(r) : `<details class="card tpast"><summary><b>Tuần <span class="nw">${dm(pk(r.wk))} – ${dm(addD(pk(r.wk), 6))}</span></b><small class="muted">${r.min}' · bài tập ${r.hw === undefined ? "–" : r.hw + "%"} · ${r.rate.map(x => x[1]).join(" / ")}</small></summary>${repCard(r).replace(/^<section class="card trep">/, '<section class="trep in">')}</details>`).join("") : `<p class="note">Phiếu liên lạc của tuần sẽ được chốt vào sáng thứ Hai tuần sau.</p>`);
   }
   function page() {
     const t = T();
