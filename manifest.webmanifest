@@ -1,4 +1,5 @@
 {
+  "id": "./",
   "name": "Tiếng Anh Từ Số 0",
   "short_name": "Tiếng Anh",
   "description": "Lộ trình học tiếng Anh từ số 0 đến thành thạo: nghe, nói, đọc, viết và trò chơi gợi nhớ.",
@@ -8,8 +9,17 @@
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#F5F2EA",
-  "theme_color": "#0E6B5C",
+  "theme_color": "#0C7F67",
   "categories": ["education"],
+  "shortcuts": [
+    {"name": "Học 5 phút", "short_name": "Học 5 phút", "url": "./#q5", "icons": [{"src": "icons/icon-192.png", "sizes": "192x192"}]},
+    {"name": "Ôn thẻ", "short_name": "Ôn thẻ", "url": "./#on", "icons": [{"src": "icons/icon-192.png", "sizes": "192x192"}]}
+  ],
+  "screenshots": [
+    {"src": "img/shots/s1.png", "sizes": "720x1480", "type": "image/png", "form_factor": "narrow", "label": "Trang Hôm nay"},
+    {"src": "img/shots/s2.png", "sizes": "720x1480", "type": "image/png", "form_factor": "narrow", "label": "Học từng phần 8–10 phút"},
+    {"src": "img/shots/s3.png", "sizes": "720x1480", "type": "image/png", "form_factor": "narrow", "label": "Lộ trình từ số 0"}
+  ],
   "icons": [
     {"src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png"},
     {"src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png"},
