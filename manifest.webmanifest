@@ -1,0 +1,34 @@
+{
+  "id": "./",
+  "name": "Tiếng Anh Từ Số 0",
+  "short_name": "Tiếng Anh",
+  "description": "Ứng dụng đã chuyển sang địa chỉ mới: tienganhtuso0.pages.dev",
+  "lang": "vi",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#F5F2EA",
+  "theme_color": "#0C7F67",
+  "categories": [
+    "education"
+  ],
+  "icons": [
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "icons/maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

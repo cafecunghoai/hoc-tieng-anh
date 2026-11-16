@@ -1,0 +1,5 @@
+/* App đã chuyển sang https://tienganhtuso0.pages.dev/ . Tệp này thay mã cũ: bản app cũ còn trong bộ nhớ đệm tải tới đây sẽ chuyển sang trang báo địa chỉ mới. */
+(function(){if(window.__htaMoved)return;window.__htaMoved=1;var home=new URL("/hoc-tieng-anh/",location.href).href,t=0;try{t=+sessionStorage.getItem("hta_moved_at")||0}catch(e){}
+if(Date.now()-t>15000){try{sessionStorage.setItem("hta_moved_at",Date.now())}catch(e){}location.replace(home+"?chuyen="+Date.now());return}
+var show=function(){document.body.innerHTML='<div style="max-width:420px;margin:0 auto;padding:40px 18px;text-align:center;font:16px/1.55 system-ui,sans-serif;color:#1d2a26"><h1 style="font-size:22px">Ứng dụng đã chuyển sang địa chỉ&nbsp;mới</h1><a href="'+home+'" style="display:block;margin-top:20px;padding:16px;border-radius:16px;background:#0C7F67;color:#fff;font-weight:700;text-decoration:none">Xem hướng dẫn chuyển&nbsp;sang</a></div>'};
+if(document.body)show();else document.addEventListener("DOMContentLoaded",show)})();
